@@ -20,10 +20,10 @@
 #define TAM_MAX_LINEA (MAX_NUMEROS*10+MAX_NUMEROS)
 #define MAX_NODOS (1 << 16)
 
-/*
  #define caca_log_debug(formato, args...) 0
- */
+/*
 #define caca_log_debug printf
+ */
 
 typedef int tipo_dato;
 
@@ -314,10 +314,14 @@ static inline void caca_x_generar_sumas_de_intersexiones(
 		int altura_actual = 0;
 		int suma_intersexion = 0;
 
-		if (idx_nodo_actual % 2) {
+		if ((idx_nodo_actual % 2)) {
 			idx_nodo_derecho = idx_nodo_actual + 1;
 			nodo_derecho = arbol_numeros_unicos + idx_nodo_derecho;
 			altura_actual = nodo_derecho->altura;
+
+			if (!altura_actual) {
+				caca_log_debug("%d es oja, no ay suma\n", idx_nodo_actual);
+			}
 
 			while (altura_actual) {
 				idx_nodo_derecho = 2 * idx_nodo_derecho + 1;
@@ -329,18 +333,26 @@ static inline void caca_x_generar_sumas_de_intersexiones(
 
 				matriz_sumas_intersexiones[idx_nodo_actual][altura_actual] =
 						suma_intersexion;
+				caca_log_debug("la sumap de %d,%d(%d) es %d\n", idx_nodo_actual,
+						idx_nodo_derecho, altura_actual,
+						matriz_sumas_intersexiones[idx_nodo_actual][altura_actual]);
 			}
 
 		} else {
 			int limite_der_nodo_izq = 0;
 			int limite_izq_nodo_der = 0;
+			bool primer_ancestro = verdadero;
 
 			idx_nodo_derecho = idx_nodo_actual + 1;
 			if (idx_nodo_derecho > num_nodos) {
+				caca_log_debug("no ay suma para %d, es el ultimo nodo\n",
+						idx_nodo_actual);
 				goto fin_ciclo;
 			}
 			nodo_derecho = arbol_numeros_unicos + idx_nodo_derecho;
 			if (nodo_derecho->altura != nodo->altura) {
+				caca_log_debug("no ay suma para %d, esta a la orisha\n",
+						idx_nodo_actual);
 				goto fin_ciclo;
 			}
 
@@ -351,9 +363,11 @@ static inline void caca_x_generar_sumas_de_intersexiones(
 				limite_izq_nodo_der = nodo_derecho->limite_izq;
 			} while (limite_der_nodo_izq < limite_izq_nodo_der);
 
-			do {
+			caca_log_debug("ancestro comun %d\n", idx_nodo_derecho);
 
-				idx_nodo_derecho = 2 * idx_nodo_derecho + 1;
+			do {
+				idx_nodo_derecho = 2 * idx_nodo_derecho
+						+ (primer_ancestro ? 2 : 1);
 				nodo_derecho = arbol_numeros_unicos + idx_nodo_derecho;
 				altura_actual = nodo_derecho->altura;
 
@@ -362,6 +376,11 @@ static inline void caca_x_generar_sumas_de_intersexiones(
 
 				matriz_sumas_intersexiones[idx_nodo_actual][altura_actual] =
 						suma_intersexion;
+				caca_log_debug("la suma de %d,%d(%d) es %d\n", idx_nodo_actual,
+						idx_nodo_derecho, altura_actual,
+						matriz_sumas_intersexiones[idx_nodo_actual][altura_actual]);
+
+				primer_ancestro = falso;
 			} while (altura_actual);
 
 		}
@@ -430,7 +449,7 @@ static inline void caca_x_main() {
 
 	caca_x_generar_sumas_de_intersexiones(
 			(int (*)[16]) matriz_sumas_coincidencias, arbol_numeros_unicos,
-			(2 << (max_profundidad + 0)) - 1);
+			(2 << (max_profundidad + 0)) - 2);
 
 	while (cont_queries < num_queries) {
 		scanf("%c %d %d\n", &tipo_query, &idx_query_ini, &idx_query_fin);
