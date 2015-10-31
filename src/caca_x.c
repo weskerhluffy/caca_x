@@ -20,9 +20,9 @@
 #define TAM_MAX_LINEA (MAX_NUMEROS*10+MAX_NUMEROS)
 #define MAX_NODOS (1 << 16)
 
- #define caca_log_debug(formato, args...) 0
-/*
 #define caca_log_debug printf
+/*
+ #define caca_log_debug(formato, args...) 0
  */
 
 typedef int tipo_dato;
@@ -389,6 +389,79 @@ static inline void caca_x_generar_sumas_de_intersexiones(
 	}
 }
 
+static inline void caca_x_encuentra_indices_segmento(
+		caca_x_numeros_unicos_en_rango *nodos, int idx_nodo, int limite_izq,
+		int limite_der, int *indices, int *num_indices) {
+	caca_x_numeros_unicos_en_rango *nodo = NULL;
+
+	nodo = nodos + idx_nodo;
+
+	if (limite_izq <= nodo->limite_izq && nodo->limite_der <= limite_der) {
+		caca_log_debug("te vas a acordar de mi %d,%d\n", nodo->limite_izq,
+				nodo->limite_der);
+		indices[(*num_indices)++] = idx_nodo;
+	} else {
+		if (nodo->limite_der < limite_izq || limite_der < nodo->limite_izq) {
+			caca_log_debug("nada que sumar %d:%d\n", nodo->limite_izq,
+					nodo->limite_der);
+		} else {
+
+			caca_log_debug("pues nadie sera %d,%d\n", nodo->limite_izq,
+					nodo->limite_der);
+			caca_x_encuentra_indices_segmento(nodos, 2 * idx_nodo + 1,
+					limite_izq, limite_der, indices, num_indices);
+			caca_x_encuentra_indices_segmento(nodos, 2 * idx_nodo + 2,
+					limite_izq, limite_der, indices, num_indices);
+		}
+	}
+
+}
+
+static inline int caca_x_suma_segmento(int *sumas_arbol_segmentado,
+		int matriz_sumas_coincidencias[MAX_NODOS][16], int limite_izq,
+		int limite_der) {
+	int res = 0;
+	int num_indices_nodos = 0;
+	int *indices_nodos = (int[16] ) { 0 };
+	caca_x_numeros_unicos_en_rango *nodo_izq = NULL;
+	caca_x_numeros_unicos_en_rango *nodo_der = NULL;
+	char buf[100] = { '\0' };
+
+	caca_x_encuentra_indices_segmento(arbol_numeros_unicos, 0, limite_izq,
+			limite_der, indices_nodos, &num_indices_nodos);
+
+	caca_log_debug("indices de segmento %d:%d %s\n", limite_izq, limite_der,
+			caca_arreglo_a_cadena(indices_nodos, num_indices_nodos, buf));
+
+	for (int i = 0; i < num_indices_nodos; i++) {
+		caca_log_debug("segmento %d aporta %d\n", indices_nodos[i],
+				sumas_arbol_segmentado[indices_nodos[i]]);
+		res += sumas_arbol_segmentado[indices_nodos[i]];
+	}
+
+	for (int i = 0; i < num_indices_nodos - 1; i++) {
+		int idx_nodo_izq = 0;
+		int idx_nodo_der = 0;
+
+		idx_nodo_izq = indices_nodos[i];
+		idx_nodo_der = indices_nodos[i + 1];
+		nodo_izq = arbol_numeros_unicos + idx_nodo_izq;
+		nodo_der = arbol_numeros_unicos + idx_nodo_der;
+
+		caca_log_debug(
+				"encontrando el cruce de %d con %d en la matriz de intersexxxiones\n",
+				nodo_izq->idx, nodo_der->altura);
+
+		assert(idx_nodo_izq == nodo_izq->idx);
+		assert(idx_nodo_der == nodo_der->idx);
+		res -= matriz_sumas_coincidencias[nodo_izq->idx][nodo_der->altura];
+	}
+
+	caca_log_debug("La suma es %d\n", res);
+
+	return res;
+}
+
 static inline void caca_x_main() {
 	int *matriz_nums = NULL;
 	int num_filas = 0;
@@ -455,6 +528,13 @@ static inline void caca_x_main() {
 		scanf("%c %d %d\n", &tipo_query, &idx_query_ini, &idx_query_fin);
 		caca_log_debug("q: %c, ini %d, fin %d\n", tipo_query, idx_query_ini,
 				idx_query_fin);
+
+		if (tipo_query == 'Q') {
+			caca_x_suma_segmento(sumas_arbol_segmentado,
+					(int (*)[16]) matriz_sumas_coincidencias, idx_query_ini - 1,
+					idx_query_fin - 1);
+		}
+
 		cont_queries++;
 	}
 
