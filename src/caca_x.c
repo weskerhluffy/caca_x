@@ -13,6 +13,7 @@
 #include <string.h>
 #include <limits.h>
 #include <assert.h>
+#include <stddef.h>
 
 #define MAX_NUMEROS 50000
 #define MAX_VALOR INT_MAX
@@ -44,9 +45,9 @@ typedef struct caca_x_numeros_unicos_en_rango {
 } caca_x_numeros_unicos_en_rango;
 
 typedef struct caca_x_estado_recursion {
-	array_bits mapa_numeros_encontrados[MAX_VALOR / 64];
 	int profundidad;
 	caca_x_numeros_unicos_en_rango *nodo;
+	array_bits mapa_numeros_encontrados[MAX_VALOR / 64];
 } caca_x_estado_recursion;
 
 caca_x_numeros_unicos_en_rango *arbol_numeros_unicos = NULL;
@@ -129,7 +130,7 @@ static inline bool caca_comun_checa_bit(array_bits *bits, int posicion) {
 	idx_arreglo = posicion / 64;
 	idx_registro = posicion % 64;
 
-	res = !!(bits[idx_arreglo] & (1 << idx_registro));
+	res = !!(bits[idx_arreglo] & (array_bits) (1 << idx_registro));
 
 	return res;
 }
@@ -141,7 +142,18 @@ static inline void caca_comun_asigna_bit(array_bits *bits, int posicion) {
 	idx_arreglo = posicion / 64;
 	idx_registro = posicion % 64;
 
-	bits[idx_arreglo] |= (1 << idx_registro);
+	bits[idx_arreglo] |= (array_bits) (1 << idx_registro);
+
+}
+
+static inline void caca_comun_limpia_bit(array_bits *bits, int posicion) {
+	int idx_arreglo = 0;
+	int idx_registro = 0;
+
+	idx_arreglo = posicion / 64;
+	idx_registro = posicion % 64;
+
+	bits[idx_arreglo] &= ~((array_bits) (1 << idx_registro));
 
 }
 
@@ -166,8 +178,26 @@ static inline void caca_x_construye_arbol_binario_segmentado(int *numeros,
 	if (altura) {
 		int distancia_media = 0;
 		int idx_medio = 0;
+		caca_x_numeros_unicos_en_rango *nodo_anterior = NULL;
 
-		memset(estado_actual, 0, sizeof(caca_x_estado_recursion));
+		nodo_anterior = estado_actual->nodo;
+
+		if (nodo_anterior && nodo_anterior->numeros) {
+			for (int i = 0; i < nodo_anterior->num_numeros; i++) {
+				int numero = 0;
+
+				numero = nodo_anterior->numeros[i];
+
+				caca_comun_limpia_bit(estado_actual->mapa_numeros_encontrados,
+						numero);
+			}
+		}
+
+		memset(estado_actual, 0,
+				offsetof(caca_x_estado_recursion, mapa_numeros_encontrados));
+
+//		memset(estado_actual, 0, sizeof(caca_x_estado_recursion));
+
 		estado_actual->nodo = nodo;
 		estado_actual->profundidad = profundidad;
 
