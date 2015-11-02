@@ -447,6 +447,110 @@ static inline void caca_x_encuentra_indices_segmento(
 
 }
 
+static inline void caca_x_encuentra_indices_a_actualizar(
+		caca_x_numeros_unicos_en_rango *arbol_numeros_unicos, int idx_nodo,
+		int *indices_izq, int *indices_der, int *num_indices_izq,
+		int *num_indices_der, int num_nodos) {
+	bool es_nodo_izq = falso;
+	bool calculando_nodo_izq = verdadero;
+	int num_iteraciones = 0;
+	caca_x_numeros_unicos_en_rango *nodo = NULL;
+
+	es_nodo_izq = idx_nodo % 2;
+
+	caca_log_debug("nodo %d es %s\n", idx_nodo, es_nodo_izq ? "izq" : "der");
+
+	nodo = arbol_numeros_unicos + idx_nodo;
+
+	do {
+		int *indices_actuales = NULL;
+		int *num_indices_actuales = NULL;
+
+		if (num_iteraciones) {
+			calculando_nodo_izq = falso;
+		}
+
+		indices_actuales = calculando_nodo_izq ? indices_izq : indices_der;
+		num_indices_actuales =
+				calculando_nodo_izq ? num_indices_izq : num_indices_der;
+
+		if ((calculando_nodo_izq && idx_nodo)
+				|| (!calculando_nodo_izq && !(idx_nodo < num_nodos))) {
+			int idx_nodo_lateral = 0;
+			int idx_nodo_ancestro = 0;
+			int idx_nodo_a_actualizar = 0;
+			int altura = 0;
+			int limite_intervalo = 0;
+			caca_x_numeros_unicos_en_rango *nodo_lateral_1 = NULL;
+			caca_x_numeros_unicos_en_rango *nodo_ancestro = NULL;
+			caca_x_numeros_unicos_en_rango *nodo_a_actualizar= NULL;
+
+			idx_nodo_lateral =
+					calculando_nodo_izq ? idx_nodo - 1 : idx_nodo + 1;
+			caca_log_debug("calculando nodo %s (%d) de %d\n",
+					calculando_nodo_izq ? "izq" : "der", idx_nodo_lateral,
+					idx_nodo);
+			nodo_lateral_1 = arbol_numeros_unicos + idx_nodo_lateral;
+			altura = nodo->altura;
+			if (altura == nodo_lateral_1->altura) {
+				if ((es_nodo_izq && calculando_nodo_izq)
+						|| (!es_nodo_izq && !calculando_nodo_izq)) {
+					limite_intervalo =
+							calculando_nodo_izq ?
+									nodo->limite_der : nodo->limite_izq;
+
+					caca_log_debug(
+							"el limite intervalo q c buscara en sibling %d\n",
+							limite_intervalo);
+
+					idx_nodo_ancestro = idx_nodo_lateral;
+					do {
+						nodo_ancestro = arbol_numeros_unicos
+								+ idx_nodo_ancestro;
+
+						if (nodo_ancestro->limite_izq <= limite_intervalo
+								&& limite_intervalo
+										<= nodo_ancestro->limite_der) {
+							break;
+						}
+
+						idx_nodo_ancestro = (idx_nodo_ancestro - 1) / 2;
+					} while (idx_nodo_ancestro);
+
+					caca_log_debug("ancestro comund de %d y %d es %d\n",
+							idx_nodo, idx_nodo_lateral, idx_nodo_ancestro);
+
+					assert(
+							nodo_ancestro->limite_izq <= limite_intervalo
+									&& limite_intervalo
+											<= nodo_ancestro->limite_der);
+
+					idx_nodo_a_actualizar = idx_nodo_ancestro;
+					indices_actuales[(*num_indices_actuales)++] =
+							idx_nodo_a_actualizar;
+
+					idx_nodo_a_actualizar = 2 * idx_nodo_a_actualizar
+							+ (calculando_nodo_izq ? 1 : 2);
+
+					do {
+
+					} while (nodo_a_actualizar->altura);
+
+				}
+			} else {
+				caca_log_debug(
+						"nodo %d es %s de su fila, nada q acer para el lado der\n",
+						idx_nodo, calculando_nodo_izq ? "primero" : "ultimo");
+			}
+		} else {
+			caca_log_debug("%s nodo %d, nada q acer para el lado der/izq\n",
+					calculando_nodo_izq ? "1er" : "ultimo", idx_nodo);
+		}
+
+		num_iteraciones;
+	} while (calculando_nodo_izq);
+}
+
 static inline int caca_x_suma_segmento(int *sumas_arbol_segmentado,
 		int matriz_sumas_coincidencias[MAX_NODOS][16], int limite_izq,
 		int limite_der) {
@@ -490,6 +594,38 @@ static inline int caca_x_suma_segmento(int *sumas_arbol_segmentado,
 	caca_log_debug("La suma es %d\n", res);
 
 	return res;
+}
+
+static inline void caca_x_encuentra_indices_afectados_por_actualizacion(
+		caca_x_numeros_unicos_en_rango *nodos, int idx_nodo,
+		int idx_actualizado, int *indices, int *num_indices) {
+	caca_x_numeros_unicos_en_rango *nodo = NULL;
+
+	nodo = nodos + idx_nodo;
+
+	if (nodo->limite_izq <= idx_actualizado
+			&& idx_actualizado <= nodo->limite_der) {
+		caca_log_debug("cuando la luna %d,%d\n", nodo->limite_izq,
+				nodo->limite_der);
+		indices[(*num_indices)++] = idx_nodo;
+
+	} else {
+		if (nodo->limite_der < idx_actualizado
+				|| idx_actualizado < nodo->limite_izq) {
+			caca_log_debug("ilumine tus ojos %d:%d\n", nodo->limite_izq,
+					nodo->limite_der);
+		} else {
+
+			caca_log_debug("en la oscuridad %d,%d\n", nodo->limite_izq,
+					nodo->limite_der);
+			indices[(*num_indices)++] = idx_nodo;
+			caca_x_encuentra_indices_segmento(nodos, 2 * idx_nodo + 1,
+					idx_actualizado, indices, num_indices);
+			caca_x_encuentra_indices_segmento(nodos, 2 * idx_nodo + 2,
+					idx_actualizado, indices, num_indices);
+		}
+	}
+
 }
 
 static inline void caca_x_main() {
