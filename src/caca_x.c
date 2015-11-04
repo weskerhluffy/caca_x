@@ -21,10 +21,10 @@
 #define TAM_MAX_LINEA (MAX_NUMEROS*10+MAX_NUMEROS)
 #define MAX_NODOS (1 << 16)
 
-#define caca_log_debug printf
 /*
- #define caca_log_debug(formato, args...) 0
+ #define caca_log_debug printf
  */
+#define caca_log_debug(formato, args...) 0
 
 typedef int tipo_dato;
 
@@ -826,8 +826,7 @@ static inline void caca_x_actualiza_estado(int *numeros,
 			&num_indices_afectados_actualizacion);
 
 	caca_log_debug("los idx afectados %s\n",
-			caca_arreglo_a_cadena(indices_afectados_actualizacion,
-					num_indices_afectados_actualizacion, buf));
+			caca_arreglo_a_cadena(indices_afectados_actualizacion, num_indices_afectados_actualizacion, buf));
 
 	caca_log_debug("el viejo %d y el nuevo %d\n", viejo_pendejo, nuevo_valor);
 
@@ -911,15 +910,17 @@ static inline void caca_x_main() {
 	while (cont_queries < num_queries) {
 		int idx_actualizado = 0;
 		int nuevo_valor = 0;
+		int sum = 0;
 		scanf("%c %d %d\n", &tipo_query, &idx_query_ini, &idx_query_fin);
 		caca_log_debug("q: %c, ini %d, fin %d\n", tipo_query, idx_query_ini,
 				idx_query_fin);
 
 		switch (tipo_query) {
 		case 'Q':
-			caca_x_suma_segmento(sumas_arbol_segmentado,
+			sum = caca_x_suma_segmento(sumas_arbol_segmentado,
 					(int (*)[16]) matriz_sumas_coincidencias, idx_query_ini - 1,
 					idx_query_fin - 1);
+			printf("%d\n", sum);
 			break;
 		case 'U':
 
@@ -945,7 +946,7 @@ static inline void caca_x_main() {
 }
 
 int main(void) {
-	puts("he corrido con algo de suerte"); /* prints he corrido con algo de suerte */
+//	puts("he corrido con algo de suerte"); /* prints he corrido con algo de suerte */
 	caca_x_main();
 	return EXIT_SUCCESS;
 }
