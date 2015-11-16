@@ -14,6 +14,7 @@
 #include <limits.h>
 #include <assert.h>
 #include <stddef.h>
+#include <unistd.h>
 
 #define MAX_NUMEROS 50000
 #define MAX_VALOR INT_MAX
@@ -22,9 +23,15 @@
 #define MAX_NODOS (1 << 16)
 
 /*
- #define caca_log_debug printf
+#define caca_log_debug printf
  */
-#define caca_log_debug(formato, args...) 0
+ #define caca_log_debug(formato, args...) 0
+
+#define assert_timeout(condition) assert(condition);
+/*
+ #define assert_timeout(condition) if(!condition){printf("fuck\n");sleep(10);}
+
+ */
 
 typedef int tipo_dato;
 
@@ -46,11 +53,17 @@ typedef struct caca_x_numeros_unicos_en_rango {
 
 typedef struct caca_x_estado_recursion {
 	int profundidad;
+	int idx_ini;
+	int idx_fin;
+	int idx_nodo;
+	int num_popeado;
 	caca_x_numeros_unicos_en_rango *nodo;
 	array_bits mapa_numeros_encontrados[MAX_VALOR / 64];
 } caca_x_estado_recursion;
 
 caca_x_numeros_unicos_en_rango *arbol_numeros_unicos = NULL;
+
+caca_x_estado_recursion *estado = NULL;
 
 static inline int lee_matrix_long_stdin(tipo_dato *matrix, int *num_filas,
 		int *num_columnas, int num_max_filas, int num_max_columnas) {
@@ -158,95 +171,198 @@ static inline void caca_comun_limpia_bit(array_bits *bits, int posicion) {
 }
 
 static inline void caca_x_construye_arbol_binario_segmentado(int *numeros,
-		int profundidad, int max_profundidad, int idx_ini, int idx_fin,
-		int idx_nodo) {
-	static caca_x_estado_recursion estado[16] = { 0 };
-	int altura = 0;
-	caca_x_numeros_unicos_en_rango *nodo = NULL;
-	caca_x_estado_recursion *estado_actual = NULL;
+		int num_numeros, int max_profundidad) {
+	int profundidad = -1;
 
-	altura = max_profundidad - profundidad;
+	estado->idx_ini = 0;
+	estado->idx_fin = num_numeros;
+	estado->idx_nodo = 0;
+	estado->nodo = NULL;
+	estado->profundidad = 0;
+	estado->num_popeado = 0;
 
-	caca_log_debug("en altura %d\n", altura);
+	profundidad++;
 
-	nodo = arbol_numeros_unicos + idx_nodo;
+	while (profundidad != -1) {
+		int idx_ini = 0;
+		int idx_fin = 0;
+		int idx_nodo = 0;
+		int altura = 0;
+		caca_x_numeros_unicos_en_rango *nodo = NULL;
+		caca_x_estado_recursion *estado_actual = NULL;
 
-	caca_x_inicializar_nodo(nodo, altura, idx_nodo, idx_ini, idx_fin);
+		estado_actual = estado + profundidad;
 
-	estado_actual = estado + profundidad;
+		assert_timeout(estado_actual->profundidad == profundidad);
+		caca_log_debug("perfume %d\n", profundidad);
 
-	if (altura) {
-		int distancia_media = 0;
-		int idx_medio = 0;
-		caca_x_numeros_unicos_en_rango *nodo_anterior = NULL;
+		idx_ini = estado_actual->idx_ini;
+		idx_fin = estado_actual->idx_fin;
+		idx_nodo = estado_actual->idx_nodo;
 
-		nodo_anterior = estado_actual->nodo;
+		altura = max_profundidad - profundidad;
 
-		if (nodo_anterior && nodo_anterior->numeros) {
-			for (int i = 0; i < nodo_anterior->num_numeros; i++) {
-				int numero = 0;
+		caca_log_debug("en altura %d de pseudo rec idx %d\n", altura, idx_nodo);
 
-				numero = nodo_anterior->numeros[i];
+		if (!estado_actual->num_popeado) {
+			nodo = arbol_numeros_unicos + idx_nodo;
 
-				caca_comun_limpia_bit(estado_actual->mapa_numeros_encontrados,
-						numero);
-			}
+			caca_x_inicializar_nodo(nodo, altura, idx_nodo, idx_ini, idx_fin);
 		}
 
-		memset(estado_actual, 0,
-				offsetof(caca_x_estado_recursion, mapa_numeros_encontrados));
+		estado_actual->num_popeado++;
+
+		profundidad--;
+
+		if (altura) {
+			int distancia_media = 0;
+			int idx_medio = 0;
+			int ultimo_num_popeado = 0;
+			caca_x_numeros_unicos_en_rango *nodo_anterior = NULL;
+			caca_x_estado_recursion *estado_futuro = NULL;
+
+			if (estado_actual->num_popeado == 1
+					|| estado_actual->num_popeado == 2) {
+
+				caca_log_debug("creando nueva profundidad \n");
+				estado_futuro = estado + estado_actual->profundidad + 1;
+
+				if (estado_actual->num_popeado == 1) {
+
+					caca_log_debug("num de popeos d estado actual es 1\n");
+					nodo_anterior = estado_actual->nodo;
+
+					if (nodo_anterior && nodo_anterior->numeros) {
+						caca_log_debug("limpiando mapa de bits\n");
+						for (int i = 0; i < nodo_anterior->num_numeros; i++) {
+							int numero = 0;
+
+							numero = nodo_anterior->numeros[i];
+
+							caca_comun_limpia_bit(
+									estado_futuro->mapa_numeros_encontrados,
+									numero);
+						}
+					}
+					estado_actual->nodo = nodo;
+
+					memset(estado_futuro, 0,
+							offsetof(caca_x_estado_recursion, mapa_numeros_encontrados));
+
+				}
+				estado_futuro->profundidad = estado_actual->profundidad + 1;
+
+				distancia_media = (idx_fin - idx_ini) / 2;
+				idx_medio = idx_ini + distancia_media;
+
+			}
 
 //		memset(estado_actual, 0, sizeof(caca_x_estado_recursion));
+			ultimo_num_popeado = estado_actual->num_popeado;
 
-		estado_actual->nodo = nodo;
-		estado_actual->profundidad = profundidad;
+			switch (estado_actual->num_popeado) {
+			case 1:
+				estado_futuro->idx_ini = idx_ini;
+				estado_futuro->idx_fin = idx_medio;
+				estado_futuro->idx_nodo = 2 * idx_nodo + 1;
+				caca_log_debug("segmentando izq de %d a %d en alt %d\n",
+						idx_ini, idx_medio, altura);
+				break;
+			case 2:
+				estado_futuro->idx_ini = idx_medio + 1;
+				estado_futuro->idx_fin = idx_fin;
+				estado_futuro->idx_nodo = 2 * idx_nodo + 2;
+				caca_log_debug("segmentando der de %d a %d en alt %d\n",
+						idx_medio + 1, idx_fin, altura);
+				break;
+			case 3:
+				nodo_anterior = estado_actual->nodo;
+				if (nodo_anterior && nodo_anterior->numeros) {
+					caca_log_debug("limpiando mapa de bits en altura 0\n");
+					for (int i = 0; i < nodo_anterior->num_numeros; i++) {
+						int numero = 0;
 
-		distancia_media = (idx_fin - idx_ini) / 2;
-		idx_medio = idx_ini + distancia_media;
+						numero = nodo_anterior->numeros[i];
 
-		caca_log_debug("segmentando izq de %d a %d en alt %d\n", idx_ini,
-				idx_medio, altura);
-		caca_x_construye_arbol_binario_segmentado(numeros, profundidad + 1,
-				max_profundidad, idx_ini, idx_medio, 2 * idx_nodo + 1);
-
-		caca_log_debug("segmentando der de %d a %d en alt %d\n", idx_medio + 1,
-				idx_fin, altura);
-		caca_x_construye_arbol_binario_segmentado(numeros, profundidad + 1,
-				max_profundidad, idx_medio + 1, idx_fin, 2 * idx_nodo + 2);
-	} else {
-		int profundidad_actual = 0;
-		int numero_actual = 0;
-
-		assert(idx_ini == idx_fin);
-		numero_actual = numeros[idx_ini];
-		*nodo->numeros = numero_actual;
-		nodo->num_numeros++;
-
-		caca_log_debug("asignado unico numero %d a indice de arbol %d\n",
-				numero_actual, idx_nodo);
-		while (profundidad_actual < profundidad) {
-			bool num_encontrado = falso;
-			array_bits *bits_actuales = NULL;
-
-			estado_actual = estado + profundidad_actual;
-
-			bits_actuales = estado_actual->mapa_numeros_encontrados;
-
-			num_encontrado = caca_comun_checa_bit(bits_actuales, numero_actual);
-
-			if (num_encontrado) {
-				caca_log_debug("numero %d encontrado en profundidad %d\n",
-						numero_actual, profundidad_actual);
-			} else {
-				estado_actual->nodo->numeros[estado_actual->nodo->num_numeros++] =
-						numero_actual;
-				caca_comun_asigna_bit(bits_actuales, numero_actual);
+						caca_comun_limpia_bit(
+								estado_actual->mapa_numeros_encontrados,
+								numero);
+					}
+				}
+				memset(estado_actual, 0,
+						offsetof(caca_x_estado_recursion, mapa_numeros_encontrados));
+				caca_log_debug("ultimo 'recursion' de nodo %d, nada q acer\n",
+						idx_nodo);
+				break;
+			default:
+				assert_timeout(0)
+				;
+				break;
 			}
 
-			profundidad_actual++;
+			if (ultimo_num_popeado < 3) {
+				profundidad += 2;
+				caca_log_debug("aumentando profundidad a %d\n", profundidad);
+			}
+
+//		if(altura<4) mierda: return;
+		} else {
+			int profundidad_actual = 0;
+			int numero_actual = 0;
+			caca_x_estado_recursion *estado_en_stack = NULL;
+
+			assert_timeout(idx_ini == idx_fin);
+			assert_timeout(nodo);
+
+			numero_actual = numeros[idx_ini];
+			*nodo->numeros = numero_actual;
+			nodo->num_numeros++;
+
+			caca_log_debug("asignado unico numero %d a indice de arbol %d\n",
+					numero_actual, idx_nodo);
+			while (profundidad_actual <= profundidad) {
+				bool num_encontrado = falso;
+				array_bits *bits_actuales = NULL;
+
+				estado_en_stack = estado + profundidad_actual;
+
+				bits_actuales = estado_en_stack->mapa_numeros_encontrados;
+
+				num_encontrado = caca_comun_checa_bit(bits_actuales,
+						numero_actual);
+
+				if (num_encontrado) {
+					caca_log_debug("numero %d encontrado en profundidad %d\n",
+							numero_actual, profundidad_actual);
+				} else {
+					estado_en_stack->nodo->numeros[estado_en_stack->nodo->num_numeros++] =
+							numero_actual;
+					caca_comun_asigna_bit(bits_actuales, numero_actual);
+					caca_log_debug(
+							"numero %d asignado en profundidad %d en pos %d idx %d\n",
+							numero_actual, profundidad_actual,
+							estado_en_stack->nodo->num_numeros,
+							estado_en_stack->nodo->idx);
+				}
+
+				profundidad_actual++;
+			}
+
+			if (nodo && nodo->numeros) {
+				caca_log_debug("limpiando mapa de bits en altura 0\n");
+				for (int i = 0; i < nodo->num_numeros; i++) {
+					int numero = 0;
+
+					numero = nodo->numeros[i];
+
+					caca_comun_limpia_bit(
+							estado_actual->mapa_numeros_encontrados, numero);
+				}
+			}
+			memset(estado_actual, 0,
+					offsetof(caca_x_estado_recursion, mapa_numeros_encontrados));
 		}
 	}
-
 }
 
 static inline void caca_x_suma_unicos(int *sumas_arbol_segmentado,
@@ -266,9 +382,10 @@ static inline void caca_x_suma_unicos(int *sumas_arbol_segmentado,
 		numeros_unicos = nodo->numeros;
 		num_numeros_unicos = nodo->num_numeros;
 
-		assert(i == nodo->idx);
+		assert_timeout(i == nodo->idx);
 
-		caca_log_debug("los numeros unicos en %d son %s\n", i,
+		caca_log_debug("los numeros unicos en %d, altura %d, son %s\n", i,
+				nodo->altura,
 				caca_arreglo_a_cadena(numeros_unicos, num_numeros_unicos, buf));
 
 		sumas_arbol_segmentado[i] = 0;
@@ -292,7 +409,7 @@ static inline int caca_x_calcular_suma_intersexion(
 	int *numeros_menor = NULL;
 
 	bits = calloc(MAX_VALOR / 64, sizeof(array_bits));
-	assert(bits);
+	assert_timeout(bits);
 
 	numeros_izq = nodo_izq->numeros;
 	numeros_der = nodo_der->numeros;
@@ -525,7 +642,7 @@ static inline void caca_x_encuentra_indices_a_actualizar_laterales(
 					caca_log_debug("ancestro comund de %d y %d es %d\n",
 							idx_nodo, idx_nodo_lateral, idx_nodo_ancestro);
 
-					assert(
+					assert_timeout(
 							nodo_ancestro->limite_izq <= limite_intervalo
 									&& limite_intervalo
 											<= nodo_ancestro->limite_der);
@@ -619,8 +736,8 @@ static inline int caca_x_suma_segmento(int *sumas_arbol_segmentado,
 				"encontrando el cruce de %d con %d en la matriz de intersexxxiones\n",
 				nodo_izq->idx, nodo_der->altura);
 
-		assert(idx_nodo_izq == nodo_izq->idx);
-		assert(idx_nodo_der == nodo_der->idx);
+		assert_timeout(idx_nodo_izq == nodo_izq->idx);
+		assert_timeout(idx_nodo_der == nodo_der->idx);
 
 		caca_log_debug(
 				"cruce de %d con %d en la matriz de intersexxxiones resta %d\n",
@@ -826,7 +943,8 @@ static inline void caca_x_actualiza_estado(int *numeros,
 			&num_indices_afectados_actualizacion);
 
 	caca_log_debug("los idx afectados %s\n",
-			caca_arreglo_a_cadena(indices_afectados_actualizacion, num_indices_afectados_actualizacion, buf));
+			caca_arreglo_a_cadena(indices_afectados_actualizacion,
+					num_indices_afectados_actualizacion, buf));
 
 	caca_log_debug("el viejo %d y el nuevo %d\n", viejo_pendejo, nuevo_valor);
 
@@ -863,17 +981,26 @@ static inline void caca_x_main() {
 	char buf[100] = { '\0' };
 
 	matriz_nums = calloc(MAX_NUMEROS * 3, sizeof(int));
-	assert(matriz_nums);
+	assert_timeout(matriz_nums);
 
 	arbol_numeros_unicos = calloc(MAX_NODOS,
 			sizeof(caca_x_numeros_unicos_en_rango));
-	assert(arbol_numeros_unicos);
+	assert_timeout(arbol_numeros_unicos);
 
 	sumas_arbol_segmentado = calloc(MAX_NODOS, sizeof(int));
-	assert(sumas_arbol_segmentado);
+	assert_timeout(sumas_arbol_segmentado);
 
 	matriz_sumas_coincidencias = calloc(MAX_NODOS * 16, sizeof(int));
-	assert(matriz_sumas_coincidencias);
+	assert_timeout(matriz_sumas_coincidencias);
+
+#ifdef USA_MALLOC
+	estado = malloc(16 * sizeof(caca_x_estado_recursion));
+	assert_timeout(estado);
+	memset(estado, 0, 16 * sizeof(caca_x_estado_recursion));
+#else
+	estado = calloc(16, sizeof(caca_x_estado_recursion));
+	assert_timeout(estado);
+#endif
 
 	num_filas = 3;
 	lee_matrix_long_stdin(matriz_nums, &num_filas, NULL, 3, MAX_NUMEROS);
@@ -898,8 +1025,8 @@ static inline void caca_x_main() {
 	caca_log_debug("llamando a func rec con max prof %d\n",
 			max_profundidad - 1);
 
-	caca_x_construye_arbol_binario_segmentado(numeros, 0, max_profundidad, 0,
-			num_numeros_redondeado - 1, 0);
+	caca_x_construye_arbol_binario_segmentado(numeros,
+			num_numeros_redondeado - 1, max_profundidad);
 
 	caca_x_suma_unicos(sumas_arbol_segmentado, MAX_NODOS);
 
@@ -943,10 +1070,12 @@ static inline void caca_x_main() {
 	free(arbol_numeros_unicos);
 	free(sumas_arbol_segmentado);
 	free(matriz_sumas_coincidencias);
+	free(estado);
 }
 
 int main(void) {
 //	puts("he corrido con algo de suerte"); /* prints he corrido con algo de suerte */
+//	sleep(10);
 	caca_x_main();
 	return EXIT_SUCCESS;
 }
