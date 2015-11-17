@@ -22,15 +22,15 @@
 #define TAM_MAX_LINEA (MAX_NUMEROS*10+MAX_NUMEROS)
 #define MAX_NODOS (1 << 16)
 
- #define caca_log_debug(formato, args...) 0
 /*
-#define caca_log_debug printf
+#define caca_log_debug(formato, args...) 0
  */
+ #define caca_log_debug printf
 
 /*
-#define assert_timeout(condition) assert(condition);
+ #define assert_timeout(condition) assert(condition);
  */
- #define assert_timeout(condition) if(!(condition)){printf("fuck\n");sleep(10);}
+#define assert_timeout(condition) if(!(condition)){printf("fuck\n");sleep(10);}
 
 #ifndef AVL_TREE_H
 #define AVL_TREE_H
@@ -783,7 +783,6 @@ static inline void caca_x_suma_unicos(int *sumas_arbol_segmentado,
 
 		nodo = arbol_numeros_unicos + i;
 
-
 		if (!nodo->arbolazo) {
 			continue;
 		}
@@ -1371,8 +1370,7 @@ static inline void caca_x_actualiza_estado(int *numeros,
 			&num_indices_afectados_actualizacion);
 
 	caca_log_debug("los idx afectados %s\n",
-			caca_arreglo_a_cadena(indices_afectados_actualizacion,
-					num_indices_afectados_actualizacion, buf));
+			caca_arreglo_a_cadena(indices_afectados_actualizacion, num_indices_afectados_actualizacion, buf));
 
 	caca_log_debug("el viejo %d y el nuevo %d\n", viejo_pendejo, nuevo_valor);
 
@@ -1403,6 +1401,7 @@ static inline void caca_x_main() {
 	int idx_query_fin = 0;
 	int max_profundidad = 0;
 	int num_numeros_redondeado = 0;
+	int num_nodos = 0;
 	int *sumas_arbol_segmentado = NULL;
 	int *matriz_sumas_coincidencias = NULL;
 
@@ -1410,13 +1409,6 @@ static inline void caca_x_main() {
 
 	matriz_nums = calloc(MAX_NUMEROS * 3, sizeof(int));
 	assert_timeout(matriz_nums);
-
-	arbol_numeros_unicos = calloc(MAX_NODOS,
-			sizeof(caca_x_numeros_unicos_en_rango));
-	assert_timeout(arbol_numeros_unicos);
-
-	sumas_arbol_segmentado = calloc(MAX_NODOS, sizeof(int));
-	assert_timeout(sumas_arbol_segmentado);
 
 	matriz_sumas_coincidencias = calloc(MAX_NODOS * 16, sizeof(int));
 	assert_timeout(matriz_sumas_coincidencias);
@@ -1450,17 +1442,28 @@ static inline void caca_x_main() {
 	caca_log_debug("en estas paginas %s\n",
 			caca_arreglo_a_cadena(numeros, num_numeros_redondeado, buf));
 
+	num_nodos = (2 << (max_profundidad + 0));
+
+	caca_log_debug("el numero de nodos %d\n",num_nodos);
+
+	arbol_numeros_unicos = calloc(num_nodos,
+			sizeof(caca_x_numeros_unicos_en_rango));
+	assert_timeout(arbol_numeros_unicos);
+
+	sumas_arbol_segmentado = calloc(num_nodos, sizeof(int));
+	assert_timeout(sumas_arbol_segmentado);
+
 	caca_log_debug("llamando a func rec con max prof %d\n",
 			max_profundidad - 1);
 
 	caca_x_construye_arbol_binario_segmentado(numeros, 0, max_profundidad, 0,
 			num_numeros_redondeado - 1, 0);
 
-	caca_x_suma_unicos(sumas_arbol_segmentado, MAX_NODOS);
+	caca_x_suma_unicos(sumas_arbol_segmentado, num_nodos);
 
 	caca_x_generar_sumas_de_intersexiones(
 			(int (*)[16]) matriz_sumas_coincidencias, arbol_numeros_unicos,
-			(2 << (max_profundidad + 0)) - 2);
+			num_nodos - 2);
 
 	while (cont_queries < num_queries) {
 		int idx_actualizado = 0;
