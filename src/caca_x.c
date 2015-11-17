@@ -30,7 +30,7 @@
 /*
 #define assert_timeout(condition) assert(condition);
  */
- #define assert_timeout(condition) if(!condition){printf("fuck\n");sleep(10);}
+ #define assert_timeout(condition) if(!(condition)){printf("fuck\n");sleep(10);}
 
 #ifndef AVL_TREE_H
 #define AVL_TREE_H
@@ -682,7 +682,6 @@ static inline void caca_comun_limpia_bit(array_bits *bits, int posicion) {
 static inline void caca_x_construye_arbol_binario_segmentado(int *numeros,
 		int profundidad, int max_profundidad, int idx_ini, int idx_fin,
 		int idx_nodo) {
-	static caca_x_estado_recursion estado[16] = { 0 };
 	int altura = 0;
 	caca_x_numeros_unicos_en_rango *nodo = NULL;
 	caca_x_estado_recursion *estado_actual = NULL;
