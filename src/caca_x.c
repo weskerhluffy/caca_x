@@ -22,10 +22,10 @@
 #define TAM_MAX_LINEA (MAX_NUMEROS*10+MAX_NUMEROS)
 #define MAX_NODOS (1 << 16)
 
-#define caca_log_debug(formato, args...) 0
 /*
- #define caca_log_debug printf
+ #define caca_log_debug(formato, args...) 0
  */
+#define caca_log_debug printf
 
 #define assert_timeout(condition) assert(condition);
 /*
@@ -180,7 +180,7 @@ static void __print(avltree_t* me, int idx, int d) {
 static inline char* __sprint(avltree_t* me, int idx, int d, char *buf,
 		int buf_tam) {
 	int i;
-	int buf_usado = 0;
+	static int buf_usado = 0;
 	char num_buf[100] = { '\0' };
 
 	for (i = 0; i < d; i++) {
@@ -199,8 +199,8 @@ static inline char* __sprint(avltree_t* me, int idx, int d, char *buf,
 	strcpy(buf + buf_usado, num_buf);
 	buf_usado += strlen(num_buf);
 
-	__sprint(me, __child_l(idx), d + 1, buf + buf_usado, buf_tam);
-	__sprint(me, __child_r(idx), d + 1, buf + buf_usado, buf_tam);
+	__sprint(me, __child_l(idx), d + 1, buf, buf_tam);
+	__sprint(me, __child_r(idx), d + 1, buf, buf_tam);
 	return buf;
 }
 
@@ -273,7 +273,7 @@ int avltree_size(avltree_t* me) {
 }
 
 static int __height(avltree_t* me, int idx) {
-	if (idx >= me->size || !me->nodes[idx].key)
+	if (idx >= me->size || !me->nodes[idx].val)
 		return 0;
 	return max(
 			__height(me,__child_l(idx)) + 1,
@@ -287,11 +287,12 @@ int avltree_height(avltree_t* me) {
 static void __shift_up(avltree_t* me, int idx, int towards) {
 	assert_timeout(idx < me->size);
 
-	if (!me->nodes[idx].key || towards >= me->size) {
+	if (!me->nodes[idx].val || towards >= me->size) {
 		return;
 	}
 
 	memcpy(&me->nodes[towards], &me->nodes[idx], sizeof(avltree_node_t));
+	me->nodes[idx].val = NULL;
 	me->nodes[idx].key = NULL;
 	if (__child_l(idx) < me->size) {
 		__shift_up(me, __child_l(idx), __child_l(towards));
@@ -305,7 +306,7 @@ static void __shift_down(avltree_t* me, int idx, int towards) {
 
 	assert_timeout(idx < me->size);
 
-	if (!me->nodes[idx].key || towards >= me->size) {
+	if (!me->nodes[idx].val || towards >= me->size) {
 		return;
 	}
 
@@ -327,6 +328,7 @@ void avltree_rotate_right(avltree_t* me, int idx) {
 	/* B */
 	__shift_down(me, __child_r(__child_l(idx)), __child_l(__child_r(idx)));
 	me->nodes[__child_r(__child_l(idx))].key = NULL;
+	me->nodes[__child_r(__child_l(idx))].val = NULL;
 
 	/* A Final
 	 * Move Y into X's old spot */
@@ -343,6 +345,7 @@ void avltree_rotate_left(avltree_t* me, int idx) {
 	/* B */
 	__shift_down(me, __child_l(__child_r(idx)), __child_r(__child_l(idx)));
 	me->nodes[__child_l(__child_r(idx))].key = NULL;
+	me->nodes[__child_l(__child_r(idx))].val = NULL;
 
 	/* A Final
 	 * Move Y into X's old spot */
@@ -696,7 +699,7 @@ static inline void caca_x_inicializar_nodo(caca_x_numeros_unicos_en_rango *nodo,
 		int altura, int idx_nodo, int limite_izq, int limite_der) {
 	nodo->altura = altura;
 	nodo->max_numeros = 1 << nodo->altura;
-	nodo->arbolazo = avltree_new(__uint_compare, (2 << (nodo->altura + 3)) - 1);
+	nodo->arbolazo = avltree_new(__uint_compare, (2 << (nodo->altura + 4)) - 1);
 	nodo->idx = idx_nodo;
 	nodo->limite_izq = limite_izq;
 	nodo->limite_der = limite_der;
@@ -956,6 +959,7 @@ static inline void caca_x_suma_unicos(int *sumas_arbol_segmentado,
 		caca_log_debug("los numeros unicos en %d, altura %d, son %s\n", i,
 				nodo->altura,
 				caca_arreglo_a_cadena(numeros_unicos, num_numeros_unicos, buf));
+		avltree_print(arbolazo_actual);
 
 		assert_timeout(nodo->num_numeros == avltree_count(arbolazo_actual));
 
@@ -1522,7 +1526,8 @@ static inline void caca_x_actualiza_estado(int *numeros,
 			&num_indices_afectados_actualizacion);
 
 	caca_log_debug("los idx afectados %s\n",
-			caca_arreglo_a_cadena(indices_afectados_actualizacion, num_indices_afectados_actualizacion, buf));
+			caca_arreglo_a_cadena(indices_afectados_actualizacion,
+					num_indices_afectados_actualizacion, buf));
 
 	caca_log_debug("el viejo %d y el nuevo %d\n", viejo_pendejo, nuevo_valor);
 
@@ -1596,7 +1601,8 @@ static inline void caca_x_main() {
 	sumas_arbol_segmentado = calloc(num_nodos, sizeof(int));
 	assert_timeout(sumas_arbol_segmentado);
 
-	caca_log_debug("llamando a func rec con max prof %d\n", max_profundidad+2);
+	caca_log_debug("llamando a func rec con max prof %d\n",
+			max_profundidad + 2);
 
 #ifdef USA_MALLOC
 	estado = malloc((max_profundidad +2) * sizeof(caca_x_estado_recursion));
