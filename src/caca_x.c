@@ -22,10 +22,10 @@
 #define TAM_MAX_LINEA (MAX_NUMEROS*10+MAX_NUMEROS)
 #define MAX_NODOS (1 << 16)
 
-/*
  #define caca_log_debug(formato, args...) 0
- */
+/*
 #define caca_log_debug printf
+ */
 
 #define assert_timeout(condition) assert(condition);
 /*
@@ -221,27 +221,6 @@ void avltree_print2(avltree_t* me) {
 		printf("%lx%c", (unsigned long int) me->nodes[i].key,
 				i == me->size ? '|' : ' ');
 	printf("\n");
-}
-
-static void __enlarge(avltree_t* me) {
-	int ii, end;
-	avltree_node_t *array_n;
-
-	/* double capacity */
-	me->size *= 2;
-	array_n = malloc(me->size * sizeof(avltree_node_t));
-
-	/* copy old data across to new array */
-	for (ii = 0, end = avltree_count(me); ii < end; ii++) {
-		if (me->nodes[ii].key)
-			memcpy(&array_n[ii], &me->nodes[ii], sizeof(avltree_node_t));
-		else
-			array_n[ii].key = NULL;
-	}
-
-	/* swap arrays */
-	free(me->nodes);
-	me->nodes = array_n;
 }
 
 avltree_t* avltree_new(long (*cmp)(const void *e1, const void *e2),
@@ -595,34 +574,6 @@ void *avltree_iterator_next(avltree_t * h, avltree_iterator_t * iter) {
 			break;
 	}
 
-#if 0
-	while (1)
-	{
-		next_id = __child_l(iter->current_node)
-		next = &h->nodes[next_id];
-		if (!next->key)
-		{
-			next_id = __child_r(iter->current_node)
-			next = &h->nodes[next_id];
-			if (!next->key)
-			{
-				int descendant;
-
-				parent = __parent(iter->current_node);
-				next_id = __parent(iter->current_node)
-				while (__child_r(next_id) == parent)
-				{
-					parent = __parent(iter->current_node);
-					next_id = __parent(iter->current_node)
-					next_id = __child_r(next_id)
-					next = &h->nodes[next_id];
-				}
-
-			}
-		}
-	}
-#endif
-
 	return next ? next : n;
 }
 
@@ -703,41 +654,6 @@ static inline void caca_x_inicializar_nodo(caca_x_numeros_unicos_en_rango *nodo,
 	nodo->idx = idx_nodo;
 	nodo->limite_izq = limite_izq;
 	nodo->limite_der = limite_der;
-
-}
-
-static inline bool caca_comun_checa_bit(array_bits *bits, int posicion) {
-	bool res = falso;
-	int idx_arreglo = 0;
-	int idx_registro = 0;
-
-	idx_arreglo = posicion / 64;
-	idx_registro = posicion % 64;
-
-	res = !!(bits[idx_arreglo] & (array_bits) (1 << idx_registro));
-
-	return res;
-}
-
-static inline void caca_comun_asigna_bit(array_bits *bits, int posicion) {
-	int idx_arreglo = 0;
-	int idx_registro = 0;
-
-	idx_arreglo = posicion / 64;
-	idx_registro = posicion % 64;
-
-	bits[idx_arreglo] |= (array_bits) (1 << idx_registro);
-
-}
-
-static inline void caca_comun_limpia_bit(array_bits *bits, int posicion) {
-	int idx_arreglo = 0;
-	int idx_registro = 0;
-
-	idx_arreglo = posicion / 64;
-	idx_registro = posicion % 64;
-
-	bits[idx_arreglo] &= ~((array_bits) (1 << idx_registro));
 
 }
 
@@ -959,7 +875,6 @@ static inline void caca_x_suma_unicos(int *sumas_arbol_segmentado,
 		caca_log_debug("los numeros unicos en %d, altura %d, son %s\n", i,
 				nodo->altura,
 				caca_arreglo_a_cadena(numeros_unicos, num_numeros_unicos, buf));
-		avltree_print(arbolazo_actual);
 
 		assert_timeout(nodo->num_numeros == avltree_count(arbolazo_actual));
 
@@ -1448,6 +1363,7 @@ static inline void caca_x_actualiza_sumas_intersexxxiones(
 		int *indices_izq = (int[16] ) { 0 };
 		int *indices_der = (int[16] ) { 0 };
 		char buf[100];
+		char buf1[100] = { '\0' };
 
 		idx_a_actualizar = indices_afectados[i];
 
@@ -1457,7 +1373,7 @@ static inline void caca_x_actualiza_sumas_intersexxxiones(
 
 		caca_log_debug("los indices afectados de lado izq %s, der %s para %d\n",
 				caca_arreglo_a_cadena(indices_izq, num_indices_izq, buf),
-				caca_arreglo_a_cadena(indices_der, num_indices_der, buf),
+				caca_arreglo_a_cadena(indices_der, num_indices_der, buf1),
 				idx_a_actualizar);
 
 		caca_x_actualiza_intersexxxiones_lateral(arbol_numeros_unicos,
