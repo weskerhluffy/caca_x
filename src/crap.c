@@ -23,55 +23,101 @@
 #define MAX_NODOS (1 << 16)
 
 /*
- #define caca_log_debug(formato, args...) 0
+#define caca_log_debug(formato, args...) 0
  */
-#define caca_log_debug printf
+ #define caca_log_debug printf
 
-#define assert_timeout(condition) assert(condition);
 /*
- #define assert_timeout(condition) if(!(condition)){printf("fuck\n");sleep(10);}
+ #define assert_timeout(condition) assert(condition);
  */
+#define assert_timeout(condition) if(!(condition)){printf("fuck\n");sleep(10);}
+
+#ifndef AVL_TREE_H
+#define AVL_TREE_H
+
+typedef struct {
+	void* key;
+	void* val;
+} avltree_node_t;
+
+typedef struct {
+	/* size of array */
+	int size;
+	int count;
+	long (*cmp)(const void *e1, const void *e2);
+	avltree_node_t *nodes;
+} avltree_t;
+
+typedef struct {
+	int current_node;
+} avltree_iterator_t;
+
+avltree_t* avltree_new(long (*cmp)(const void *e1, const void *e2),
+		int nodos_maximos);
+
+void* avltree_remove(avltree_t* me, void* k);
+
+int avltree_count(avltree_t* me);
+
+int avltree_size(avltree_t* me);
+
+int avltree_height(avltree_t* me);
+
+void avltree_empty(avltree_t* me);
+
+void avltree_insert(avltree_t* me, void* k, void* v);
+
+void* avltree_get(avltree_t* me, const void* k);
+
+void* avltree_get_from_idx(avltree_t* me, int idx);
+
+/**
+ * Rotate on X:
+ * Y = X's parent
+ * Step A: Y becomes left child of X
+ * Step B: X's left child's becomes Y's right child */
+void avltree_rotate_left(avltree_t* me, int idx);
+
+/**
+ * Rotate on X:
+ * Y = X's left child
+ * Step A: X becomes right child of X's left child
+ * Step B: X's left child's right child becomes X's left child */
+void avltree_rotate_right(avltree_t* me, int idx);
+
+/**
+ * Initialise a new hash iterator over this hash
+ * It is NOT safe to remove items while iterating.  */
+void avltree_iterator(avltree_t * h, avltree_iterator_t * iter);
+
+/**
+ * Iterate to the next item on an iterator
+ * @return next item key from iterator */
+void *avltree_iterator_next(avltree_t * h, avltree_iterator_t * iter);
+
+/**
+ * Iterate to the next item on an iterator
+ * @return next item value from iterator */
+void *avltree_iterator_next_value(avltree_t * h, avltree_iterator_t * iter);
+
+int avltree_iterator_has_next(avltree_t * h, avltree_iterator_t * iter);
+
+void* avltree_iterator_peek_value(avltree_t * h, avltree_iterator_t * iter);
+
+void* avltree_iterator_peek(avltree_t * h, avltree_iterator_t * iter);
+
+#endif /* AVL_TREE_H */
 
 typedef int tipo_dato;
 
-typedef long long bitch_vector;
+typedef long long array_bits;
 
 typedef enum BOOLEANOS {
 	falso = 0, verdadero
 } bool;
 
-#if 1
-
-struct avl_node_s {
-	long llave;
-	int altura;
-	int indice_en_arreglo;
-	struct avl_node_s *left;
-	struct avl_node_s *right;
-	struct avl_node_s *padre;
-};
-
-typedef struct avl_node_s avl_node_t;
-
-struct avl_tree_s {
-	int max_nodos;
-	int nodos_usados;
-	struct avl_node_s *root;
-	avl_node_t *nodos_mem;
-};
-
-typedef struct avl_tree_s avl_tree_t;
-
-typedef struct avl_tree_iterator_t {
-	avl_tree_t *arbolin;
-	char *contador_visitas;
-	avl_node_t *nodo_actual;
-} avl_tree_iterator_t;
-
-#endif
-
 typedef struct caca_x_numeros_unicos_en_rango {
-	avl_tree_t *arbolazo;
+	avltree_t *arbolazo;
 	int max_numeros;
 	int num_numeros;
 	int altura;
@@ -85,7 +131,6 @@ typedef struct caca_x_estado_recursion {
 	int idx_ini;
 	int idx_fin;
 	int idx_nodo;
-	int num_popeado;
 	caca_x_numeros_unicos_en_rango *nodo;
 } caca_x_estado_recursion;
 
@@ -93,422 +138,440 @@ caca_x_numeros_unicos_en_rango *arbol_numeros_unicos = NULL;
 
 caca_x_estado_recursion *estado = NULL;
 
-#define max(x,y) ((x) < (y) ? (y) : (x))
-
 #if 1
 
-/* Create a new AVL tree. */
-avl_tree_t *avl_create(avl_tree_t **arbolin, int max_nodos) {
-	avl_tree_t *tree = NULL;
+#define max(x,y) ((x) < (y) ? (y) : (x))
 
-	assert_timeout(arbolin);
-
-	tree = calloc(1, sizeof(avl_tree_t));
-
-	assert_timeout(tree);
-
-	tree->max_nodos = max_nodos;
-
-	tree->nodos_mem = calloc(max_nodos * 2, sizeof(avl_node_t));
-
-	assert_timeout(tree->nodos_mem);
-
-	tree->root = NULL;
-
-	*arbolin = tree;
-
-	return tree;
+static int __child_l(const int idx) {
+	return idx * 2 + 1;
 }
 
-static inline avl_destroy(avl_tree_t *arbolin) {
-	free(arbolin->nodos_mem);
-	free(arbolin);
-
+static int __child_r(const int idx) {
+	return idx * 2 + 2;
 }
 
-/* Initialize a new node. */
-avl_node_t *avl_create_node(avl_tree_t *arbolin) {
-	avl_node_t *node = NULL;
-
-	assert_timeout(arbolin->nodos_usados < arbolin->max_nodos);
-
-	node = arbolin->nodos_mem + arbolin->nodos_usados++;
-	node->indice_en_arreglo = arbolin->nodos_usados - 1;
-
-	return node;
+static int __parent(const int idx) {
+#if 0
+	if (idx == 0) return *(int*)NULL;
+#endif
+	assert(idx != 0);
+	return (idx - 1) / 2;
 }
 
-/* Find the height of an AVL no repulsivamente */
-int avl_node_height(avl_node_t *node) {
-	return node ? node->altura : 0;
-}
+static void __print(avltree_t* me, int idx, int d) {
+	int i;
 
-static inline void avl_node_actualizar_altura(avl_node_t *node) {
-	int height_left = 0;
-	int height_right = 0;
+	for (i = 0; i < d; i++)
+		printf(" ");
+	printf("%c ", idx % 2 == 1 ? 'l' : 'r');
 
-	if (node->left) {
-		height_left = node->left->altura;
+	if (me->size <= idx || !me->nodes[idx].key) {
+		printf("\n");
+		return;
 	}
-	if (node->right) {
-		height_right = node->right->altura;
-	}
-	node->altura = (height_right > height_left ? height_right : height_left)
-			+ 1;
+
+	printf("%lx\n", (unsigned long int) me->nodes[idx].key);
+	__print(me, __child_l(idx), d + 1);
+	__print(me, __child_r(idx), d + 1);
 }
 
-/* Find the balance of an AVL node */
-int avl_balance_factor(avl_node_t *node) {
-	int bf = 0;
-
-	if (node->left)
-		bf += avl_node_height(node->left);
-	if (node->right)
-		bf -= avl_node_height(node->right);
-
-	return bf;
+void avltree_print(avltree_t* me) {
+	printf("AVL Tree:\n");
+	__print(me, 0, 0);
 }
 
-/* Left Left Rotate */
-avl_node_t *avl_rotate_leftleft(avl_node_t *node) {
-	avl_node_t *a = node;
-	avl_node_t *b = a->left;
-	avl_node_t *padre = NULL;
+void avltree_print2(avltree_t* me) {
+	int i;
 
-	padre = node->padre;
-
-	a->left = b->right;
-	b->right = a;
-
-	avl_node_actualizar_altura(a);
-	avl_node_actualizar_altura(b);
-
-	a->padre = b;
-	b->padre = padre;
-
-	return (b);
+	for (i = 0; i < me->size; i++)
+		printf("%lx%c", (unsigned long int) me->nodes[i].key,
+				i == me->size ? '|' : ' ');
+	printf("\n");
 }
 
-/* Left Right Rotate */
-avl_node_t *avl_rotate_leftright(avl_node_t *node) {
-	avl_node_t *a = node;
-	avl_node_t *b = a->left;
-	avl_node_t *c = b->right;
-	avl_node_t *padre = NULL;
+static void __enlarge(avltree_t* me) {
+	int ii, end;
+	avltree_node_t *array_n;
 
-	padre = node->padre;
+	/* double capacity */
+	me->size *= 2;
+	array_n = malloc(me->size * sizeof(avltree_node_t));
 
-	a->left = c->right;
-	b->right = c->left;
-	c->left = b;
-	c->right = a;
-
-	avl_node_actualizar_altura(a);
-	avl_node_actualizar_altura(b);
-	avl_node_actualizar_altura(c);
-
-	a->padre = c;
-	b->padre = c;
-	c->padre = padre;
-
-	return (c);
-}
-
-/* Right Left Rotate */
-avl_node_t *avl_rotate_rightleft(avl_node_t *node) {
-	avl_node_t *a = node;
-	avl_node_t *b = a->right;
-	avl_node_t *c = b->left;
-	avl_node_t *padre = NULL;
-
-	padre = node->padre;
-
-	a->right = c->left;
-	b->left = c->right;
-	c->right = b;
-	c->left = a;
-
-	avl_node_actualizar_altura(a);
-	avl_node_actualizar_altura(b);
-	avl_node_actualizar_altura(c);
-
-	a->padre = c;
-	b->padre = c;
-	c->padre = padre;
-
-	return (c);
-}
-
-/* Right Right Rotate */
-avl_node_t *avl_rotate_rightright(avl_node_t *node) {
-	avl_node_t *a = node;
-	avl_node_t *b = a->right;
-	avl_node_t *padre = NULL;
-
-	padre = node->padre;
-
-	a->right = b->left;
-	b->left = a;
-
-	avl_node_actualizar_altura(a);
-	avl_node_actualizar_altura(b);
-
-	a->padre = b;
-	b->padre = padre;
-
-	return (b);
-}
-
-/* Balance a given node */
-static inline avl_node_t *avl_balance_node_delete(avl_node_t *node) {
-	avl_node_t *newroot = NULL;
-
-	/* Balance our children, if they exist. */
-	if (node->left)
-		node->left = avl_balance_node(node->left);
-	if (node->right)
-		node->right = avl_balance_node(node->right);
-
-	int bf = avl_balance_factor(node);
-
-	if (bf >= 2) {
-		/* Left Heavy */
-
-		if (avl_balance_factor(node->left) <= -1)
-			newroot = avl_rotate_leftright(node);
+	/* copy old data across to new array */
+	for (ii = 0, end = avltree_count(me); ii < end; ii++) {
+		if (me->nodes[ii].key)
+			memcpy(&array_n[ii], &me->nodes[ii], sizeof(avltree_node_t));
 		else
-			newroot = avl_rotate_leftleft(node);
-
-	} else if (bf <= -2) {
-		/* Right Heavy */
-
-		if (avl_balance_factor(node->right) >= 1)
-			newroot = avl_rotate_rightleft(node);
-		else
-			newroot = avl_rotate_rightright(node);
-
-	} else {
-		/* This node is balanced -- no change. */
-
-		newroot = node;
+			array_n[ii].key = NULL;
 	}
 
-	return (newroot);
+	/* swap arrays */
+	free(me->nodes);
+	me->nodes = array_n;
 }
 
-static inline avl_node_t *avl_balance_node_insertar(avl_node_t *node,
-		long llave_nueva) {
-	avl_node_t *newroot = NULL;
+avltree_t* avltree_new(long (*cmp)(const void *e1, const void *e2),
+		int nodos_maximos) {
+	avltree_t* me;
 
-	/* Balance our children, if they exist. */
-	if (node->left)
-		node->left = avl_balance_node(node->left);
-	if (node->right)
-		node->right = avl_balance_node(node->right);
+	assert(cmp);
 
-	int bf = avl_balance_factor(node);
+	me = calloc(1, sizeof(avltree_t));
+	me->size = nodos_maximos;
+	me->nodes = calloc(me->size, sizeof(avltree_node_t));
+	me->cmp = cmp;
+	return me;
+}
 
-	if (bf >= 2) {
-		/* Left Heavy */
+static int __count(avltree_t* me, int idx) {
+	if (me->size <= idx || !me->nodes[idx].key)
+		return 0;
+	return __count(me, __child_l(idx)) + __count(me, __child_r(idx)) + 1;
+}
 
-		if (llave_nueva > node->left->llave) {
-			newroot = avl_rotate_leftright(node);
+int avltree_count(avltree_t* me) {
+//    return __count(me,0);
+	return me->count;
+}
+
+int avltree_size(avltree_t* me) {
+	return me->size;
+}
+
+static int __height(avltree_t* me, int idx) {
+	if (idx >= me->size || !me->nodes[idx].key)
+		return 0;
+	return max(
+			__height(me,__child_l(idx)) + 1,
+			__height(me,__child_r(idx)) + 1);
+}
+
+int avltree_height(avltree_t* me) {
+	return __height(me, 0);
+}
+
+static void __shift_up(avltree_t* me, int idx, int towards) {
+	if (!me->nodes[idx].key || idx >= me->size || towards >= me->size) {
+		return;
+	}
+
+	memcpy(&me->nodes[towards], &me->nodes[idx], sizeof(avltree_node_t));
+	me->nodes[idx].key = NULL;
+	if (__child_l(idx) <= me->size && __child_l(towards) <= me->size) {
+		__shift_up(me, __child_l(idx), __child_l(towards));
+	}
+	if (__child_r(idx) <= me->size && __child_r(towards) <= me->size) {
+		__shift_up(me, __child_r(idx), __child_r(towards));
+	}
+}
+
+static void __shift_down(avltree_t* me, int idx, int towards) {
+	if (!me->nodes[idx].key || idx >= me->size || towards >= me->size) {
+		return;
+	}
+
+	if (__child_l(idx) < me->size && __child_l(towards) < me->size) {
+		__shift_down(me, __child_l(idx), __child_l(towards));
+	}
+	if (__child_l(idx) < me->size && __child_l(towards) < me->size) {
+		__shift_down(me, __child_r(idx), __child_r(towards));
+	}
+	memcpy(&me->nodes[towards], &me->nodes[idx], sizeof(avltree_node_t));
+}
+
+void avltree_rotate_right(avltree_t* me, int idx) {
+	/* A Partial
+	 * Move X out of the way so that Y can take its spot */
+	__shift_down(me, __child_r(idx), __child_r(__child_r(idx)));
+	memcpy(&me->nodes[__child_r(idx)], &me->nodes[idx], sizeof(avltree_node_t));
+
+	/* B */
+	__shift_down(me, __child_r(__child_l(idx)), __child_l(__child_r(idx)));
+	me->nodes[__child_r(__child_l(idx))].key = NULL;
+
+	/* A Final
+	 * Move Y into X's old spot */
+	__shift_up(me, __child_l(idx), idx);
+}
+
+void* avltree_get(avltree_t* me, const void* k) {
+	int i;
+
+	for (i = 0; i < me->size;) {
+		int r;
+		avltree_node_t *n;
+
+		n = &me->nodes[i];
+
+		/* couldn't find it */
+		if (!n->key)
+			return NULL ;
+
+		r = me->cmp(n->key, k);
+
+		if (r == 0) {
+			return n->val;
+		} else if (r < 0) {
+			i = __child_l(i);
+		} else if (r > 0) {
+			i = __child_r(i);
 		} else {
-			newroot = avl_rotate_leftleft(node);
+			assert(0);
 		}
-
-	} else if (bf <= -2) {
-		/* Right Heavy */
-		if (llave_nueva < node->right->llave) {
-			newroot = avl_rotate_rightleft(node);
-		} else {
-			newroot = avl_rotate_rightright(node);
-		}
-
-	} else {
-		/* This node is balanced -- no change. */
-
-		newroot = node;
 	}
 
-	return (newroot);
+	/* couldn't find it */
+	return NULL ;
 }
 
-/* Balance a given tree */
-void avl_balance_insertar(avl_tree_t *tree, long llave_nueva) {
-
-	avl_node_t *newroot = NULL;
-
-	newroot = avl_balance_node_insertar(tree->root, llave_nueva);
-
-	if (newroot != tree->root) {
-		tree->root = newroot;
-	}
+void* avltree_get_from_idx(avltree_t* me, int idx) {
+	return me->nodes[idx].key;
 }
 
-/* Insert a new node. */
-void avl_insert(avl_tree_t *tree, long value) {
-	avl_node_t *node = NULL;
-	avl_node_t *next = NULL;
-	avl_node_t *last = NULL;
+void avltree_rotate_left(avltree_t* me, int idx) {
+	int p;
 
-	/* Well, there must be a first case */
-	if (tree->root == NULL ) {
-		node = avl_create_node();
-		node->llave = value;
+	p = __parent(idx);
 
-		tree->root = node;
+	/* A Partial
+	 * Move Y out of the way so that X can take its spot */
+	__shift_down(me, __child_l(p), __child_l(__child_l(p)));
+	memcpy(&me->nodes[__child_l(p)], &me->nodes[p], sizeof(avltree_node_t));
 
-		/* Okay.  We have a root already.  Where do we put this? */
-	} else {
-		next = tree->root;
+	/* B */
+	__shift_down(me, __child_l(idx), __child_r(__child_l(p)));
+	me->nodes[__child_l(idx)].key = NULL;
 
-		while (next != NULL ) {
-			last = next;
+	/* A Final
+	 * Move Y into X's old spot */
+	__shift_up(me, idx, p);
+}
 
-			if (value < next->llave) {
-				next = next->left;
+static void __rebalance(avltree_t* me, int idx) {
 
-			} else if (value > next->llave) {
-				next = next->right;
+	while (1) {
+		if (2
+				<= abs(
+						__height(me, __child_l(idx))
+								- __height(me, __child_r(idx)))) {
+			/*  balance factor left node */
+			int bf_r;
 
-				/* Have we already inserted this node? */
-			} else if (value == next->llave) {
-				caca_log_debug("llave ya existe, no insertada\n");
+			bf_r = __height(me, __child_l(__child_r(idx)))
+					- __height(me, __child_r(__child_r(idx)));
+
+			if (bf_r == -1) {
+				avltree_rotate_left(me, __child_r(idx));
+			} else {
+				avltree_rotate_left(me, __child_r(idx));
+				avltree_rotate_right(me, __child_r(idx));
 			}
 		}
 
-		node = avl_create_node();
-		node->llave = value;
-
-		if (value < last->llave)
-			last->left = node;
-		if (value > last->llave)
-			last->right = node;
-
+		if (0 == idx)
+			break;
+		idx = __parent(idx);
 	}
-
-	avl_balance_insertar(tree, value);
 }
 
-/* Find the node containing a given value */
-avl_node_t *avl_find(avl_tree_t *tree, long value) {
-	avl_node_t *current = tree->root;
+static int __previous_ordered_node(avltree_t* me, int idx) {
+	int prev, i;
 
-	while (current && current->llave != value) {
-		if (value > current->llave)
-			current = current->right;
-		else
-			current = current->left;
-	}
-
-	return current;
-}
-
-/* Do a depth first traverse of a node. */
-void avl_traverse_node_dfs(avl_node_t *node, int depth) {
-	int i = 0;
-
-	if (node->left)
-		avl_traverse_node_dfs(node->left, depth + 2);
-
-	for (i = 0; i < depth; i++)
-		putchar(' ');
-	printf("%d: %d\n", node->llave, avl_balance_factor(node));
-
-	if (node->right)
-		avl_traverse_node_dfs(node->right, depth + 2);
-}
-
-/* Do a depth first traverse of a tree. */
-void avl_traverse_dfs(avl_tree_t *tree) {
-	avl_traverse_node_dfs(tree->root, 0);
-}
-
-static inline void avl_tree_iterador_ini(avl_tree_t *arbolin,
-		avl_tree_iterator_t *iter) {
-	iter = calloc(1, sizeof(avl_tree_iterator_t));
-	assert_timeout(iter);
-	iter->contador_visitas = calloc(arbolin->max_nodos * 2, sizeof(char));
-	assert_timeout(iter->contador_visitas);
-	iter->arbolin = arbolin;
-}
-
-static inline void avl_tree_iterador_fini(avl_tree_iterator_t *iter) {
-	free(iter->contador_visitas);
-	free(iter);
-}
-
-static inline avl_node_t* avl_tree_iterador_obtener_actual(
-		avl_tree_iterator_t *iter) {
-	avl_node_t *nodo = NULL;
-
-	nodo = iter->nodo_actual;
-
-	return nodo;
-}
-
-static inline avl_node_t* avl_tree_iterador_siguiente(avl_tree_iterator_t *iter) {
-	int contador_actual = 0;
-	avl_node_t *nodo = NULL;
-	avl_node_t *last_of_us = NULL;
-	avl_node_t *nodo_actual = NULL;
-
-	if (!iter->nodo_actual) {
-		nodo_actual = iter->nodo_actual = iter->arbolin->root;
-	}
-
-	contador_actual =
-			iter->contador_visitas[iter->nodo_actual->indice_en_arreglo];
-
-	iter->contador_visitas[iter->nodo_actual->indice_en_arreglo]++;
-
-	switch (contador_actual) {
-	case 0:
-	case 2:
-		if (!contador_actual) {
-			nodo_actual = iter->nodo_actual->left;
-		} else {
-			nodo_actual = iter->nodo_actual->right;
-			if (!nodo_actual) {
-				nodo = iter->nodo_actual->padre;
-			}
-		}
-
-		while (nodo_actual) {
-			last_of_us = nodo_actual;
-			iter->contador_visitas[nodo_actual->indice_en_arreglo]++;
-			nodo_actual = last_of_us->left;
-		}
-
-		nodo = iter->nodo_actual = nodo_actual;
-		iter->contador_visitas[last_of_us->indice_en_arreglo]++;
-
-		break;
-	case 1:
-		nodo = iter->nodo_actual;
-		break;
-	case 3:
-		last_of_us = iter->nodo_actual;
-		nodo = iter->nodo_actual->padre;
-		if (!nodo) {
-			nodo = last_of_us;
-		}
-		break;
-	default:
-		assert_timeout(0)
+	for (prev = -1, i = __child_l(idx);
+	/* array isn't that big, or key is null -> we don't have this child */
+	i < me->size && me->nodes[i].key; prev = i, i = __child_r(i))
 		;
-		break;
+
+	return prev;
+}
+
+void* avltree_remove(avltree_t* me, void* k) {
+	int i;
+
+	for (i = 0; i < me->size;) {
+		long r;
+		avltree_node_t *n;
+
+		n = &me->nodes[i];
+
+		/* couldn't find it */
+		if (!n->key)
+			return NULL ;
+
+		r = me->cmp(n->key, k);
+
+		if (r == 0) {
+			/* replacement */
+			int rep;
+
+			me->count -= 1;
+
+			k = n->key;
+
+			rep = __previous_ordered_node(me, i);
+			if (-1 == rep) {
+				/* make sure the node is now blank */
+				n->key = NULL;
+			} else {
+				/* have r's left node become right node of r's parent.
+				 * NOTE: r by definition shouldn't have a right child */
+				__shift_up(me, __child_l(rep), __child_r(__parent(rep)));
+
+				/* have r replace deleted node */
+				__shift_up(me, rep, i);
+			}
+
+			if (i != 0)
+				__rebalance(me, __parent(i));
+
+			return k;
+		} else if (r < 0) {
+			i = __child_l(i);
+		} else if (r > 0) {
+			i = __child_r(i);
+		} else {
+			assert(0);
+		}
 	}
 
-	return nodo;
+	/* couldn't find it */
+	return NULL ;
 }
 
-static inline avl_node_t* avl_tree_iterador_hay_siguiente(
-		avl_tree_iterator_t *iter) {
-	return iter->nodo_actual != iter->arbolin->root;
+void avltree_empty(avltree_t* me) {
+	int i;
+
+	for (i = 0; i < me->size; i++) {
+		me->nodes[i].key = NULL;
+	}
 }
 
+void avltree_insert(avltree_t* me, void* k, void* v) {
+	int i;
+	avltree_node_t* n;
+
+	for (i = 0; i < me->size;) {
+		n = &me->nodes[i];
+
+		/* found an empty slot */
+		if (!n->key) {
+			n->key = k;
+			n->val = v;
+			me->count += 1;
+
+			if (0 == i)
+				return;
+
+			__rebalance(me, __parent(i));
+			return;
+		}
+
+		long r = me->cmp(n->key, k);
+
+		if (r == 0) {
+			/*  we don't need to rebalance because we just overwrite this slot */
+			n->val = v;
+			return;
+		} else if (r < 0) {
+			i = __child_l(i);
+		} else if (r > 0) {
+			i = __child_r(i);
+		} else {
+			assert(0);
+		}
+	}
+
+	/* we're outside of the loop because we need to enlarge */
+	__enlarge(me);
+	n = &me->nodes[i];
+	n->key = k;
+	n->val = v;
+	me->count += 1;
+}
+
+void* avltree_iterator_peek(avltree_t * h, avltree_iterator_t * iter) {
+	if (iter->current_node < h->size) {
+		avltree_node_t *next = NULL;
+
+		next = &h->nodes[iter->current_node];
+		if (next->key) {
+			return next;
+		}
+	}
+
+	return NULL ;
+}
+
+void* avltree_iterator_peek_value(avltree_t * h, avltree_iterator_t * iter) {
+	return avltree_get(h, avltree_iterator_peek(h, iter));
+}
+
+int avltree_iterator_has_next(avltree_t * h, avltree_iterator_t * iter) {
+	return NULL != avltree_iterator_peek(h, iter);
+}
+
+void *avltree_iterator_next_value(avltree_t * h, avltree_iterator_t * iter) {
+	void* k;
+
+	k = avltree_iterator_next(h, iter);
+	if (!k)
+		return NULL ;
+	return avltree_get(h, k);
+}
+
+void *avltree_iterator_next(avltree_t * h, avltree_iterator_t * iter) {
+	avltree_node_t *n;
+	avltree_node_t *next;
+
+	assert(iter);
+
+	n = &h->nodes[iter->current_node];
+
+	while (iter->current_node < h->size) {
+		next = &h->nodes[iter->current_node];
+		iter->current_node++;
+		if (next->key)
+			break;
+	}
+#if 0
+	while (1)
+	{
+		next_id = __child_l(iter->current_node)
+		next = &h->nodes[next_id];
+		if (!next->key)
+		{
+			next_id = __child_r(iter->current_node)
+			next = &h->nodes[next_id];
+			if (!next->key)
+			{
+				int descendant;
+
+				parent = __parent(iter->current_node);
+				next_id = __parent(iter->current_node)
+				while (__child_r(next_id) == parent)
+				{
+					parent = __parent(iter->current_node);
+					next_id = __parent(iter->current_node)
+					next_id = __child_r(next_id)
+					next = &h->nodes[next_id];
+				}
+
+			}
+		}
+	}
+#endif
+
+	return n;
+}
+
+void avltree_iterator(avltree_t * h __attribute__((unused)),
+		avltree_iterator_t * iter) {
+	iter->current_node = 0;
+}
+
+static long __uint_compare(const void *e1, const void *e2) {
+	return e2 - e1;
+}
 #endif
 
 static inline int lee_matrix_long_stdin(tipo_dato *matrix, int *num_filas,
@@ -574,178 +637,139 @@ static inline void caca_x_inicializar_nodo(caca_x_numeros_unicos_en_rango *nodo,
 		int altura, int idx_nodo, int limite_izq, int limite_der) {
 	nodo->altura = altura;
 	nodo->max_numeros = 1 << nodo->altura;
-	avl_create(&nodo->arbolazo, nodo->max_numeros);
+	nodo->arbolazo = avltree_new(__uint_compare, nodo->max_numeros);
 	nodo->idx = idx_nodo;
 	nodo->limite_izq = limite_izq;
 	nodo->limite_der = limite_der;
 
 }
 
+static inline bool caca_comun_checa_bit(array_bits *bits, int posicion) {
+	bool res = falso;
+	int idx_arreglo = 0;
+	int idx_registro = 0;
+
+	idx_arreglo = posicion / 64;
+	idx_registro = posicion % 64;
+
+	res = !!(bits[idx_arreglo] & (array_bits) (1 << idx_registro));
+
+	return res;
+}
+
+static inline void caca_comun_asigna_bit(array_bits *bits, int posicion) {
+	int idx_arreglo = 0;
+	int idx_registro = 0;
+
+	idx_arreglo = posicion / 64;
+	idx_registro = posicion % 64;
+
+	bits[idx_arreglo] |= (array_bits) (1 << idx_registro);
+
+}
+
+static inline void caca_comun_limpia_bit(array_bits *bits, int posicion) {
+	int idx_arreglo = 0;
+	int idx_registro = 0;
+
+	idx_arreglo = posicion / 64;
+	idx_registro = posicion % 64;
+
+	bits[idx_arreglo] &= ~((array_bits) (1 << idx_registro));
+
+}
+
 static inline void caca_x_construye_arbol_binario_segmentado(int *numeros,
-		int num_numeros, int max_profundidad) {
-	int profundidad = -1;
+		int profundidad, int max_profundidad, int idx_ini, int idx_fin,
+		int idx_nodo) {
+	int altura = 0;
+	caca_x_numeros_unicos_en_rango *nodo = NULL;
+	caca_x_estado_recursion *estado_actual = NULL;
 
-	estado->idx_ini = 0;
-	estado->idx_fin = num_numeros;
-	estado->idx_nodo = 0;
-	estado->nodo = NULL;
-	estado->profundidad = 0;
-	estado->num_popeado = 0;
+	altura = max_profundidad - profundidad;
 
-	profundidad++;
+	caca_log_debug("en altura %d\n", altura);
 
-	while (profundidad != -1) {
-		int idx_ini = 0;
-		int idx_fin = 0;
-		int idx_nodo = 0;
-		int altura = 0;
-		caca_x_numeros_unicos_en_rango *nodo = NULL;
-		caca_x_estado_recursion *estado_actual = NULL;
+	nodo = arbol_numeros_unicos + idx_nodo;
 
-		estado_actual = estado + profundidad;
+	caca_x_inicializar_nodo(nodo, altura, idx_nodo, idx_ini, idx_fin);
 
-		assert_timeout(estado_actual->profundidad == profundidad);
-		caca_log_debug("perfume %d\n", profundidad);
+	estado_actual = estado + profundidad;
 
-		idx_ini = estado_actual->idx_ini;
-		idx_fin = estado_actual->idx_fin;
-		idx_nodo = estado_actual->idx_nodo;
+	if (altura) {
+		int distancia_media = 0;
+		int idx_medio = 0;
+		caca_x_numeros_unicos_en_rango *nodo_anterior = NULL;
 
-		altura = max_profundidad - profundidad;
+		caca_log_debug("seteando estado nodo %d en prof %d\n", idx_nodo,
+				profundidad);
 
-		caca_log_debug("en altura %d de pseudo rec idx %d\n", altura, idx_nodo);
+		nodo_anterior = estado_actual->nodo;
 
-		if (!estado_actual->num_popeado) {
-			nodo = arbol_numeros_unicos + idx_nodo;
+		memset(estado_actual, 0, sizeof(caca_x_estado_recursion));
 
-			caca_x_inicializar_nodo(nodo, altura, idx_nodo, idx_ini, idx_fin);
-		}
+		estado_actual->nodo = nodo;
+		estado_actual->profundidad = profundidad;
+		estado_actual->idx_nodo = idx_nodo;
 
-		estado_actual->num_popeado++;
+		distancia_media = (idx_fin - idx_ini) / 2;
+		idx_medio = idx_ini + distancia_media;
 
-		profundidad--;
+		caca_log_debug("segmentando izq de %d a %d en alt %d\n", idx_ini,
+				idx_medio, altura);
+		caca_x_construye_arbol_binario_segmentado(numeros, profundidad + 1,
+				max_profundidad, idx_ini, idx_medio, 2 * idx_nodo + 1);
 
-		if (altura) {
-			int distancia_media = 0;
-			int idx_medio = 0;
-			int ultimo_num_popeado = 0;
-			caca_x_estado_recursion *estado_futuro = NULL;
+		caca_log_debug("segmentando der de %d a %d en alt %d\n", idx_medio + 1,
+				idx_fin, altura);
+		caca_x_construye_arbol_binario_segmentado(numeros, profundidad + 1,
+				max_profundidad, idx_medio + 1, idx_fin, 2 * idx_nodo + 2);
+	} else {
+		int profundidad_actual = 0;
+		int numero_actual = 0;
 
-			if (estado_actual->num_popeado == 1
-					|| estado_actual->num_popeado == 2) {
+		assert(idx_ini == idx_fin);
+		numero_actual = numeros[idx_ini];
+		avltree_insert(nodo->arbolazo, (void *) (long) numero_actual,
+				(void *) 1);
+		nodo->num_numeros++;
 
-				caca_log_debug("creando nueva profundidad \n");
-				estado_futuro = estado + estado_actual->profundidad + 1;
+		caca_log_debug("asignado unico numero %d a indice de arbol %d\n",
+				numero_actual, idx_nodo);
+		while (profundidad_actual < profundidad) {
+			bool numero_encontrado = falso;
 
-				caca_log_debug("num de popeos d estado actual es %d\n",
-						estado_actual->num_popeado);
+			estado_actual = estado + profundidad_actual;
 
-				if (estado_actual->num_popeado == 1) {
-					estado_actual->nodo = nodo;
-				}
+			caca_log_debug("añadiendo %d a idx %d nodo %d\n", numero_actual,
+					estado_actual->idx_nodo, estado_actual->nodo->idx);
 
-				memset(estado_futuro, 0, sizeof(caca_x_estado_recursion));
+			numero_encontrado = (bool) avltree_get(
+					estado_actual->nodo->arbolazo,
+					(void *) (long) numero_actual);
 
-				estado_futuro->profundidad = estado_actual->profundidad + 1;
-
-				distancia_media = (idx_fin - idx_ini) / 2;
-				idx_medio = idx_ini + distancia_media;
-
+			if (!numero_encontrado) {
+				caca_log_debug("numero %d nuevo\n", numero_actual);
+				estado_actual->nodo->num_numeros++;
 			}
 
-			ultimo_num_popeado = estado_actual->num_popeado;
+			avltree_insert(estado_actual->nodo->arbolazo,
+					(void *) (long) numero_actual, (void*) 1);
 
-			switch (estado_actual->num_popeado) {
-			case 1:
-				estado_futuro->idx_ini = idx_ini;
-				estado_futuro->idx_fin = idx_medio;
-				estado_futuro->idx_nodo = 2 * idx_nodo + 1;
-				caca_log_debug("segmentando izq de %d a %d en alt %d\n",
-						idx_ini, idx_medio, altura);
-				break;
-			case 2:
-				estado_futuro->idx_ini = idx_medio + 1;
-				estado_futuro->idx_fin = idx_fin;
-				estado_futuro->idx_nodo = 2 * idx_nodo + 2;
-				caca_log_debug("segmentando der de %d a %d en alt %d\n",
-						idx_medio + 1, idx_fin, altura);
-				break;
-			case 3:
-				memset(estado_actual, 0, sizeof(caca_x_estado_recursion));
-				caca_log_debug("ultimo 'recursion' de nodo %d, nada q acer\n",
-						idx_nodo);
-				break;
-			default:
-				assert_timeout(0)
-				;
-				break;
-			}
+			assert_timeout(
+					estado_actual->nodo->num_numeros
+							== avltree_count(estado_actual->nodo->arbolazo));
 
-			if (ultimo_num_popeado < 3) {
-				profundidad += 2;
-				caca_log_debug("aumentando profundidad a %d\n", profundidad);
-			}
-
-		} else {
-			int profundidad_actual = 0;
-			int numero_actual = 0;
-			caca_x_estado_recursion *estado_en_stack = NULL;
-
-			assert_timeout(idx_ini == idx_fin);
-			assert_timeout(nodo);
-
-			numero_actual = numeros[idx_ini];
-
-			avltree_insert(nodo->arbolazo, (void *) (long) numero_actual,
-					(void *) 1);
-			nodo->num_numeros++;
-
-			caca_log_debug("asignado unico numero %d a indice de arbol %d\n",
-					numero_actual, idx_nodo);
-			while (profundidad_actual <= profundidad) {
-				bool numero_encontrado = falso;
-
-				estado_en_stack = estado + profundidad_actual;
-
-				caca_log_debug("añadiendo %d a idx %d nodo %d\n", numero_actual,
-						estado_en_stack->idx_nodo, estado_en_stack->nodo->idx);
-
-				numero_encontrado = (bool) avltree_get(
-						estado_en_stack->nodo->arbolazo,
-						(void *) (long) numero_actual);
-
-				if (!numero_encontrado) {
-					caca_log_debug("numero %d nuevo\n", numero_actual);
-					estado_en_stack->nodo->num_numeros++;
-					avltree_insert(estado_en_stack->nodo->arbolazo,
-							(void *) (long) numero_actual, (void*) 1);
-					caca_log_debug("arbol kedo \n");
-					/*
-					 avltree_print2(estado_en_stack->nodo->arbolazo);
-					 avltree_print(estado_en_stack->nodo->arbolazo);
-					 ·
-					 */
-				}
-
-				assert_timeout(
-						estado_en_stack->nodo->num_numeros
-								== avltree_count(
-										estado_en_stack->nodo->arbolazo));
-
-				profundidad_actual++;
-			}
-
-			memset(estado_actual, 0, sizeof(caca_x_estado_recursion));
+			profundidad_actual++;
 		}
 	}
+
 }
 
 static inline void caca_x_suma_unicos(int *sumas_arbol_segmentado,
 		int num_nodos) {
 	int *numeros_unicos = NULL;
-	char *buf = NULL;
-
-	buf = calloc(1000, sizeof(char));
+	char buf[100] = { '\0' };
 
 	numeros_unicos = calloc(MAX_NODOS, sizeof(int));
 	assert(numeros_unicos);
@@ -754,7 +778,7 @@ static inline void caca_x_suma_unicos(int *sumas_arbol_segmentado,
 		int num_numeros_unicos = 0;
 
 		caca_x_numeros_unicos_en_rango *nodo = NULL;
-		avl_tree_t *arbolazo_actual = NULL;
+		avltree_t *arbolazo_actual = NULL;
 		avltree_iterator_t * iterador = &(avltree_iterator_t ) { 0 };
 
 		nodo = arbol_numeros_unicos + i;
@@ -767,32 +791,20 @@ static inline void caca_x_suma_unicos(int *sumas_arbol_segmentado,
 
 		arbolazo_actual = nodo->arbolazo;
 
-		caca_log_debug("arbol en idx %d \n %s\n", i,
-				avltree_sprint(arbolazo_actual, buf, 1000));
-		caca_log_debug("aaa\n");
-		/*
-		 avltree_print2(arbolazo_actual);
-		 */
-
 		avltree_iterator(arbolazo_actual, iterador);
 
 		sumas_arbol_segmentado[i] = 0;
 
 		while (avltree_iterator_has_next(arbolazo_actual, iterador)) {
 			int numero_unico_actual = 0;
-			avltree_node_t *nodo_arbol_actual = NULL;
 
-			nodo_arbol_actual = (avltree_node_t*) avltree_iterator_peek(
-					arbolazo_actual, iterador);
+			numero_unico_actual =
+					(int) ((avltree_node_t*) avltree_iterator_peek(
+							arbolazo_actual, iterador))->key;
 
-			if (nodo_arbol_actual) {
+			sumas_arbol_segmentado[i] += numero_unico_actual;
+			numeros_unicos[num_numeros_unicos++] = numero_unico_actual;
 
-				numero_unico_actual = (int) nodo_arbol_actual->key;
-
-				sumas_arbol_segmentado[i] += numero_unico_actual;
-				numeros_unicos[num_numeros_unicos++] = numero_unico_actual;
-
-			}
 			avltree_iterator_next(arbolazo_actual, iterador);
 		}
 
@@ -805,7 +817,6 @@ static inline void caca_x_suma_unicos(int *sumas_arbol_segmentado,
 		caca_log_debug("la suma es %d\n", sumas_arbol_segmentado[i]);
 	}
 
-	free(buf);
 	free(numeros_unicos);
 }
 
@@ -817,10 +828,10 @@ static inline int caca_x_calcular_suma_intersexion(
 	int num_arbolazo_menor = 0;
 
 	avltree_iterator_t *iterador = &(avltree_iterator_t ) { 0 };
-	avl_tree_t *arbolazo_izq = NULL;
-	avl_tree_t *arbolazo_der = NULL;
-	avl_tree_t *arbolazo_mayor = NULL;
-	avl_tree_t *arbolazo_menor = NULL;
+	avltree_t *arbolazo_izq = NULL;
+	avltree_t *arbolazo_der = NULL;
+	avltree_t *arbolazo_mayor = NULL;
+	avltree_t *arbolazo_menor = NULL;
 
 	arbolazo_izq = nodo_izq->arbolazo;
 	arbolazo_der = nodo_der->arbolazo;
@@ -844,24 +855,18 @@ static inline int caca_x_calcular_suma_intersexion(
 	while (avltree_iterator_has_next(arbolazo_menor, iterador)) {
 		int numero_actual = 0;
 		int numero_encontrado = 0;
-		avltree_node_t *nodo_arbol_actual = NULL;
 
-		nodo_arbol_actual = (avltree_node_t *) avltree_iterator_peek(
-				arbolazo_menor, iterador);
+		numero_actual = (int) ((avltree_node_t *) avltree_iterator_peek(
+				arbolazo_menor, iterador))->key;
 
-		if (nodo_arbol_actual) {
+		caca_log_debug("el numero %d se va a buscar \n", numero_actual);
 
-			numero_actual = (int) nodo_arbol_actual->key;
-
-			caca_log_debug("el numero %d se va a buscar \n", numero_actual);
-
-			numero_encontrado = (int) avltree_get(arbolazo_mayor,
-					(const void *) (long) numero_actual);
-			if (numero_encontrado) {
-				caca_log_debug("el numero %d encontrado en intersexion\n",
-						numero_actual);
-				res += numero_actual;
-			}
+		numero_encontrado = (int) avltree_get(arbolazo_mayor,
+				(const void *) (long) numero_actual);
+		if (numero_encontrado) {
+			caca_log_debug("el numero %d encontrado en intersexion\n",
+					numero_actual);
+			res += numero_actual;
 		}
 
 		avltree_iterator_next(arbolazo_menor, iterador);
@@ -1235,7 +1240,7 @@ static inline void caca_x_actualiza_intersexxxiones_lateral(
 		int altura_nodo_actualizado = 0;
 		caca_x_numeros_unicos_en_rango *nodo_lateral = NULL;
 		caca_x_numeros_unicos_en_rango *nodo_actualizado = NULL;
-		avl_tree_t *arbolazo_nodo_lateral = NULL;
+		avltree_t *arbolazo_nodo_lateral = NULL;
 
 		idx_a_actualizar = indices_afectados[i];
 
@@ -1287,7 +1292,6 @@ static inline void caca_x_actualiza_sumas_intersexxxiones(
 		int *indices_izq = (int[16] ) { 0 };
 		int *indices_der = (int[16] ) { 0 };
 		char buf[100];
-		char buf1[100] = { '\0' };
 
 		idx_a_actualizar = indices_afectados[i];
 
@@ -1297,7 +1301,7 @@ static inline void caca_x_actualiza_sumas_intersexxxiones(
 
 		caca_log_debug("los indices afectados de lado izq %s, der %s para %d\n",
 				caca_arreglo_a_cadena(indices_izq, num_indices_izq, buf),
-				caca_arreglo_a_cadena(indices_der, num_indices_der, buf1),
+				caca_arreglo_a_cadena(indices_der, num_indices_der, buf),
 				idx_a_actualizar);
 
 		caca_x_actualiza_intersexxxiones_lateral(arbol_numeros_unicos,
@@ -1318,7 +1322,7 @@ static inline void caca_x_actualiza_arbol_numeros_unicos(
 	for (int i = 0; i < num_indices_a_actualizar; i++) {
 		int idx_a_actualizar = 0;
 		caca_x_numeros_unicos_en_rango *nodo_a_actualizar = NULL;
-		avl_tree_t *arbolazo = NULL;
+		avltree_t *arbolazo = NULL;
 
 		idx_a_actualizar = indices_a_actualizar[i];
 		nodo_a_actualizar = arbol_numeros_unicos + idx_a_actualizar;
@@ -1366,8 +1370,7 @@ static inline void caca_x_actualiza_estado(int *numeros,
 			&num_indices_afectados_actualizacion);
 
 	caca_log_debug("los idx afectados %s\n",
-			caca_arreglo_a_cadena(indices_afectados_actualizacion,
-					num_indices_afectados_actualizacion, buf));
+			caca_arreglo_a_cadena(indices_afectados_actualizacion, num_indices_afectados_actualizacion, buf));
 
 	caca_log_debug("el viejo %d y el nuevo %d\n", viejo_pendejo, nuevo_valor);
 
@@ -1410,6 +1413,15 @@ static inline void caca_x_main() {
 	matriz_sumas_coincidencias = calloc(MAX_NODOS * 16, sizeof(int));
 	assert_timeout(matriz_sumas_coincidencias);
 
+#ifdef USA_MALLOC
+	estado = malloc(16 * sizeof(caca_x_estado_recursion));
+	assert_timeout(estado);
+	memset(estado, 0, 16 * sizeof(caca_x_estado_recursion));
+#else
+	estado = calloc(16, sizeof(caca_x_estado_recursion));
+	assert_timeout(estado);
+#endif
+
 	num_filas = 3;
 	lee_matrix_long_stdin(matriz_nums, &num_filas, NULL, 3, MAX_NUMEROS);
 
@@ -1432,7 +1444,7 @@ static inline void caca_x_main() {
 
 	num_nodos = (2 << (max_profundidad + 0));
 
-	caca_log_debug("el numero de nodos %d\n", num_nodos);
+	caca_log_debug("el numero de nodos %d\n",num_nodos);
 
 	arbol_numeros_unicos = calloc(num_nodos,
 			sizeof(caca_x_numeros_unicos_en_rango));
@@ -1442,19 +1454,10 @@ static inline void caca_x_main() {
 	assert_timeout(sumas_arbol_segmentado);
 
 	caca_log_debug("llamando a func rec con max prof %d\n",
-			max_profundidad + 2);
+			max_profundidad - 1);
 
-#ifdef USA_MALLOC
-	estado = malloc((max_profundidad +2) * sizeof(caca_x_estado_recursion));
-	assert_timeout(estado);
-	memset(estado, 0, (max_profundidad+2 )* sizeof(caca_x_estado_recursion));
-#else
-	estado = calloc(max_profundidad + 2, sizeof(caca_x_estado_recursion));
-	assert_timeout(estado);
-#endif
-
-	caca_x_construye_arbol_binario_segmentado(numeros,
-			num_numeros_redondeado - 1, max_profundidad);
+	caca_x_construye_arbol_binario_segmentado(numeros, 0, max_profundidad, 0,
+			num_numeros_redondeado - 1, 0);
 
 	caca_x_suma_unicos(sumas_arbol_segmentado, num_nodos);
 
@@ -1507,3 +1510,4 @@ int main(void) {
 	caca_x_main();
 	return EXIT_SUCCESS;
 }
+
