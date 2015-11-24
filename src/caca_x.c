@@ -27,10 +27,10 @@
 #define caca_log_debug printf
  */
 
-#define assert_timeout(condition) assert(condition);
 /*
- #define assert_timeout(condition) if(!(condition)){printf("fuck\n");sleep(10);}
+#define assert_timeout(condition) assert(condition);
  */
+ #define assert_timeout(condition) if(!(condition)){printf("fuck\n");sleep(10);}
 
 #ifndef AVL_TREE_H
 #define AVL_TREE_H
