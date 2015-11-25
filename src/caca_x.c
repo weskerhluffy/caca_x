@@ -755,7 +755,7 @@ static inline void caca_x_suma_unicos(int *sumas_arbol_segmentado,
 
 		caca_x_numeros_unicos_en_rango *nodo = NULL;
 		avl_tree_t *arbolazo_actual = NULL;
-		avltree_iterator_t * iterador = &(avltree_iterator_t ) { 0 };
+		avl_tree_iterator_t * iterador = &(avl_tree_iterator_t ) { 0 };
 
 		nodo = arbol_numeros_unicos + i;
 
@@ -780,14 +780,14 @@ static inline void caca_x_suma_unicos(int *sumas_arbol_segmentado,
 
 		while (avltree_iterator_has_next(arbolazo_actual, iterador)) {
 			int numero_unico_actual = 0;
-			avltree_node_t *nodo_arbol_actual = NULL;
+			avl_node_t *nodo_arbol_actual = NULL;
 
-			nodo_arbol_actual = (avltree_node_t*) avltree_iterator_peek(
+			nodo_arbol_actual = (avl_node_t*) avltree_iterator_peek(
 					arbolazo_actual, iterador);
 
 			if (nodo_arbol_actual) {
 
-				numero_unico_actual = (int) nodo_arbol_actual->key;
+				numero_unico_actual = (int) nodo_arbol_actual->llave;
 
 				sumas_arbol_segmentado[i] += numero_unico_actual;
 				numeros_unicos[num_numeros_unicos++] = numero_unico_actual;
@@ -816,7 +816,7 @@ static inline int caca_x_calcular_suma_intersexion(
 	int num_arbolazo_mayor = 0;
 	int num_arbolazo_menor = 0;
 
-	avltree_iterator_t *iterador = &(avltree_iterator_t ) { 0 };
+	avl_tree_iterator_t *iterador = &(avl_tree_iterator_t ) { 0 };
 	avl_tree_t *arbolazo_izq = NULL;
 	avl_tree_t *arbolazo_der = NULL;
 	avl_tree_t *arbolazo_mayor = NULL;
@@ -844,14 +844,14 @@ static inline int caca_x_calcular_suma_intersexion(
 	while (avltree_iterator_has_next(arbolazo_menor, iterador)) {
 		int numero_actual = 0;
 		int numero_encontrado = 0;
-		avltree_node_t *nodo_arbol_actual = NULL;
+		avl_node_t *nodo_arbol_actual = NULL;
 
-		nodo_arbol_actual = (avltree_node_t *) avltree_iterator_peek(
+		nodo_arbol_actual = (avl_node_t *) avltree_iterator_peek(
 				arbolazo_menor, iterador);
 
 		if (nodo_arbol_actual) {
 
-			numero_actual = (int) nodo_arbol_actual->key;
+			numero_actual = (int) nodo_arbol_actual->llave;
 
 			caca_log_debug("el numero %d se va a buscar \n", numero_actual);
 
