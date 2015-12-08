@@ -17,6 +17,7 @@
 #include <unistd.h>
 
 #define MAX_NUMEROS 50000
+#define MAX_NUMEROS_REDONDEADO 65536
 #define MAX_VALOR INT_MAX
 #define MAX_QUERIES 100000
 #define TAM_MAX_LINEA (MAX_NUMEROS*10+MAX_NUMEROS)
@@ -162,7 +163,7 @@ static inline void avl_node_actualizar_altura(avl_node_t *node) {
 	if (node->right) {
 		height_right = node->right->altura;
 	}
-	if (height_left || height_right) {
+	if (node->left || node->right) {
 		node->altura = (height_right > height_left ? height_right : height_left)
 				+ 1;
 	} else {
@@ -198,6 +199,9 @@ avl_node_t *avl_rotate_leftleft(avl_node_t *node) {
 
 	a->padre = b;
 	b->padre = padre;
+	if (a->left) {
+		a->left->padre = a;
+	}
 
 	return (b);
 }
@@ -223,6 +227,12 @@ avl_node_t *avl_rotate_leftright(avl_node_t *node) {
 	a->padre = c;
 	b->padre = c;
 	c->padre = padre;
+	if (a->left) {
+		a->left->padre = a;
+	}
+	if (b->right) {
+		b->right->padre = b;
+	}
 
 	return (c);
 }
@@ -248,6 +258,12 @@ avl_node_t *avl_rotate_rightleft(avl_node_t *node) {
 	a->padre = c;
 	b->padre = c;
 	c->padre = padre;
+	if (a->right) {
+		a->right->padre = a;
+	}
+	if (b->left) {
+		b->left->padre = b;
+	}
 
 	return (c);
 }
@@ -268,6 +284,9 @@ avl_node_t *avl_rotate_rightright(avl_node_t *node) {
 
 	a->padre = b;
 	b->padre = padre;
+	if (a->right) {
+		a->right->padre = a;
+	}
 
 	return (b);
 }
@@ -309,59 +328,71 @@ static inline avl_node_t *avl_balance_node_delete(avl_node_t *node) {
 	return (newroot);
 }
 
-static inline avl_node_t *avl_balance_node_insertar(avl_node_t *node,
-		long llave_nueva) {
+static inline avl_node_t *avl_balance_node_insertar(const avl_node_t *node,
+		const long llave_nueva) {
 	avl_node_t *newroot = NULL;
+	avl_node_t *nodo_actual = NULL;
 
-	/* Balance our children, if they exist. */
-	if (node->left)
-		node->left = avl_balance_node_insertar(node->left, llave_nueva);
-	if (node->right)
-		node->right = avl_balance_node_insertar(node->right, llave_nueva);
+	newroot = (avl_node_t *) node;
+	nodo_actual = node->padre;
+	while (nodo_actual) {
 
+		int bf = 0;
+		avl_node_t *padre = NULL;
+		avl_node_t **rama_padre = NULL;
 
-	/*
-		node = node->padre;
-		while (node) {
-			avl_node_actualizar_altura(node);
-			node = node->padre;
-		}
-		*/
+		bf = avl_balance_factor(nodo_actual);
 
-	int bf = avl_balance_factor(node);
+		if (bf >= 2) {
+			/* Left Heavy */
 
-	if (bf >= 2) {
-		/* Left Heavy */
+			if (llave_nueva > nodo_actual->left->llave) {
+				newroot = avl_rotate_leftright(nodo_actual);
+			} else {
+				newroot = avl_rotate_leftleft(nodo_actual);
+			}
 
-		if (llave_nueva > node->left->llave) {
-			newroot = avl_rotate_leftright(node);
+		} else if (bf <= -2) {
+			/* Right Heavy */
+			if (llave_nueva < nodo_actual->right->llave) {
+				newroot = avl_rotate_rightleft(nodo_actual);
+			} else {
+				newroot = avl_rotate_rightright(nodo_actual);
+			}
+
 		} else {
-			newroot = avl_rotate_leftleft(node);
+			/* This node is balanced -- no change. */
+
+			newroot = nodo_actual;
+			avl_node_actualizar_altura(nodo_actual);
 		}
 
-	} else if (bf <= -2) {
-		/* Right Heavy */
-		if (llave_nueva < node->right->llave) {
-			newroot = avl_rotate_rightleft(node);
-		} else {
-			newroot = avl_rotate_rightright(node);
+		if (newroot->padre) {
+			padre = newroot->padre;
+			if (llave_nueva < padre->llave) {
+				rama_padre = &padre->left;
+			} else {
+				if (llave_nueva > padre->llave) {
+					rama_padre = &padre->right;
+				} else {
+					assert_timeout(0);
+				}
+			}
+			*rama_padre = newroot;
 		}
 
-	} else {
-		/* This node is balanced -- no change. */
-
-		newroot = node;
+		nodo_actual = nodo_actual->padre;
 	}
 
 	return (newroot);
 }
 
 /* Balance a given tree */
-void avl_balance_insertar(avl_tree_t *tree, long llave_nueva) {
+void avl_balance_insertar(avl_tree_t *tree, avl_node_t *nodo, long llave_nueva) {
 
 	avl_node_t *newroot = NULL;
 
-	newroot = avl_balance_node_insertar(tree->root, llave_nueva);
+	newroot = avl_balance_node_insertar(nodo, llave_nueva);
 
 	if (newroot != tree->root) {
 		tree->root = newroot;
@@ -413,10 +444,9 @@ void avl_insert(avl_tree_t *tree, long value) {
 
 		node->padre = last;
 
-
 	}
 
-	avl_balance_insertar(tree, value);
+	avl_balance_insertar(tree, node, value);
 }
 
 /* Find the node containing a given value */
@@ -554,9 +584,11 @@ static inline void avl_tree_inoder_node_travesti(avl_node_t *nodo, char *buf) {
 	char num_buf[100] = { '\0' };
 
 	if (nodo != NULL ) {
+		assert_timeout(!nodo->left || nodo->left->padre == nodo);
 		avl_tree_inoder_node_travesti(nodo->left, buf);
 		sprintf(num_buf, "%ld ", nodo->llave);
 		strcat(buf, num_buf);
+		assert_timeout(!nodo->right || nodo->right->padre == nodo);
 		avl_tree_inoder_node_travesti(nodo->right, buf);
 	}
 
@@ -1537,18 +1569,19 @@ static inline void caca_x_main() {
 
 	char buf[100] = { '\0' };
 
-	matriz_nums = calloc(MAX_NUMEROS * 3, sizeof(int));
+	matriz_nums = calloc(MAX_NUMEROS_REDONDEADO * 3, sizeof(int));
 	assert_timeout(matriz_nums);
 
 	matriz_sumas_coincidencias = calloc(MAX_NODOS * 16, sizeof(int));
 	assert_timeout(matriz_sumas_coincidencias);
 
 	num_filas = 3;
-	lee_matrix_long_stdin(matriz_nums, &num_filas, NULL, 3, MAX_NUMEROS);
+	lee_matrix_long_stdin(matriz_nums, &num_filas, NULL, 3,
+			MAX_NUMEROS_REDONDEADO);
 
 	num_numeros = *matriz_nums;
-	numeros = matriz_nums + MAX_NUMEROS;
-	num_queries = *(numeros + MAX_NUMEROS);
+	numeros = matriz_nums + MAX_NUMEROS_REDONDEADO;
+	num_queries = *(numeros + MAX_NUMEROS_REDONDEADO);
 
 	caca_log_debug("a vece siento q %d\n", num_numeros);
 	caca_log_debug("as corrido con algo de s %s\n",
