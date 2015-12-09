@@ -5,4 +5,5 @@ br s -n avltree_insert -c "k==644235 && me->size==31"
 #settings set target.run-args < caca1.txt
 #settings set target.run-args < caca2.txt
 #settings set target.run-args < caca3.txt
-settings set target.run-args < /tmp/como.txt
+#settings set target.run-args < /tmp/como.txt
+settings set target.run-args < /tmp/como_rev.txt
