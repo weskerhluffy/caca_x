@@ -60,6 +60,7 @@ struct avl_tree_s {
 	int nodos_usados;
 	int nodos_realmente_en_arbol;
 	int nodos_realmente_creados;
+	int ultimo_nodo_liberado_idx;
 	struct avl_node_s *root;
 	avl_node_t *nodos_mem;
 };
@@ -135,16 +136,21 @@ static inline void avl_destroy(avl_tree_t *arbolin) {
 avl_node_t *avl_create_node(avl_tree_t *arbolin) {
 	avl_node_t *node = NULL;
 
-	if (arbolin->nodos_usados < arbolin->max_nodos) {
+	assert(
+			arbolin->ultimo_nodo_liberado_idx
+					|| arbolin->nodos_usados <= arbolin->max_nodos);
+
+	if (arbolin->ultimo_nodo_liberado_idx) {
+		node = arbolin->nodos_mem + arbolin->ultimo_nodo_liberado_idx;
+		node->indice_en_arreglo = arbolin->ultimo_nodo_liberado_idx;
+		arbolin->ultimo_nodo_liberado_idx = 0;
+	} else {
 		node = arbolin->nodos_mem + arbolin->nodos_usados++;
 		node->indice_en_arreglo = arbolin->nodos_usados - 1;
-	} else {
-		node = calloc(1, sizeof(avl_node_t));
-		node->indice_en_arreglo = CACA_X_VALOR_INVALIDO;
-	}
 
-	arbolin->nodos_realmente_en_arbol++;
-	arbolin->nodos_realmente_creados++;
+		arbolin->nodos_realmente_en_arbol++;
+		arbolin->nodos_realmente_creados++;
+	}
 	return node;
 }
 
@@ -291,43 +297,6 @@ avl_node_t *avl_rotate_rightright(avl_node_t *node) {
 	return (b);
 }
 
-/* Balance a given node */
-static inline avl_node_t *avl_balance_node_delete(avl_node_t *node) {
-	avl_node_t *newroot = NULL;
-
-	/* Balance our children, if they exist. */
-	if (node->left)
-		node->left = avl_balance_node_delete(node->left);
-	if (node->right)
-		node->right = avl_balance_node_delete(node->right);
-
-	int bf = avl_balance_factor(node);
-
-	if (bf >= 2) {
-		/* Left Heavy */
-
-		if (avl_balance_factor(node->left) <= -1)
-			newroot = avl_rotate_leftright(node);
-		else
-			newroot = avl_rotate_leftleft(node);
-
-	} else if (bf <= -2) {
-		/* Right Heavy */
-
-		if (avl_balance_factor(node->right) >= 1)
-			newroot = avl_rotate_rightleft(node);
-		else
-			newroot = avl_rotate_rightright(node);
-
-	} else {
-		/* This node is balanced -- no change. */
-
-		newroot = node;
-	}
-
-	return (newroot);
-}
-
 static inline avl_node_t *avl_balance_node_insertar(const avl_node_t *node,
 		const long llave_nueva) {
 	avl_node_t *newroot = NULL;
@@ -472,11 +441,15 @@ avl_node_t *avl_find_descartando(avl_node_t *nodo_raiz,
 	current = nodo_raiz;
 	assert_timeout(!tope_topado || tope);
 
+	if (tope_topado) {
+		*tope_topado = falso;
+	}
+
 	while (current && current->llave != value) {
 		if (tope_topado) {
-			if (value >= tope) {
+			if (current->llave >= tope && value >= tope) {
 				*tope_topado = verdadero;
-				return NULL ;
+				break;
 			}
 		}
 		if (value > current->llave) {
@@ -489,11 +462,9 @@ avl_node_t *avl_find_descartando(avl_node_t *nodo_raiz,
 		}
 	}
 
-	*tope_topado = falso;
-
 	*primer_nodo_mayor_o_igual = primer_nodo_mayor;
 	if (!primer_nodo_mayor_o_igual) {
-		if (current) {
+		if (current && (current->llave == value)) {
 			*primer_nodo_mayor_o_igual = current;
 		}
 	}
@@ -656,6 +627,7 @@ static inline char *avl_tree_inoder_node_travesti(avl_node_t *nodo, char *buf,
 	}
 	return buf;
 }
+
 static inline char* avl_tree_sprint(avl_tree_t *arbolini, char *buf) {
 	avl_tree_inoder_node_travesti(arbolini->root, buf, -1);
 	return buf;
@@ -663,6 +635,10 @@ static inline char* avl_tree_sprint(avl_tree_t *arbolini, char *buf) {
 
 static inline char* avl_tree_sprint_identado(avl_tree_t *arbolini, char *buf) {
 	int profundidad_maxima = 0;
+
+	if (!arbolini->root) {
+		return buf;
+	}
 
 	profundidad_maxima = arbolini->root->altura;
 	avl_tree_inoder_node_travesti(arbolini->root, buf, profundidad_maxima);
@@ -729,6 +705,135 @@ static inline void avl_tree_validar_arbolin(avl_node_t *nodo) {
 		assert_timeout(!nodo->right || nodo->right->padre == nodo);
 		avl_tree_validar_arbolin(nodo->right);
 	}
+}
+
+/* Balance a given node */
+/* Given a non-empty binary search tree, return the node with minimum
+ key value found in that tree. Note that the entire tree does not
+ need to be searched. */
+static inline avl_node_t* avl_siguiente_nodo_inorder(avl_node_t *node) {
+	avl_node_t *current = node;
+
+	/* loop down to find the leftmost leaf */
+	while (current->left != NULL ) {
+		current = current->left;
+	}
+
+	return current;
+}
+
+static inline avl_node_t *avl_nodo_borrar(avl_tree_t *arbolini,
+		avl_node_t *root, int key) {
+	// STEP 1: PERFORM STANDARD BST DELETE
+
+	if (root == NULL ) {
+		return root;
+	}
+
+	if (key < root->llave) {
+		// If the key to be deleted is smaller than the root's key,
+		// then it lies in left subtree
+		root->left = avl_nodo_borrar(arbolini, root->left, key);
+		assert_timeout(!root->left || root->left->padre == root);
+	} else {
+		// If the key to be deleted is greater than the root's key,
+		// then it lies in right subtree
+		if (key > root->llave) {
+			root->right = avl_nodo_borrar(arbolini, root->right, key);
+			assert_timeout(!root->right || root->right->padre == root);
+		} else {
+			if (root->left == NULL || root->right == NULL ) {
+				avl_node_t *temp = root->left ? root->left : root->right;
+
+				// No child case
+				if (temp == NULL ) {
+					temp = root;
+					root = NULL;
+				} else {
+					// One child case
+					int idx_en_arreglo = 0;
+					avl_node_t *padre = NULL;
+
+					padre = root->padre;
+					idx_en_arreglo = root->indice_en_arreglo;
+					*root = *temp; // Copy the contents of the non-empty child
+					root->padre = padre;
+					root->indice_en_arreglo = idx_en_arreglo;
+					if (root->left) {
+						root->left->padre = root;
+					}
+					if (root->right) {
+						root->right->padre = root;
+					}
+				}
+
+				assert_timeout(!arbolini->ultimo_nodo_liberado_idx);
+				arbolini->ultimo_nodo_liberado_idx = temp->indice_en_arreglo;
+				memset(temp, 0, sizeof(avl_node_t));
+				temp->llave = CACA_X_VALOR_INVALIDO;
+
+			} else {
+				// node with two children: Get the inorder successor (smallest
+				// in the right subtree)
+				avl_node_t *temp = avl_siguiente_nodo_inorder(root->right);
+
+				// Copy the inorder successor's data to this node
+				root->llave = temp->llave;
+
+				// Delete the inorder successor
+				root->right = avl_nodo_borrar(arbolini, root->right,
+						temp->llave);
+			}
+		}
+	}
+
+// If the tree had only one node then return
+	if (root == NULL ) {
+		return root;
+	}
+
+// STEP 2: UPDATE HEIGHT OF THE CURRENT NODE
+	avl_node_actualizar_altura(root);
+
+// STEP 3: GET THE BALANCE FACTOR OF THIS NODE (to check whether
+//  this node became unbalanced)
+	int balance = avl_balance_factor(root);
+
+// If this node becomes unbalanced, then there are 4 cases
+
+// Left Left Case
+	if (balance > 1 && avl_balance_factor(root->left) >= 0) {
+		return avl_rotate_leftleft(root);
+	}
+
+// Left Right Case
+	if (balance > 1 && avl_balance_factor(root->left) < 0) {
+		return avl_rotate_leftright(root);
+	}
+
+// Right Right Case
+	if (balance < -1 && avl_balance_factor(root->right) <= 0) {
+		return avl_rotate_rightright(root);
+	}
+
+// Right Left Case
+	if (balance < -1 && avl_balance_factor(root->right) > 0) {
+		return avl_rotate_rightleft(root);
+	}
+
+	return root;
+}
+
+void avl_borrar(avl_tree_t *tree, int value) {
+
+	avl_node_t *newroot = NULL;
+
+	newroot = avl_nodo_borrar(tree, tree->root, value);
+
+	if (newroot != tree->root) {
+		tree->root = newroot;
+	}
+	tree->nodos_realmente_en_arbol--;
 }
 
 #endif
@@ -1435,13 +1540,14 @@ static inline long caca_x_generar_suma_repetidos(
 	long suma_repetidos = 0;
 	avl_tree_t *arbolin_unicos = NULL;
 
+	caca_log_debug("sumando repetidos\n");
+
 	avl_create(&arbolin_unicos, MAX_NODOS);
 
 	for (int i = 0; i < num_indices; i++) {
 		avl_tree_t *arbolin_actual = NULL;
 
-		// FIXME: El indice no es el contador
-		arbolin_actual = arbol_numeros_unicos[i].arbolazo;
+		arbolin_actual = arbol_numeros_unicos[indices[i]].arbolazo;
 
 		if (!i) {
 			caca_log_debug("primer arbol en nodo %d\n", i);
@@ -1458,7 +1564,6 @@ static inline long caca_x_generar_suma_repetidos(
 			avl_node_t *nodo_minimo_arbol_actual = NULL;
 			avl_node_t *nodo_maximo_arbol_unicos = NULL;
 			avl_node_t *nodo_raiz_arbol_actual = NULL;
-			avl_node_t *nodo_nueva_raiz_arbol_actual = NULL;
 
 			nodo_raiz_arbol_actual = arbolin_actual->root;
 
@@ -1476,53 +1581,61 @@ static inline long caca_x_generar_suma_repetidos(
 			avl_tree_iterador_ini(arbolin_actual, iter_actual);
 			avl_tree_iterador_ini(arbolin_unicos, iter_unicos);
 
-			avl_tree_iterador_asignar_actual(iter_unicos,
-					numero_minimo_arbol_actual);
+			if (numero_minimo_arbol_actual <= numero_maximo_arbol_unicos) {
+				avl_tree_iterador_asignar_actual(iter_unicos,
+						numero_minimo_arbol_actual);
 
-			while (avl_tree_iterador_hay_siguiente(iter_unicos)) {
-				int numero_unicos = 0;
-				avl_node_t *nodo_unicos = NULL;
+				while (avl_tree_iterador_hay_siguiente(iter_unicos)) {
+					int numero_unicos = 0;
+					avl_node_t *nodo_unicos = NULL;
+					avl_node_t *nodo_nueva_raiz_arbol_actual = NULL;
 
-				nodo_unicos = avl_tree_iterador_obtener_actual(iter_unicos);
-				numero_unicos = nodo_unicos->llave;
+					nodo_unicos = avl_tree_iterador_obtener_actual(iter_unicos);
+					numero_unicos = nodo_unicos->llave;
 
-				caca_log_debug("buscando %d en\n%s", numero_unicos,
-						avl_tree_inoder_node_travesti(nodo_raiz_arbol_actual,
-								(char[100] ) { '\0' },
-								nodo_raiz_arbol_actual->altura));
-
-				if (avl_find_descartando(nodo_raiz_arbol_actual,
-						&nodo_nueva_raiz_arbol_actual, numero_unicos,
-						numero_maximo_arbol_unicos, &tope_topado)) {
-					caca_log_debug(
-							"numero %d, se encontro que es duplicado en \n%s, proviene de segmento actual %d:\n%s\n",
-							numero_unicos,
-							avl_tree_sprint_identado(arbolin_unicos,
-									(char[100] ) { '\0' }), i,
+					caca_log_debug("buscando %d en\n%s", numero_unicos,
 							avl_tree_inoder_node_travesti(
 									nodo_raiz_arbol_actual,
 									(char[100] ) { '\0' },
 									nodo_raiz_arbol_actual->altura));
-					suma_repetidos += numero_unicos;
-					num_encontrados_en_actual++;
+
+					if (avl_find_descartando(nodo_raiz_arbol_actual,
+							&nodo_nueva_raiz_arbol_actual, numero_unicos,
+							numero_maximo_arbol_unicos, &tope_topado)) {
+						caca_log_debug(
+								"numero %d, se encontro que es duplicado en segment %d \n%s, proviene de unicos:\n%s\n",
+								numero_unicos, i,
+								avl_tree_inoder_node_travesti(
+										nodo_raiz_arbol_actual, (char[100] ) {
+														'\0' },
+										nodo_raiz_arbol_actual->altura),
+								avl_tree_sprint_identado(arbolin_unicos,
+										(char[100] ) { '\0' }));
+						suma_repetidos += numero_unicos;
+						num_encontrados_en_actual++;
+					}
+
+					if (tope_topado) {
+						caca_log_debug(
+								"se alcanzo el tope %d con el numero %d\n",
+								numero_maximo_arbol_unicos, numero_unicos);
+						break;
+					}
+					if (nodo_nueva_raiz_arbol_actual) {
+						caca_log_debug(
+								"cambiada la raiz a buscar de %ld a %ld\n",
+								nodo_raiz_arbol_actual->llave,
+								nodo_nueva_raiz_arbol_actual->llave);
+						nodo_raiz_arbol_actual = nodo_nueva_raiz_arbol_actual;
+					}
+
+					avl_tree_iterador_siguiente(iter_unicos);
 				}
 
-				if (tope_topado) {
-					caca_log_debug("se alcanzo el tope %d con el numero %d\n",
-							numero_maximo_arbol_unicos, numero_unicos);
-					break;
-				}
-				if (nodo_nueva_raiz_arbol_actual) {
-					caca_log_debug("cambiada la raiz a buscar de %ld a %ld\n",
-							nodo_raiz_arbol_actual->llave,
-							nodo_nueva_raiz_arbol_actual->llave);
-					nodo_raiz_arbol_actual = nodo_nueva_raiz_arbol_actual;
-				}
-
-				avl_tree_iterador_siguiente(iter_unicos);
+				caca_log_debug("termino de buscar unicos en actual\n");
+			} else {
+				caca_log_debug("no ay coincidencias entre segmentos\n");
 			}
-
-			caca_log_debug("termino de buscar unicos en actual\n");
 
 			while (avl_tree_iterador_hay_siguiente(iter_actual)) {
 				int numero_actual = 0;
@@ -1536,7 +1649,15 @@ static inline long caca_x_generar_suma_repetidos(
 							numero_actual,
 							avl_tree_sprint_identado(arbolin_unicos,
 									(char[100] ) { '\0' }));
+					avl_insert(arbolin_unicos, numero_actual);
 				} else {
+					caca_log_debug(
+							"numero %d, se encontro que es duplicado en \n%s, proviene de segmento actual %d:\n%s\n",
+							numero_actual,
+							avl_tree_sprint_identado(arbolin_unicos,
+									(char[100] ) { '\0' }), i,
+							avl_tree_sprint_identado(arbolin_actual,
+									(char[100] ) { '\0' }));
 					num_encontrados_en_unicos++;
 				}
 
@@ -1553,8 +1674,21 @@ static inline long caca_x_generar_suma_repetidos(
 
 	avl_destroy(arbolin_unicos);
 
-	caca_log_debug("en total la suma es %ld\n", suma_repetidos);
+	caca_log_debug("en total la suma de repetidos es %ld\n", suma_repetidos);
 	return suma_repetidos;
+}
+
+int caca_comun_compara_enteros(const void *a, const void *b) {
+	int a_int = 0;
+	int b_int = 0;
+	int resultado = 0;
+
+	a_int = *(int *) a;
+	b_int = *(int *) b;
+
+	caca_log_debug("comparando %d con %d\n", a_int, b_int);
+	resultado = a_int - b_int;
+	return resultado;
 }
 
 static inline long caca_x_suma_segmento(int *sumas_arbol_segmentado,
@@ -1570,6 +1704,8 @@ static inline long caca_x_suma_segmento(int *sumas_arbol_segmentado,
 	caca_x_encuentra_indices_segmento(arbol_numeros_unicos, 0, limite_izq,
 			limite_der, indices_nodos, &num_indices_nodos);
 
+	qsort(indices_nodos, num_indices_nodos, sizeof(int),
+			caca_comun_compara_enteros);
 	caca_log_debug("indices de segmento %d:%d %s\n", limite_izq, limite_der,
 			caca_arreglo_a_cadena(indices_nodos, num_indices_nodos, buf));
 
@@ -1719,39 +1855,6 @@ static inline void caca_x_actualiza_sumas_intersexxxiones(
 	}
 }
 
-static inline void caca_x_actualiza_arbol_numeros_unicos(
-		caca_x_numeros_unicos_en_rango *arbol_numeros_unicos,
-		int *indices_a_actualizar, int num_indices_a_actualizar,
-		int viejo_pendejo, int nuevo_valor) {
-
-	for (int i = 0; i < num_indices_a_actualizar; i++) {
-		int idx_a_actualizar = 0;
-		caca_x_numeros_unicos_en_rango *nodo_a_actualizar = NULL;
-		avl_tree_t *arbolazo = NULL;
-
-		idx_a_actualizar = indices_a_actualizar[i];
-		nodo_a_actualizar = arbol_numeros_unicos + idx_a_actualizar;
-		arbolazo = nodo_a_actualizar->arbolazo;
-
-//		avltree_remove(arbolazo, (void *) (long) viejo_pendejo);
-		avl_insert(arbolazo, (long) nuevo_valor);
-	}
-}
-
-static inline void caca_x_actualiza_sumas_arbol_segmentado(
-		int *sumas_arbol_segmentado, int *indices_a_actualizar,
-		int num_indices_a_actualizar, int nuevo_valor, int viejo_pendejo) {
-
-	for (int i = 0; i < num_indices_a_actualizar; i++) {
-		int idx_a_actualizar = 0;
-
-		idx_a_actualizar = indices_a_actualizar[i];
-
-		sumas_arbol_segmentado[idx_a_actualizar] -= viejo_pendejo;
-		sumas_arbol_segmentado[idx_a_actualizar] += nuevo_valor;
-	}
-}
-
 static inline bool caca_comun_checa_bit(bitch_vector *bits, int posicion) {
 	bool res = falso;
 	int idx_arreglo = 0;
@@ -1787,11 +1890,89 @@ static inline void caca_comun_limpia_bit(bitch_vector *bits, int posicion) {
 
 }
 
+static inline void caca_x_actualiza_arbol_numeros_unicos(
+		caca_x_numeros_unicos_en_rango *arbol_numeros_unicos,
+		int *indices_a_actualizar, int num_indices_a_actualizar,
+		int viejo_pendejo, int nuevo_valor, bitch_vector *nuevo_ya_existente) {
+
+	for (int i = 0; i < num_indices_a_actualizar; i++) {
+		int idx_a_actualizar = 0;
+		caca_x_numeros_unicos_en_rango *nodo_a_actualizar = NULL;
+		avl_tree_t *arbolazo = NULL;
+
+		idx_a_actualizar = indices_a_actualizar[i];
+		nodo_a_actualizar = arbol_numeros_unicos + idx_a_actualizar;
+		arbolazo = nodo_a_actualizar->arbolazo;
+
+		caca_log_debug("borrando %d de seg %d. Antes de borra arbol es\n%s",
+				viejo_pendejo, idx_a_actualizar,
+				avl_tree_sprint_identado(arbolazo, (char[100] ) { '\0' }));
+		avl_borrar(arbolazo, viejo_pendejo);
+#ifndef CACA_X_VALIDAR_ARBOLINES
+		avl_tree_validar_arbolin(arbolazo->root);
+#endif
+		caca_log_debug(
+				"borrado %d de seg %d. Despues de borra arbol es\n%s.\n Ahora insertando %d.\n",
+				viejo_pendejo, idx_a_actualizar,
+				avl_tree_sprint_identado(arbolazo, (char[100] ) { '\0' }),
+				nuevo_valor);
+		if (!avl_find(arbolazo, nuevo_valor)) {
+			avl_insert(arbolazo, (long) nuevo_valor);
+		} else {
+			caca_comun_asigna_bit(nuevo_ya_existente, i);
+			caca_log_debug("no se añadio %d a seg %d, ya estaba\n", nuevo_valor,
+					idx_a_actualizar);
+		}
+#ifndef CACA_X_VALIDAR_ARBOLINES
+		avl_tree_validar_arbolin(arbolazo->root);
+#endif
+		caca_log_debug(
+				"insertado %d en seg %d. Despues de insertar el arbol es\n%s",
+				nuevo_valor, idx_a_actualizar,
+				avl_tree_sprint_identado(arbolazo, (char[100] ) { '\0' }));
+	}
+}
+
+static inline void caca_x_actualiza_sumas_arbol_segmentado(
+		caca_x_numeros_unicos_en_rango *arbol_numeros_unicos,
+		int *sumas_arbol_segmentado, int *indices_a_actualizar,
+		int num_indices_a_actualizar, int nuevo_valor, int viejo_pendejo,
+		bitch_vector *nuevo_ya_existente) {
+
+	for (int i = 0; i < num_indices_a_actualizar; i++) {
+		int idx_a_actualizar = 0;
+		avl_tree_t *arbolin_a_actualizar = NULL;
+
+		idx_a_actualizar = indices_a_actualizar[i];
+		arbolin_a_actualizar = arbol_numeros_unicos[idx_a_actualizar].arbolazo;
+
+		caca_log_debug("el valor original de la suma en seg %d es %d\n",
+				idx_a_actualizar, sumas_arbol_segmentado[idx_a_actualizar]);
+
+		sumas_arbol_segmentado[idx_a_actualizar] -= viejo_pendejo;
+		caca_log_debug("despues de restar %d en seg %d la suma en seg %d \n",
+				viejo_pendejo, idx_a_actualizar,
+				sumas_arbol_segmentado[idx_a_actualizar]);
+		if (!caca_comun_checa_bit(nuevo_ya_existente, i)) {
+			sumas_arbol_segmentado[idx_a_actualizar] += nuevo_valor;
+			caca_log_debug(
+					"despues de ahora sumar %d en seg %d la suma en seg %d \n",
+					nuevo_valor, idx_a_actualizar,
+					sumas_arbol_segmentado[idx_a_actualizar]);
+		} else {
+			caca_log_debug("segmento %d no se le añadira %d por que ia sta\n",
+					idx_a_actualizar, nuevo_valor);
+		}
+	}
+}
+
+
 static inline void caca_x_actualiza_estado(int *numeros,
 		caca_x_numeros_unicos_en_rango *arbol_numeros_unicos,
 		int *sumas_arbol_segmentado,
 		int matriz_sumas_coincidencias[MAX_NODOS][16], int idx_actualizado,
 		int nuevo_valor, int num_nodos) {
+	bitch_vector nuevo_ya_existente = 0;
 	int num_indices_afectados_actualizacion = 0;
 	int viejo_pendejo = 0;
 	int *indices_afectados_actualizacion = (int[16] ) { 0 };
@@ -1817,11 +1998,13 @@ static inline void caca_x_actualiza_estado(int *numeros,
 
 	caca_x_actualiza_arbol_numeros_unicos(arbol_numeros_unicos,
 			indices_afectados_actualizacion,
-			num_indices_afectados_actualizacion, viejo_pendejo, nuevo_valor);
+			num_indices_afectados_actualizacion, viejo_pendejo, nuevo_valor,
+			&nuevo_ya_existente);
 
-	caca_x_actualiza_sumas_arbol_segmentado(sumas_arbol_segmentado,
-			indices_afectados_actualizacion,
-			num_indices_afectados_actualizacion, nuevo_valor, viejo_pendejo);
+	caca_x_actualiza_sumas_arbol_segmentado(arbol_numeros_unicos,
+			sumas_arbol_segmentado, indices_afectados_actualizacion,
+			num_indices_afectados_actualizacion, nuevo_valor, viejo_pendejo,
+			&nuevo_ya_existente);
 
 }
 

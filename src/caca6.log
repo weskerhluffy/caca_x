@@ -1,0 +1,713 @@
+en col 0, fil 0, el valor 10
+las columnas son 1
+las filas son 1, con clos 1
+en col 0, fil 1, el valor 1
+las columnas son 1
+en col 1, fil 1, el valor 13
+las columnas son 2
+en col 2, fil 1, el valor 2
+las columnas son 3
+en col 3, fil 1, el valor 12
+las columnas son 4
+en col 4, fil 1, el valor 3
+las columnas son 5
+en col 5, fil 1, el valor 11
+las columnas son 6
+en col 6, fil 1, el valor 4
+las columnas son 7
+en col 7, fil 1, el valor 10
+las columnas son 8
+en col 8, fil 1, el valor 5
+las columnas son 9
+en col 9, fil 1, el valor 9
+las columnas son 10
+en col 10, fil 1, el valor 6
+las columnas son 11
+en col 11, fil 1, el valor 8
+las columnas son 12
+en col 12, fil 1, el valor 7
+las columnas son 13
+las filas son 2, con clos 13
+en col 0, fil 2, el valor 4
+las columnas son 1
+las filas son 3, con clos 1
+a vece siento q 10
+as corrido con algo de s 1,13,2,12,3,11,4,10,5,9
+en estas paginas 4
+en estas paginas 1,13,2,12,3,11,4,10,5,9,6,8,7,0,0,0
+el numero de nodos 32
+llamando a func rec con max prof 6
+perfume 0
+en altura 4 de pseudo rec idx 0
+creando nueva profundidad 
+num de popeos d estado actual es 1
+segmentando izq de 0 a 7 en alt 4
+aumentando profundidad a 1
+perfume 1
+en altura 3 de pseudo rec idx 1
+creando nueva profundidad 
+num de popeos d estado actual es 1
+segmentando izq de 0 a 3 en alt 3
+aumentando profundidad a 2
+perfume 2
+en altura 2 de pseudo rec idx 3
+creando nueva profundidad 
+num de popeos d estado actual es 1
+segmentando izq de 0 a 1 en alt 2
+aumentando profundidad a 3
+perfume 3
+en altura 1 de pseudo rec idx 7
+creando nueva profundidad 
+num de popeos d estado actual es 1
+segmentando izq de 0 a 0 en alt 1
+aumentando profundidad a 4
+perfume 4
+en altura 0 de pseudo rec idx 15
+asignado unico numero 1 a indice de arbol 15
+perfume 3
+en altura 1 de pseudo rec idx 7
+creando nueva profundidad 
+num de popeos d estado actual es 2
+segmentando der de 1 a 1 en alt 1
+aumentando profundidad a 4
+perfume 4
+en altura 0 de pseudo rec idx 16
+asignado unico numero 13 a indice de arbol 16
+perfume 3
+en altura 1 de pseudo rec idx 7
+ultimo 'recursion' de nodo 7, nada q acer
+perfume 2
+en altura 2 de pseudo rec idx 3
+creando nueva profundidad 
+num de popeos d estado actual es 2
+segmentando der de 2 a 3 en alt 2
+aumentando profundidad a 3
+perfume 3
+en altura 1 de pseudo rec idx 8
+creando nueva profundidad 
+num de popeos d estado actual es 1
+segmentando izq de 2 a 2 en alt 1
+aumentando profundidad a 4
+perfume 4
+en altura 0 de pseudo rec idx 17
+asignado unico numero 2 a indice de arbol 17
+perfume 3
+en altura 1 de pseudo rec idx 8
+creando nueva profundidad 
+num de popeos d estado actual es 2
+segmentando der de 3 a 3 en alt 1
+aumentando profundidad a 4
+perfume 4
+en altura 0 de pseudo rec idx 18
+asignado unico numero 12 a indice de arbol 18
+perfume 3
+en altura 1 de pseudo rec idx 8
+ultimo 'recursion' de nodo 8, nada q acer
+perfume 2
+en altura 2 de pseudo rec idx 3
+ultimo 'recursion' de nodo 3, nada q acer
+perfume 1
+en altura 3 de pseudo rec idx 1
+creando nueva profundidad 
+num de popeos d estado actual es 2
+segmentando der de 4 a 7 en alt 3
+aumentando profundidad a 2
+perfume 2
+en altura 2 de pseudo rec idx 4
+creando nueva profundidad 
+num de popeos d estado actual es 1
+segmentando izq de 4 a 5 en alt 2
+aumentando profundidad a 3
+perfume 3
+en altura 1 de pseudo rec idx 9
+creando nueva profundidad 
+num de popeos d estado actual es 1
+segmentando izq de 4 a 4 en alt 1
+aumentando profundidad a 4
+perfume 4
+en altura 0 de pseudo rec idx 19
+asignado unico numero 3 a indice de arbol 19
+perfume 3
+en altura 1 de pseudo rec idx 9
+creando nueva profundidad 
+num de popeos d estado actual es 2
+segmentando der de 5 a 5 en alt 1
+aumentando profundidad a 4
+perfume 4
+en altura 0 de pseudo rec idx 20
+asignado unico numero 11 a indice de arbol 20
+perfume 3
+en altura 1 de pseudo rec idx 9
+ultimo 'recursion' de nodo 9, nada q acer
+perfume 2
+en altura 2 de pseudo rec idx 4
+creando nueva profundidad 
+num de popeos d estado actual es 2
+segmentando der de 6 a 7 en alt 2
+aumentando profundidad a 3
+perfume 3
+en altura 1 de pseudo rec idx 10
+creando nueva profundidad 
+num de popeos d estado actual es 1
+segmentando izq de 6 a 6 en alt 1
+aumentando profundidad a 4
+perfume 4
+en altura 0 de pseudo rec idx 21
+asignado unico numero 4 a indice de arbol 21
+perfume 3
+en altura 1 de pseudo rec idx 10
+creando nueva profundidad 
+num de popeos d estado actual es 2
+segmentando der de 7 a 7 en alt 1
+aumentando profundidad a 4
+perfume 4
+en altura 0 de pseudo rec idx 22
+asignado unico numero 10 a indice de arbol 22
+perfume 3
+en altura 1 de pseudo rec idx 10
+ultimo 'recursion' de nodo 10, nada q acer
+perfume 2
+en altura 2 de pseudo rec idx 4
+ultimo 'recursion' de nodo 4, nada q acer
+perfume 1
+en altura 3 de pseudo rec idx 1
+ultimo 'recursion' de nodo 1, nada q acer
+perfume 0
+en altura 4 de pseudo rec idx 0
+creando nueva profundidad 
+num de popeos d estado actual es 2
+segmentando der de 8 a 15 en alt 4
+aumentando profundidad a 1
+perfume 1
+en altura 3 de pseudo rec idx 2
+creando nueva profundidad 
+num de popeos d estado actual es 1
+segmentando izq de 8 a 11 en alt 3
+aumentando profundidad a 2
+perfume 2
+en altura 2 de pseudo rec idx 5
+creando nueva profundidad 
+num de popeos d estado actual es 1
+segmentando izq de 8 a 9 en alt 2
+aumentando profundidad a 3
+perfume 3
+en altura 1 de pseudo rec idx 11
+creando nueva profundidad 
+num de popeos d estado actual es 1
+segmentando izq de 8 a 8 en alt 1
+aumentando profundidad a 4
+perfume 4
+en altura 0 de pseudo rec idx 23
+asignado unico numero 5 a indice de arbol 23
+perfume 3
+en altura 1 de pseudo rec idx 11
+creando nueva profundidad 
+num de popeos d estado actual es 2
+segmentando der de 9 a 9 en alt 1
+aumentando profundidad a 4
+perfume 4
+en altura 0 de pseudo rec idx 24
+asignado unico numero 9 a indice de arbol 24
+perfume 3
+en altura 1 de pseudo rec idx 11
+ultimo 'recursion' de nodo 11, nada q acer
+perfume 2
+en altura 2 de pseudo rec idx 5
+creando nueva profundidad 
+num de popeos d estado actual es 2
+segmentando der de 10 a 11 en alt 2
+aumentando profundidad a 3
+perfume 3
+en altura 1 de pseudo rec idx 12
+creando nueva profundidad 
+num de popeos d estado actual es 1
+segmentando izq de 10 a 10 en alt 1
+aumentando profundidad a 4
+perfume 4
+en altura 0 de pseudo rec idx 25
+asignado unico numero 6 a indice de arbol 25
+perfume 3
+en altura 1 de pseudo rec idx 12
+creando nueva profundidad 
+num de popeos d estado actual es 2
+segmentando der de 11 a 11 en alt 1
+aumentando profundidad a 4
+perfume 4
+en altura 0 de pseudo rec idx 26
+asignado unico numero 8 a indice de arbol 26
+perfume 3
+en altura 1 de pseudo rec idx 12
+ultimo 'recursion' de nodo 12, nada q acer
+perfume 2
+en altura 2 de pseudo rec idx 5
+ultimo 'recursion' de nodo 5, nada q acer
+perfume 1
+en altura 3 de pseudo rec idx 2
+creando nueva profundidad 
+num de popeos d estado actual es 2
+segmentando der de 12 a 15 en alt 3
+aumentando profundidad a 2
+perfume 2
+en altura 2 de pseudo rec idx 6
+creando nueva profundidad 
+num de popeos d estado actual es 1
+segmentando izq de 12 a 13 en alt 2
+aumentando profundidad a 3
+perfume 3
+en altura 1 de pseudo rec idx 13
+creando nueva profundidad 
+num de popeos d estado actual es 1
+segmentando izq de 12 a 12 en alt 1
+aumentando profundidad a 4
+perfume 4
+en altura 0 de pseudo rec idx 27
+asignado unico numero 7 a indice de arbol 27
+perfume 3
+en altura 1 de pseudo rec idx 13
+creando nueva profundidad 
+num de popeos d estado actual es 2
+segmentando der de 13 a 13 en alt 1
+aumentando profundidad a 4
+perfume 4
+en altura 0 de pseudo rec idx 28
+asignado unico numero 0 a indice de arbol 28
+perfume 3
+en altura 1 de pseudo rec idx 13
+ultimo 'recursion' de nodo 13, nada q acer
+perfume 2
+en altura 2 de pseudo rec idx 6
+creando nueva profundidad 
+num de popeos d estado actual es 2
+segmentando der de 14 a 15 en alt 2
+aumentando profundidad a 3
+perfume 3
+en altura 1 de pseudo rec idx 14
+creando nueva profundidad 
+num de popeos d estado actual es 1
+segmentando izq de 14 a 14 en alt 1
+aumentando profundidad a 4
+perfume 4
+en altura 0 de pseudo rec idx 29
+asignado unico numero 0 a indice de arbol 29
+perfume 3
+en altura 1 de pseudo rec idx 14
+creando nueva profundidad 
+num de popeos d estado actual es 2
+segmentando der de 15 a 15 en alt 1
+aumentando profundidad a 4
+perfume 4
+en altura 0 de pseudo rec idx 30
+asignado unico numero 0 a indice de arbol 30
+perfume 3
+en altura 1 de pseudo rec idx 14
+ultimo 'recursion' de nodo 14, nada q acer
+perfume 2
+en altura 2 de pseudo rec idx 6
+ultimo 'recursion' de nodo 6, nada q acer
+perfume 1
+en altura 3 de pseudo rec idx 2
+ultimo 'recursion' de nodo 2, nada q acer
+perfume 0
+en altura 4 de pseudo rec idx 0
+ultimo 'recursion' de nodo 0, nada q acer
+arbol en idx 0 
+ 131211109876543210
+aaa
+los numeros unicos en 0, altura 4, son 0,1,2,3,4,5,6,7,8,9,10,11,12,13
+la suma es 91
+arbol en idx 1 
+ 131211104321
+aaa
+los numeros unicos en 1, altura 3, son 1,2,3,4,10,11,12,13
+la suma es 56
+arbol en idx 2 
+ 987650
+aaa
+los numeros unicos en 2, altura 3, son 0,5,6,7,8,9
+la suma es 35
+arbol en idx 3 
+ 131221
+aaa
+los numeros unicos en 3, altura 2, son 1,2,12,13
+la suma es 28
+arbol en idx 4 
+ 111043
+aaa
+los numeros unicos en 4, altura 2, son 3,4,10,11
+la suma es 28
+arbol en idx 5 
+ 9865
+aaa
+los numeros unicos en 5, altura 2, son 5,6,8,9
+la suma es 28
+arbol en idx 6 
+ 70
+aaa
+los numeros unicos en 6, altura 2, son 0,7
+la suma es 7
+arbol en idx 7 
+ 131
+aaa
+los numeros unicos en 7, altura 1, son 1,13
+la suma es 14
+arbol en idx 8 
+ 122
+aaa
+los numeros unicos en 8, altura 1, son 2,12
+la suma es 14
+arbol en idx 9 
+ 113
+aaa
+los numeros unicos en 9, altura 1, son 3,11
+la suma es 14
+arbol en idx 10 
+ 104
+aaa
+los numeros unicos en 10, altura 1, son 4,10
+la suma es 14
+arbol en idx 11 
+ 95
+aaa
+los numeros unicos en 11, altura 1, son 5,9
+la suma es 14
+arbol en idx 12 
+ 86
+aaa
+los numeros unicos en 12, altura 1, son 6,8
+la suma es 14
+arbol en idx 13 
+ 70
+aaa
+los numeros unicos en 13, altura 1, son 0,7
+la suma es 7
+arbol en idx 14 
+ 0
+aaa
+los numeros unicos en 14, altura 1, son 0
+la suma es 0
+arbol en idx 15 
+ 1
+aaa
+los numeros unicos en 15, altura 0, son 1
+la suma es 1
+arbol en idx 16 
+ 13
+aaa
+los numeros unicos en 16, altura 0, son 13
+la suma es 13
+arbol en idx 17 
+ 2
+aaa
+los numeros unicos en 17, altura 0, son 2
+la suma es 2
+arbol en idx 18 
+ 12
+aaa
+los numeros unicos en 18, altura 0, son 12
+la suma es 12
+arbol en idx 19 
+ 3
+aaa
+los numeros unicos en 19, altura 0, son 3
+la suma es 3
+arbol en idx 20 
+ 11
+aaa
+los numeros unicos en 20, altura 0, son 11
+la suma es 11
+arbol en idx 21 
+ 4
+aaa
+los numeros unicos en 21, altura 0, son 4
+la suma es 4
+arbol en idx 22 
+ 10
+aaa
+los numeros unicos en 22, altura 0, son 10
+la suma es 10
+arbol en idx 23 
+ 5
+aaa
+los numeros unicos en 23, altura 0, son 5
+la suma es 5
+arbol en idx 24 
+ 9
+aaa
+los numeros unicos en 24, altura 0, son 9
+la suma es 9
+arbol en idx 25 
+ 6
+aaa
+los numeros unicos en 25, altura 0, son 6
+la suma es 6
+arbol en idx 26 
+ 8
+aaa
+los numeros unicos en 26, altura 0, son 8
+la suma es 8
+arbol en idx 27 
+ 7
+aaa
+los numeros unicos en 27, altura 0, son 7
+la suma es 7
+arbol en idx 28 
+ 0
+aaa
+los numeros unicos en 28, altura 0, son 0
+la suma es 0
+arbol en idx 29 
+ 0
+aaa
+los numeros unicos en 29, altura 0, son 0
+la suma es 0
+arbol en idx 30 
+ 0
+aaa
+los numeros unicos en 30, altura 0, son 0
+la suma es 0
+q: Q, ini 1, fin 5
+pues nadie sera 0,15
+pues nadie sera 0,7
+te vas a acordar de mi 0,3
+pues nadie sera 4,7
+pues nadie sera 4,5
+te vas a acordar de mi 4,4
+nada que sumar 5:5
+nada que sumar 6:7
+nada que sumar 8:15
+comparando 3 con 19
+indices de segmento 0:4 3,19
+segmento 3 aporta 28
+segmento 19 aporta 3
+sumando repetidos
+primer arbol en nodo 0
+nodo minimo de actual 3, nodo maximo de unicos 13
+buscando 2 en
+3
+cambiada la raiz a buscar de 3 a 3
+buscando 12 en
+3
+buscando 13 en
+3
+termino de buscar unicos en actual
+añadiendo 3 al arbol de unicos
+  13
+12
+ 2
+  1
+
+en total la suma de repetidos es 0
+La suma es 31
+31
+q: U, ini 4, fin 7
+en la oscuridad 0,15
+en la oscuridad 0,7
+en la oscuridad 0,3
+ilumine tus ojos 0:1
+en la oscuridad 2,3
+ilumine tus ojos 2:2
+cuando la luna 3,3
+ilumine tus ojos 4:7
+ilumine tus ojos 8:15
+los idx afectados 0,1,3,8,18
+el viejo 12 y el nuevo 7
+borrando 12 de seg 0. Antes de borra arbol es
+    13
+   12
+  11
+ 10
+    9
+   8
+  7
+   6
+    5
+4
+  3
+    2
+   1
+    0
+borrado 12 de seg 0. Despues de borra arbol es
+    13
+   11
+ 10
+    9
+   8
+  7
+   6
+    5
+4
+  3
+    2
+   1
+    0
+.
+ Ahora insertando 7.
+no se añadio 7 a seg 0, ya estaba
+insertado 7 en seg 0. Despues de insertar el arbol es
+    13
+   11
+ 10
+    9
+   8
+  7
+   6
+    5
+4
+  3
+    2
+   1
+    0
+borrando 12 de seg 1. Antes de borra arbol es
+   13
+  12
+ 11
+   10
+4
+ 3
+   2
+  1
+borrado 12 de seg 1. Despues de borra arbol es
+   13
+  11
+   10
+4
+ 3
+   2
+  1
+.
+ Ahora insertando 7.
+insertado 7 en seg 1. Despues de insertar el arbol es
+   13
+ 11
+  10
+   7
+4
+ 3
+   2
+  1
+borrando 12 de seg 3. Antes de borra arbol es
+  13
+12
+ 2
+  1
+borrado 12 de seg 3. Despues de borra arbol es
+13
+ 2
+  1
+.
+ Ahora insertando 7.
+insertado 7 en seg 3. Despues de insertar el arbol es
+13
+  7
+ 2
+  1
+borrando 12 de seg 8. Antes de borra arbol es
+12
+ 2
+borrado 12 de seg 8. Despues de borra arbol es
+2
+.
+ Ahora insertando 7.
+insertado 7 en seg 8. Despues de insertar el arbol es
+ 7
+2
+borrando 12 de seg 18. Antes de borra arbol es
+12
+borrado 12 de seg 18. Despues de borra arbol es
+.
+ Ahora insertando 7.
+insertado 7 en seg 18. Despues de insertar el arbol es
+7
+el valor original de la suma en seg 0 es 91
+despues de restar 12 en seg 0 la suma en seg 79 
+segmento 0 no se le añadira 7 por que ia sta
+el valor original de la suma en seg 1 es 56
+despues de restar 12 en seg 1 la suma en seg 44 
+despues de ahora sumar 7 en seg 1 la suma en seg 51 
+el valor original de la suma en seg 3 es 28
+despues de restar 12 en seg 3 la suma en seg 16 
+despues de ahora sumar 7 en seg 3 la suma en seg 23 
+el valor original de la suma en seg 8 es 14
+despues de restar 12 en seg 8 la suma en seg 2 
+despues de ahora sumar 7 en seg 8 la suma en seg 9 
+el valor original de la suma en seg 18 es 12
+despues de restar 12 en seg 18 la suma en seg 0 
+despues de ahora sumar 7 en seg 18 la suma en seg 7 
+q: Q, ini 1, fin 5
+pues nadie sera 0,15
+pues nadie sera 0,7
+te vas a acordar de mi 0,3
+pues nadie sera 4,7
+pues nadie sera 4,5
+te vas a acordar de mi 4,4
+nada que sumar 5:5
+nada que sumar 6:7
+nada que sumar 8:15
+comparando 3 con 19
+indices de segmento 0:4 3,19
+segmento 3 aporta 23
+segmento 19 aporta 3
+sumando repetidos
+primer arbol en nodo 0
+nodo minimo de actual 3, nodo maximo de unicos 13
+buscando 7 en
+3
+buscando 13 en
+3
+termino de buscar unicos en actual
+añadiendo 3 al arbol de unicos
+13
+  7
+ 2
+  1
+
+en total la suma de repetidos es 0
+La suma es 26
+26
+q: Q, ini 4, fin 7
+pues nadie sera 0,15
+pues nadie sera 0,7
+pues nadie sera 0,3
+nada que sumar 0:1
+pues nadie sera 2,3
+nada que sumar 2:2
+te vas a acordar de mi 3,3
+pues nadie sera 4,7
+te vas a acordar de mi 4,5
+pues nadie sera 6,7
+te vas a acordar de mi 6,6
+nada que sumar 7:7
+nada que sumar 8:15
+comparando 18 con 9
+comparando 18 con 21
+indices de segmento 3:6 9,18,21
+segmento 9 aporta 14
+segmento 18 aporta 7
+segmento 21 aporta 4
+sumando repetidos
+primer arbol en nodo 0
+nodo minimo de actual 7, nodo maximo de unicos 11
+buscando 3 en
+7
+cambiada la raiz a buscar de 7 a 7
+buscando 11 en
+7
+termino de buscar unicos en actual
+añadiendo 7 al arbol de unicos
+11
+ 3
+
+nodo minimo de actual 4, nodo maximo de unicos 11
+buscando 7 en
+4
+buscando 11 en
+4
+termino de buscar unicos en actual
+añadiendo 4 al arbol de unicos
+11
+  7
+ 3
+
+en total la suma de repetidos es 0
+La suma es 25
+25

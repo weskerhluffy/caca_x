@@ -23,9 +23,9 @@
 #define MAX_NODOS (1 << 16)
 
 /*
-#define caca_log_debug(formato, args...) 0
+ #define caca_log_debug(formato, args...) 0
  */
- #define caca_log_debug printf
+#define caca_log_debug printf
 
 /*
  #define assert_timeout(condition) assert(condition);
@@ -389,8 +389,8 @@ void* avltree_remove(avltree_t* me, void* k) {
 	int i;
 
 	for (i = 0; i < me->size;) {
-		long r;
-		avltree_node_t *n;
+		long r = 0;
+		avltree_node_t *n = NULL;
 
 		n = &me->nodes[i];
 
@@ -1370,7 +1370,8 @@ static inline void caca_x_actualiza_estado(int *numeros,
 			&num_indices_afectados_actualizacion);
 
 	caca_log_debug("los idx afectados %s\n",
-			caca_arreglo_a_cadena(indices_afectados_actualizacion, num_indices_afectados_actualizacion, buf));
+			caca_arreglo_a_cadena(indices_afectados_actualizacion,
+					num_indices_afectados_actualizacion, buf));
 
 	caca_log_debug("el viejo %d y el nuevo %d\n", viejo_pendejo, nuevo_valor);
 
@@ -1444,7 +1445,7 @@ static inline void caca_x_main() {
 
 	num_nodos = (2 << (max_profundidad + 0));
 
-	caca_log_debug("el numero de nodos %d\n",num_nodos);
+	caca_log_debug("el numero de nodos %d\n", num_nodos);
 
 	arbol_numeros_unicos = calloc(num_nodos,
 			sizeof(caca_x_numeros_unicos_en_rango));
