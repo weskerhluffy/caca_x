@@ -9,4 +9,8 @@ salto_inicial=$((saltito * 1))
 shit=$(seq -f %1.f -s' ' $salto_inicial $saltito $MAX_VALOR)
 echo "$MAX_ELEMS" > /tmp/como.txt
 echo "$shit" >> /tmp/como.txt
-
+echo "$MAX_ELEMS" >> /tmp/como.txt
+for numerin in $shit
+do
+	echo "U 4 $numerin" >> /tmp/como.txt
+done

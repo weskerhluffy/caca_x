@@ -1693,13 +1693,15 @@ static inline long caca_x_suma_segmento(long *sumas_arbol_segmentado,
 		int limite_izq, int limite_der) {
 	long res = 0;
 	int num_indices_nodos = 0;
-	int *indices_nodos = (int[16] ) { 0 };
+	int *indices_nodos = (int[30] ) { 0 };
 	caca_x_numeros_unicos_en_rango *nodo_izq = NULL;
 	caca_x_numeros_unicos_en_rango *nodo_der = NULL;
 	char buf[100] = { '\0' };
 
 	caca_x_encuentra_indices_segmento(arbol_numeros_unicos, 0, limite_izq,
 			limite_der, indices_nodos, &num_indices_nodos);
+
+	assert_timeout(num_indices_nodos < 30);
 
 	qsort(indices_nodos, num_indices_nodos, sizeof(int),
 			caca_comun_compara_enteros);
@@ -1904,6 +1906,10 @@ static inline void caca_x_actualiza_arbol_numeros_unicos(
 		caca_log_debug("borrando %d de seg %d. Antes de borra arbol es\n%s",
 				viejo_pendejo, idx_a_actualizar,
 				avl_tree_sprint_identado(arbolazo, (char[100] ) { '\0' }));
+
+		arbolazo->ultimo_nodo_liberado_idx = 0;
+
+		assert(avl_find(arbolazo, viejo_pendejo));
 		avl_borrar(arbolazo, viejo_pendejo);
 #ifndef CACA_X_VALIDAR_ARBOLINES
 		avl_tree_validar_arbolin_indices(arbolazo, arbolazo->root);
@@ -1985,6 +1991,8 @@ static inline void caca_x_actualiza_estado(int *numeros,
 			0, idx_actualizado, indices_afectados_actualizacion,
 			&num_indices_afectados_actualizacion);
 
+	assert_timeout(num_indices_afectados_actualizacion < 18);
+
 	caca_log_debug("los idx afectados %s\n",
 			caca_arreglo_a_cadena(indices_afectados_actualizacion, num_indices_afectados_actualizacion, buf));
 
@@ -1999,6 +2007,8 @@ static inline void caca_x_actualiza_estado(int *numeros,
 			sumas_arbol_segmentado, indices_afectados_actualizacion,
 			num_indices_afectados_actualizacion, nuevo_valor, viejo_pendejo,
 			&nuevo_ya_existente);
+
+	numeros[idx_actualizado] = nuevo_valor;
 	/*
 	 */
 
@@ -2098,6 +2108,7 @@ static inline void caca_x_main() {
 			caca_x_actualiza_estado(numeros, arbol_numeros_unicos,
 					sumas_arbol_segmentado, idx_actualizado, nuevo_valor,
 					(2 << (max_profundidad + 0)) - 2);
+			printf("mala nacha no %d\n", cont_queries);
 			break;
 		default:
 			abort();

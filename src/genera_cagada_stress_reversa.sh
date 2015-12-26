@@ -10,3 +10,8 @@ shit=$(seq -f %1.f -s' ' $MAX_VALOR -$saltito $salto_inicial)
 echo "$MAX_ELEMS" > /tmp/como_rev.txt
 echo "$shit" >> /tmp/como_rev.txt
 
+echo "$MAX_ELEMS" >> /tmp/como_rev.txt
+for numerin in $shit
+do
+        echo "U 4 $numerin" >> /tmp/como_rev.txt
+done
