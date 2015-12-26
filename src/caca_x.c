@@ -2099,6 +2099,7 @@ static inline void caca_x_main() {
 		case 'Q':
 			sum = caca_x_suma_segmento(sumas_arbol_segmentado,
 					idx_query_ini - 1, idx_query_fin - 1);
+			printf("pero mala nacha %d\n", cont_queries);
 			printf("%ld\n", sum);
 			break;
 		case 'U':
