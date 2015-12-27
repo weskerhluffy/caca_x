@@ -24,15 +24,19 @@
 #define MAX_NODOS (1 << 16)
 #define CACA_X_VALOR_INVALIDO -1
 
+#define CACA_X_VALIDAR_ARBOLINES
+
 #define caca_log_debug(formato, args...) 0
 /*
  #define caca_log_debug printf
  */
 
-#define assert_timeout(condition) assert(condition);
 /*
+ #define assert_timeout(condition) assert(condition);
  #define assert_timeout(condition) if(!(condition)){printf("fuck\n");sleep(10);}
  */
+#define assert_timeout(condition) 0
+
 
 typedef int tipo_dato;
 
@@ -568,8 +572,7 @@ static inline avl_node_t* avl_tree_iterador_siguiente(avl_tree_iterator_t *iter)
 
 		break;
 	default:
-		assert_timeout(0)
-		;
+		assert_timeout(0);
 		break;
 	}
 
@@ -1121,8 +1124,7 @@ static inline void caca_x_construye_arbol_binario_segmentado(int *numeros,
 			}
 				break;
 			default:
-				assert_timeout(0)
-				;
+				assert_timeout(0);
 				break;
 			}
 
@@ -1483,9 +1485,7 @@ static inline void caca_x_encuentra_indices_a_actualizar_laterales(
 							idx_nodo, idx_nodo_lateral, idx_nodo_ancestro);
 
 					assert_timeout(
-							nodo_ancestro->limite_izq <= limite_intervalo
-									&& limite_intervalo
-											<= nodo_ancestro->limite_der);
+							nodo_ancestro->limite_izq <= limite_intervalo && limite_intervalo <= nodo_ancestro->limite_der);
 
 					idx_nodo_a_actualizar = idx_nodo_ancestro;
 
@@ -2099,7 +2099,6 @@ static inline void caca_x_main() {
 		case 'Q':
 			sum = caca_x_suma_segmento(sumas_arbol_segmentado,
 					idx_query_ini - 1, idx_query_fin - 1);
-			printf("pero mala nacha %d\n", cont_queries);
 			printf("%ld\n", sum);
 			break;
 		case 'U':
@@ -2109,7 +2108,6 @@ static inline void caca_x_main() {
 			caca_x_actualiza_estado(numeros, arbol_numeros_unicos,
 					sumas_arbol_segmentado, idx_actualizado, nuevo_valor,
 					(2 << (max_profundidad + 0)) - 2);
-			printf("mala nacha no %d\n", cont_queries);
 			break;
 		default:
 			abort();
