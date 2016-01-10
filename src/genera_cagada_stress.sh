@@ -5,7 +5,7 @@ MAX_ELEMS=50000
 saltito=$((MAX_VALOR / MAX_ELEMS))
 salto_inicial=$((saltito * 1))
 contador_actualizaciones=0
-
+caca=0
 
 shit=$(seq -f %1.f -s' ' $salto_inicial $saltito $MAX_VALOR)
 echo "$MAX_ELEMS" > /tmp/como.txt
@@ -17,4 +17,6 @@ do
 	echo "U $indice_actualizacion $numerin" >> /tmp/como.txt
 	contador_actualizaciones=$((contador_actualizaciones+ 1))
 	echo "Q 1 $contador_actualizaciones" >> /tmp/como.txt
+	caca=$((caca + numerin))
 done
+#echo $caca >> /tmp/como.txt
