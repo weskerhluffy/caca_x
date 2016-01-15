@@ -8,9 +8,9 @@ import array
 import sys
 import math
 import logging
-from logging import DEBUG
 logger_cagada = None
 
+@profile
 def crea_caca_seg(numeros, inicio_inter, fin_inter, indice_nodo, arbolin_en_array, sumas_unicos):
     mitad_inter = 0
     if(indice_nodo >= len(arbolin_en_array)):
@@ -151,9 +151,9 @@ arbolin_en_array = []
 sumas_unicos = []
 lineas = None
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.ERROR)
 logger_cagada=logging.getLogger("asa")
-logger_cagada.setLevel(DEBUG)
+logger_cagada.setLevel(logging.ERROR)
 
 lineas = list(fileinput.input())
 
