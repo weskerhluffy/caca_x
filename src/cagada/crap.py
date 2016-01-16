@@ -10,25 +10,25 @@ import math
 import logging
 logger_cagada = None
 
-#@profile
+# @profile
 def crea_caca_seg(numeros, inicio_inter, fin_inter, indice_nodo, arbolin_en_array, sumas_unicos):
     mitad_inter = 0
     if(indice_nodo >= len(arbolin_en_array)):
         logger_cagada.debug("el fin de inter %d por lo tanto a la mierda los nodos son %d" % (indice_nodo, len(arbolin_en_array)))
-        return set()
+        return array.array("l")
     logger_cagada.debug("puta madre el inter actual %d-%d comp %s" % (inicio_inter , fin_inter, inicio_inter == fin_inter))
     if(inicio_inter == fin_inter):
         logger_cagada.debug("tocando fondo en inter %d con num %d" % (inicio_inter, numeros[inicio_inter]))
-        arbolin_en_array[indice_nodo].add(numeros[inicio_inter])
+        arbolin_en_array[indice_nodo].append(numeros[inicio_inter])
     else:
         mitad_inter = inicio_inter + int((fin_inter - inicio_inter) / 2)
         logger_cagada.debug("usando el nodo %d" % indice_nodo)
         logger_cagada.debug("inter izq %d-%d" % (inicio_inter, mitad_inter))
         logger_cagada.debug("inter der %d-%d" % (mitad_inter + 1, fin_inter))
-        arbolin_en_array[indice_nodo] |= crea_caca_seg(numeros, inicio_inter, mitad_inter, indice_nodo * 2 + 1, arbolin_en_array, sumas_unicos) | crea_caca_seg(numeros, mitad_inter + 1, fin_inter, indice_nodo * 2 + 2, arbolin_en_array, sumas_unicos)
+        arbolin_en_array[indice_nodo] += crea_caca_seg(numeros, inicio_inter, mitad_inter, indice_nodo * 2 + 1, arbolin_en_array, sumas_unicos) + crea_caca_seg(numeros, mitad_inter + 1, fin_inter, indice_nodo * 2 + 2, arbolin_en_array, sumas_unicos)
         
     logger_cagada.debug("en inter %d-%d nodo %d el set es %s" % (inicio_inter, fin_inter, indice_nodo, arbolin_en_array[indice_nodo]))
-    sumas_unicos[indice_nodo] = sum(arbolin_en_array[indice_nodo])
+    sumas_unicos[indice_nodo] = max(arbolin_en_array[indice_nodo])
     return arbolin_en_array[indice_nodo]
 
 def obtiene_indices_ass(indice_afectado, max_profundidad):
@@ -123,21 +123,6 @@ def sumar_cagada(arbolin_en_array, sumas_unicos, indice_inicio, indice_final, nu
     
     logger_cagada.debug("la suma raw %d" % suma)
     
-    if(len(indices) > 1):
-        sets_a_mergear = [arbolin_en_array[indice_set] for indice_set in indices]
-        logger_cagada.debug("los sets a mergar %s" % sets_a_mergear)
-        
-        set_unicos = sets_a_mergear[0]
-        
-        for set_actual in sets_a_mergear[1:]:
-            suma_intersexion = 0
-            set_intersexion = set()
-            set_intersexion = set_unicos & set_actual
-            logger_cagada.debug("la intersexion de %s y %s es %s" % (set_unicos, set_actual, set_intersexion))
-            suma_intersexion = sum(set_intersexion)
-            logger_cagada.debug("la suma de intersex %d" % suma_intersexion)
-            suma -= suma_intersexion
-            set_unicos |= set_actual
     
     return suma
 
@@ -152,7 +137,7 @@ sumas_unicos = []
 lineas = None
 
 logging.basicConfig(level=logging.ERROR)
-logger_cagada=logging.getLogger("asa")
+logger_cagada = logging.getLogger("asa")
 logger_cagada.setLevel(logging.ERROR)
 
 lineas = list(fileinput.input())
@@ -167,7 +152,7 @@ while num_numeros >> max_profundidad:
 
 num_nodos = (2 << max_profundidad)
 
-arbolin_en_array = [set() for _ in range(num_nodos)]
+arbolin_en_array = [array.array("l") for _ in range(num_nodos)]
 sumas_unicos = [0 for _ in range(num_nodos)]
 
 num_numeros_redondeado = (1 << max_profundidad);
@@ -192,8 +177,9 @@ for linea in lineas[3:]:
     tipo_query = ""
     param1_str = ""
     param2_str = ""
-    (tipo_query, param1_str, param2_str) = linea.split(" ")
+    (param1_str, param2_str) = linea.split(" ")
     
+    tipo_query = 'Q'
     param1 = int(param1_str)
     param2 = int(param2_str)
     

@@ -19,4 +19,4 @@ do
 	echo "Q 1 $contador_actualizaciones" >> /tmp/como.txt
 	caca=$((caca + numerin))
 done
-#echo $caca >> /tmp/como.txt
+echo $caca >> /tmp/como.txt
