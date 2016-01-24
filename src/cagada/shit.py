@@ -9,8 +9,9 @@ import sys
 import math
 import logging
 logger_cagada = None
+nivel_log = logging.ERROR
 
-#@profile
+# @profile
 def crea_caca_seg(numeros, inicio_inter, fin_inter, indice_nodo, arbolin_en_array, sumas_unicos):
     mitad_inter = 0
     if(indice_nodo >= len(arbolin_en_array)):
@@ -127,7 +128,17 @@ def sumar_cagada(arbolin_en_array, sumas_unicos, indice_inicio, indice_final, nu
         sets_a_mergear = [arbolin_en_array[indice_set] for indice_set in indices]
         logger_cagada.debug("los sets a mergar %s" % sets_a_mergear)
         
-        set_unicos = sets_a_mergear[0]
+#        set_unicos = set(sets_a_mergear[0])
+#        set_unicos = sets_a_mergear[0].copy()
+#        set_unicos = sets_a_mergear[0]
+#        set_unicos = sets_a_mergear[0] | set()
+        set_unicos = set()
+        for elemen in sets_a_mergear[0]:
+            set_unicos.add(elemen)
+            if(len(set_unicos)>100):
+                break
+        
+        logger_cagada.debug("el set unicos antes del desmadre %s", arbolin_en_array[indices[0]])
         
         for set_actual in sets_a_mergear[1:]:
             suma_intersexion = 0
@@ -138,6 +149,8 @@ def sumar_cagada(arbolin_en_array, sumas_unicos, indice_inicio, indice_final, nu
             logger_cagada.debug("la suma de intersex %d" % suma_intersexion)
             suma -= suma_intersexion
             set_unicos |= set_actual
+            
+        logger_cagada.debug("el set unicos despues del desmadre %s", arbolin_en_array[indices[0]])
     
     return suma
 
@@ -151,9 +164,9 @@ arbolin_en_array = []
 sumas_unicos = []
 lineas = None
 
-logging.basicConfig(level=logging.ERROR)
-logger_cagada=logging.getLogger("asa")
-logger_cagada.setLevel(logging.ERROR)
+logging.basicConfig(level=nivel_log)
+logger_cagada = logging.getLogger("asa")
+logger_cagada.setLevel(nivel_log)
 
 lineas = list(fileinput.input())
 
