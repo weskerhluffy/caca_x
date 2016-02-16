@@ -1628,15 +1628,12 @@ static inline void caca_x_main() {
 	int num_numeros_redondeado = 0;
 	int num_nodos = 0;
 	long *sumas_arbol_segmentado = NULL;
-	int *matriz_sumas_coincidencias = NULL;
 
 	char buf[100] = { '\0' };
 
 	matriz_nums = calloc(MAX_NUMEROS_REDONDEADO * 3, sizeof(int));
 	assert_timeout(matriz_nums);
 
-	matriz_sumas_coincidencias = calloc(MAX_NODOS * 16, sizeof(int));
-	assert_timeout(matriz_sumas_coincidencias);
 
 	num_filas = 3;
 	lee_matrix_long_stdin(matriz_nums, &num_filas, NULL, 3,
@@ -1720,7 +1717,6 @@ static inline void caca_x_main() {
 	free(matriz_nums);
 	free(arbol_numeros_unicos);
 	free(sumas_arbol_segmentado);
-	free(matriz_sumas_coincidencias);
 	free(estado);
 }
 
