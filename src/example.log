@@ -1,0 +1,113 @@
+DEBUG:asa:num numeros es 5
+DEBUG:asa:num numeros redondeados es 8
+DEBUG:asa:los numeros en si [1, 2, 4, 2, 3, 0, 0, 0]
+DEBUG:asa:num queries es 3
+DEBUG:asa:num nodos es 16
+DEBUG:asa:max prof es 3
+DEBUG:asa:puta madre el inter actual 0-7 comp False
+DEBUG:asa:usando el nodo 0
+DEBUG:asa:inter izq 0-3
+DEBUG:asa:inter der 4-7
+DEBUG:asa:puta madre el inter actual 0-3 comp False
+DEBUG:asa:usando el nodo 1
+DEBUG:asa:inter izq 0-1
+DEBUG:asa:inter der 2-3
+DEBUG:asa:puta madre el inter actual 0-1 comp False
+DEBUG:asa:usando el nodo 3
+DEBUG:asa:inter izq 0-0
+DEBUG:asa:inter der 1-1
+DEBUG:asa:puta madre el inter actual 0-0 comp True
+DEBUG:asa:tocando fondo en inter 0 con num 1
+DEBUG:asa:en inter 0-0 nodo 7 el set es {1}
+DEBUG:asa:puta madre el inter actual 1-1 comp True
+DEBUG:asa:tocando fondo en inter 1 con num 2
+DEBUG:asa:en inter 1-1 nodo 8 el set es {2}
+DEBUG:asa:en inter 0-1 nodo 3 el set es {1, 2}
+DEBUG:asa:puta madre el inter actual 2-3 comp False
+DEBUG:asa:usando el nodo 4
+DEBUG:asa:inter izq 2-2
+DEBUG:asa:inter der 3-3
+DEBUG:asa:puta madre el inter actual 2-2 comp True
+DEBUG:asa:tocando fondo en inter 2 con num 4
+DEBUG:asa:en inter 2-2 nodo 9 el set es {4}
+DEBUG:asa:puta madre el inter actual 3-3 comp True
+DEBUG:asa:tocando fondo en inter 3 con num 2
+DEBUG:asa:en inter 3-3 nodo 10 el set es {2}
+DEBUG:asa:en inter 2-3 nodo 4 el set es {2, 4}
+DEBUG:asa:en inter 0-3 nodo 1 el set es {1, 2, 4}
+DEBUG:asa:puta madre el inter actual 4-7 comp False
+DEBUG:asa:usando el nodo 2
+DEBUG:asa:inter izq 4-5
+DEBUG:asa:inter der 6-7
+DEBUG:asa:puta madre el inter actual 4-5 comp False
+DEBUG:asa:usando el nodo 5
+DEBUG:asa:inter izq 4-4
+DEBUG:asa:inter der 5-5
+DEBUG:asa:puta madre el inter actual 4-4 comp True
+DEBUG:asa:tocando fondo en inter 4 con num 3
+DEBUG:asa:en inter 4-4 nodo 11 el set es {3}
+DEBUG:asa:puta madre el inter actual 5-5 comp True
+DEBUG:asa:tocando fondo en inter 5 con num 0
+DEBUG:asa:en inter 5-5 nodo 12 el set es {0}
+DEBUG:asa:en inter 4-5 nodo 5 el set es {0, 3}
+DEBUG:asa:puta madre el inter actual 6-7 comp False
+DEBUG:asa:usando el nodo 6
+DEBUG:asa:inter izq 6-6
+DEBUG:asa:inter der 7-7
+DEBUG:asa:puta madre el inter actual 6-6 comp True
+DEBUG:asa:tocando fondo en inter 6 con num 0
+DEBUG:asa:en inter 6-6 nodo 13 el set es {0}
+DEBUG:asa:puta madre el inter actual 7-7 comp True
+DEBUG:asa:tocando fondo en inter 7 con num 0
+DEBUG:asa:en inter 7-7 nodo 14 el set es {0}
+DEBUG:asa:en inter 6-7 nodo 6 el set es {0}
+DEBUG:asa:en inter 4-7 nodo 2 el set es {0, 3}
+DEBUG:asa:en inter 0-7 nodo 0 el set es {0, 1, 2, 3, 4}
+DEBUG:asa:las sumas de unicos [10, 7, 3, 3, 6, 3, 0, 1, 2, 4, 2, 3, 0, 0, 0, 0]
+DEBUG:asa:tipo query Q, param1 2 param2 4
+DEBUG:asa:buscando intervalo 1-3 en segmento 0-7
+DEBUG:asa:buscando intervalo 1-3 en segmento 0-3
+DEBUG:asa:buscando intervalo 1-3 en segmento 0-1
+DEBUG:asa:buscando intervalo 1-3 en segmento 0-0
+DEBUG:asa:nada q acer
+DEBUG:asa:buscando intervalo 1-3 en segmento 1-1
+DEBUG:asa:thunderstruck 8
+DEBUG:asa:buscando intervalo 1-3 en segmento 2-3
+DEBUG:asa:thunderstruck 4
+DEBUG:asa:buscando intervalo 1-3 en segmento 4-7
+DEBUG:asa:nada q acer
+DEBUG:asa:los indices a mergear [4, 8]
+DEBUG:asa:las sumas de los segmentos [6, 2]
+DEBUG:asa:la suma raw 8
+DEBUG:asa:los sets a mergar [{2, 4}, {2}]
+DEBUG:asa:la intersexion de {2, 4} y {2} es {2}
+DEBUG:asa:la suma de intersex 2
+DEBUG:asa:tipo query U, param1 4 param2 7
+DEBUG:asa:profundidad actual 0, indice inicio nivel 0
+DEBUG:asa:profundidad actual 1, indice inicio nivel 1
+DEBUG:asa:profundidad actual 2, indice inicio nivel 3
+DEBUG:asa:el indice inicio nivel 7
+DEBUG:asa:el indice afectado en el arbolin 10
+DEBUG:asa:los indices afectados	array('i', [0, 1, 4, 10])
+DEBUG:asa:los sets correspondientes		[{0, 1, 2, 3, 4}, {1, 2, 4}, {2, 4}, {2}]
+DEBUG:asa:las sumas		[10, 7, 3, 3, 6, 3, 0, 1, 2, 4, 2, 3, 0, 0, 0, 0]
+DEBUG:asa:los sets correspondientes actual	[{0, 1, 3, 4, 7}, {1, 4, 7}, {4, 7}, {7}]
+DEBUG:asa:las sumas actual	[15, 12, 3, 3, 11, 3, 0, 1, 2, 4, 7, 3, 0, 0, 0, 0]
+DEBUG:asa:tipo query Q, param1 2 param2 4
+DEBUG:asa:buscando intervalo 1-3 en segmento 0-7
+DEBUG:asa:buscando intervalo 1-3 en segmento 0-3
+DEBUG:asa:buscando intervalo 1-3 en segmento 0-1
+DEBUG:asa:buscando intervalo 1-3 en segmento 0-0
+DEBUG:asa:nada q acer
+DEBUG:asa:buscando intervalo 1-3 en segmento 1-1
+DEBUG:asa:thunderstruck 8
+DEBUG:asa:buscando intervalo 1-3 en segmento 2-3
+DEBUG:asa:thunderstruck 4
+DEBUG:asa:buscando intervalo 1-3 en segmento 4-7
+DEBUG:asa:nada q acer
+DEBUG:asa:los indices a mergear [4, 8]
+DEBUG:asa:las sumas de los segmentos [11, 2]
+DEBUG:asa:la suma raw 13
+DEBUG:asa:los sets a mergar [{4, 7}, {2}]
+DEBUG:asa:la intersexion de {4, 7} y {2} es set()
+DEBUG:asa:la suma de intersex 0

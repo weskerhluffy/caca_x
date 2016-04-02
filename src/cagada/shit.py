@@ -132,41 +132,17 @@ def sumar_cagada(arbolin_en_array, sumas_unicos, indice_inicio, indice_final, nu
         sets_a_mergear = [arbolin_en_array[indice_set] for indice_set in indices]
         logger_cagada.debug("los sets a mergar %s" % sets_a_mergear)
         
-#        set_unicos = set(sets_a_mergear[0])
-#        set_unicos = sets_a_mergear[0].copy()
-#        set_unicos = sets_a_mergear[0]
-#        set_unicos = sets_a_mergear[0] | set()
-#        for elemen in sets_a_mergear[0]:
-#            if(not isinstance(elemen, numbers.Number)):
-#                while True:
-#                    pass
-#            set_unicos.add(elemen)
+        set_unicos = sets_a_mergear[0].copy()
         
-        logger_cagada.debug("el set unicos antes del desmadre %s", arbolin_en_array[indices[0]])
-        
-        indice_segmento_a_mergear = 1
         for set_actual in sets_a_mergear[1:]:
             suma_intersexion = 0
-#            set_intersexion.clear()
-            
-            for elem_act in set_actual:
-                ya_en_sets = False
-                
-                for set_unicos1 in sets_a_mergear[0:indice_segmento_a_mergear ]:
-                    if elem_act in set_unicos1:
-                        ya_en_sets = True
-                        break
-        
-                if(ya_en_sets):
-#                    set_intersexion.add(elem_act)
-                    suma -= elem_act
-#            set_intersexion = set_unicos & set_actual
-            logger_cagada.debug("la intersexion de %s y %s es %s" % (sets_a_mergear[0:indice_segmento_a_mergear ], set_actual, set_intersexion))
-#            suma_intersexion = sum(set_intersexion)
-#            logger_cagada.debug("la suma de intersex %d" % suma_intersexion)
-#            suma -= suma_intersexion
-            indice_segmento_a_mergear += 1
-#            set_unicos |= set_actual
+            set_intersexion = set()
+            set_intersexion = set_unicos & set_actual
+            logger_cagada.debug("la intersexion de %s y %s es %s" % (set_unicos, set_actual, set_intersexion))
+            suma_intersexion = sum(set_intersexion)
+            logger_cagada.debug("la suma de intersex %d" % suma_intersexion)
+            suma -= suma_intersexion
+            set_unicos |= set_actual
             
         logger_cagada.debug("el set unicos despues del desmadre %s", arbolin_en_array[indices[0]])
     
@@ -223,7 +199,7 @@ for linea in lineas[3:]:
     tipo_query = ""
     param1_str = ""
     param2_str = ""
-    (tipo_query, param1_str, param2_str) = linea.split(" ")
+    (tipo_query, param1_str, param2_str) = linea.split()
     
     param1 = int(param1_str)
     param2 = int(param2_str)
