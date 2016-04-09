@@ -28,3 +28,7 @@ src/crap
 *.lprof
 
 caca_x
+
+*.out
+
+ass1.txt
