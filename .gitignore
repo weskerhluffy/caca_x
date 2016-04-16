@@ -32,3 +32,5 @@ caca_x
 *.out
 
 ass1.txt
+/a.out.dSYM
+/caca_x.dSYM
