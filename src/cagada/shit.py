@@ -8,7 +8,6 @@ import array
 import sys
 import math
 import logging
-import numbers
 logger_cagada = None
 nivel_log = logging.ERROR
 # nivel_log = logging.DEBUG
@@ -18,20 +17,30 @@ def crea_caca_seg(numeros, inicio_inter, fin_inter, indice_nodo, arbolin_en_arra
     mitad_inter = 0
     if(indice_nodo >= len(arbolin_en_array)):
         logger_cagada.debug("el fin de inter %d por lo tanto a la mierda los nodos son %d" % (indice_nodo, len(arbolin_en_array)))
-        return set()
+        return {}
     logger_cagada.debug("puta madre el inter actual %d-%d comp %s" % (inicio_inter , fin_inter, inicio_inter == fin_inter))
     if(inicio_inter == fin_inter):
         logger_cagada.debug("tocando fondo en inter %d con num %d" % (inicio_inter, numeros[inicio_inter]))
-        arbolin_en_array[indice_nodo].add(numeros[inicio_inter])
+        arbolin_en_array[indice_nodo].setdefault(numeros[inicio_inter], 1)
     else:
+        mapa_izq = None
+        mapa_der = None
         mitad_inter = inicio_inter + int((fin_inter - inicio_inter) / 2)
         logger_cagada.debug("usando el nodo %d" % indice_nodo)
         logger_cagada.debug("inter izq %d-%d" % (inicio_inter, mitad_inter))
         logger_cagada.debug("inter der %d-%d" % (mitad_inter + 1, fin_inter))
-        arbolin_en_array[indice_nodo] |= crea_caca_seg(numeros, inicio_inter, mitad_inter, indice_nodo * 2 + 1, arbolin_en_array, sumas_unicos) | crea_caca_seg(numeros, mitad_inter + 1, fin_inter, indice_nodo * 2 + 2, arbolin_en_array, sumas_unicos)
+        mapa_izq = crea_caca_seg(numeros, inicio_inter, mitad_inter, indice_nodo * 2 + 1, arbolin_en_array, sumas_unicos) 
+        mapa_der = crea_caca_seg(numeros, mitad_inter + 1, fin_inter, indice_nodo * 2 + 2, arbolin_en_array, sumas_unicos)
+        
+        arbolin_en_array[indice_nodo] = mapa_izq.copy()
+        for numerin, conteo in mapa_der.items():
+            if numerin in arbolin_en_array[indice_nodo]:
+                arbolin_en_array[indice_nodo][numerin] += conteo
+            else:
+                arbolin_en_array[indice_nodo][numerin] = conteo
         
     logger_cagada.debug("en inter %d-%d nodo %d el set es %s" % (inicio_inter, fin_inter, indice_nodo, arbolin_en_array[indice_nodo]))
-    sumas_unicos[indice_nodo] = sum(arbolin_en_array[indice_nodo])
+    sumas_unicos[indice_nodo] = sum(arbolin_en_array[indice_nodo].keys())
     return arbolin_en_array[indice_nodo]
 
 def obtiene_indices_ass(indice_afectado, max_profundidad):
@@ -74,13 +83,19 @@ def actualizar_caca(numeros, arbolin_en_array, sumas_unicos, indice_actualizado,
     logger_cagada.debug("las sumas\t\t%s" % sumas_unicos)
     
     for indice in indices_afectado:
-        set_actual = set()
+        set_actual = {}
         set_actual = arbolin_en_array[indice]
-        set_actual.remove(viejo_pendejo)
-        sumas_unicos[indice] -= viejo_pendejo
+        
+        if(set_actual[viejo_pendejo] == 1):
+            del set_actual[viejo_pendejo]
+            sumas_unicos[indice] -= viejo_pendejo
+        else:
+            set_actual[viejo_pendejo] -= 1
         if(numero_nuevo not in set_actual):
-            set_actual.add(numero_nuevo)
+            set_actual[numero_nuevo] = 1
             sumas_unicos[indice] += numero_nuevo
+        else:
+            set_actual[numero_nuevo] += 1
             
     logger_cagada.debug("los sets correspondientes actual\t%s" % ([arbolin_en_array[x] for x in indices_afectado]))
     logger_cagada.debug("las sumas actual\t%s" % sumas_unicos)
@@ -129,7 +144,7 @@ def sumar_cagada(arbolin_en_array, sumas_unicos, indice_inicio, indice_final, nu
     logger_cagada.debug("la suma raw %d" % suma)
     
     if(len(indices) > 1):
-        sets_a_mergear = [arbolin_en_array[indice_set] for indice_set in indices]
+        sets_a_mergear = [set(arbolin_en_array[indice_set].keys()) for indice_set in indices]
         logger_cagada.debug("los sets a mergar %s" % sets_a_mergear)
         
         set_unicos = sets_a_mergear[0].copy()
@@ -174,7 +189,7 @@ while num_numeros >> max_profundidad:
 
 num_nodos = (2 << max_profundidad)
 
-arbolin_en_array = [set() for _ in range(num_nodos)]
+arbolin_en_array = [{} for _ in range(num_nodos)]
 sumas_unicos = [0 for _ in range(num_nodos)]
 
 num_numeros_redondeado = (1 << max_profundidad);
