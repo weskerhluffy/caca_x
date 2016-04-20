@@ -26,10 +26,10 @@
 
 #define CACA_X_VALIDAR_ARBOLINES
 
-#define caca_log_debug(formato, args...) 0
 /*
- #define caca_log_debug printf
+#define caca_log_debug(formato, args...) 0
  */
+#define caca_log_debug printf
 
 #define assert_timeout(condition) assert(condition);
 /*
@@ -146,7 +146,7 @@ avl_tree_node_t *avl_tree_create_node(avl_tree_t *arbolin) {
 		node->indice_en_arreglo = arbolin->nodos_usados - 1;
 	}
 	arbolin->nodos_realmente_en_arbol++;
-	caca_log_debug("aumentando nodos realmente en arbol a %u",
+	caca_log_debug("aumentando nodos realmente en arbol a %u\n",
 			arbolin->nodos_realmente_en_arbol);
 	return node;
 }
@@ -436,7 +436,7 @@ avl_tree_node_t *avl_tree_insert(avl_tree_t *tree, tipo_dato value) {
 
 						ancestro_actal = next;
 						while (ancestro_actal) {
-							caca_log_debug("bajando decendientes de %llu",
+							caca_log_debug("bajando decendientes de %u",
 									ancestro_actal->llave);
 							ancestro_actal->num_decendientes--;
 							ancestro_actal = ancestro_actal->padre;
@@ -557,8 +557,7 @@ void avl_tree_traverse_dfs(avl_tree_t *tree) {
 
 static inline void avl_tree_iterador_ini(avl_tree_t *arbolin,
 		avl_tree_iterator_t *iter) {
-	iter->contador_visitas = calloc(arbolin->nodos_usados,
-			sizeof(char));
+	iter->contador_visitas = calloc(arbolin->nodos_usados, sizeof(char));
 	assert_timeout(iter->contador_visitas);
 	iter->arbolin = arbolin;
 }
@@ -718,9 +717,11 @@ static inline char *avl_tree_inoder_node_travesti_conteo(avl_tree_node_t *nodo,
 				strcat(buf, " ");
 			}
 		}
-		sprintf(num_buf, "%u [%u,%u] (%u) ocu %u", nodo->llave,
-				(natural )(nodo->llave >> 32), (natural )nodo->llave,
-				nodo->num_decendientes, nodo->ocurrencias);
+		/*
+		 sprintf(num_buf, "%u [%u,%u] (%u) ocu %u", nodo->llave,
+		 (natural )(nodo->llave >> 32), (natural )nodo->llave,
+		 nodo->num_decendientes, nodo->ocurrencias);
+		 */
 		strcat(buf, num_buf);
 		if (profundidad_maxima != -1) {
 			strcat(buf, "\n");
@@ -810,17 +811,36 @@ static inline avl_tree_node_t* avl_tree_max_min(avl_tree_t *arbolin, bool max) {
 	return last_of_us;
 }
 
-static inline void avl_tree_validar_arbolin_indices(avl_tree_t *arbolin,
-		avl_tree_node_t *nodo) {
+static inline void avl_tree_validar_arbolin_indices_int(avl_tree_t *arbolin,
+		avl_tree_node_t *nodo, natural *contador_total) {
 	if (nodo != NULL ) {
 		assert_timeout(&arbolin->nodos_mem[nodo->indice_en_arreglo] == nodo);
 		assert_timeout(!nodo->left || nodo->left->padre == nodo);
-		avl_tree_validar_arbolin_indices(arbolin, nodo->left);
+		avl_tree_validar_arbolin_indices_int(arbolin, nodo->left,
+				contador_total);
 		assert_timeout(!nodo->right || nodo->right->padre == nodo);
-		avl_tree_validar_arbolin_indices(arbolin, nodo->right);
+		avl_tree_validar_arbolin_indices_int(arbolin, nodo->right,
+				contador_total);
 		assert_timeout(nodo->ocurrencias > 0);
 		assert_timeout(nodo->ocurrencias <= arbolin->max_nodos);
+		(*contador_total) += nodo->ocurrencias;
 	}
+}
+
+static inline void avl_tree_validar_arbolin_indices_ex(avl_tree_t *arbolin,
+		avl_tree_node_t *nodo, bool validar_conteo_total) {
+	natural contador_total = 0;
+
+	avl_tree_validar_arbolin_indices_int(arbolin, nodo, &contador_total);
+
+	assert_timeout(
+			!validar_conteo_total || contador_total == arbolin->max_nodos);
+
+}
+
+static inline void avl_tree_validar_arbolin_indices(avl_tree_t *arbolin,
+		avl_tree_node_t *nodo) {
+	avl_tree_validar_arbolin_indices_ex(arbolin, nodo, falso);
 }
 
 /* Balance a given node */
@@ -1275,8 +1295,9 @@ static inline void caca_x_construye_arbol_binario_segmentado(int *numeros,
 						estado_actual->nodo->arbolazo);
 
 #ifdef CACA_X_VALIDAR_ARBOLINES
-				avl_tree_validar_arbolin_indices(estado_actual->nodo->arbolazo,
-						estado_actual->nodo->arbolazo->root);
+				avl_tree_validar_arbolin_indices_ex(
+						estado_actual->nodo->arbolazo,
+						estado_actual->nodo->arbolazo->root, verdadero);
 #endif
 
 				estado_actual->nodo->num_numeros =
@@ -1507,7 +1528,7 @@ static inline long caca_x_generar_suma_repetidos(
 					}
 					if (nodo_nueva_raiz_arbol_actual) {
 						caca_log_debug(
-								"cambiada la raiz a buscar de %ld a %ld\n",
+								"cambiada la raiz a buscar de %u a %u\n",
 								nodo_raiz_arbol_actual->llave,
 								nodo_nueva_raiz_arbol_actual->llave);
 						nodo_raiz_arbol_actual = nodo_nueva_raiz_arbol_actual;
@@ -1593,7 +1614,7 @@ static inline long caca_x_suma_segmento(long *sumas_arbol_segmentado,
 			caca_arreglo_a_cadena(indices_nodos, num_indices_nodos, buf));
 
 	for (int i = 0; i < num_indices_nodos; i++) {
-		caca_log_debug("segmento %d aporta %d\n", indices_nodos[i],
+		caca_log_debug("segmento %d aporta %lu\n", indices_nodos[i],
 				sumas_arbol_segmentado[indices_nodos[i]]);
 		res += sumas_arbol_segmentado[indices_nodos[i]];
 	}
@@ -1702,7 +1723,8 @@ static inline void caca_x_actualiza_arbol_numeros_unicos(
 		}
 		avl_tree_insert(arbolazo, (tipo_dato) nuevo_valor);
 #ifdef CACA_X_VALIDAR_ARBOLINES
-		avl_tree_validar_arbolin_indices(arbolazo, arbolazo->root);
+		avl_tree_validar_arbolin_indices_ex(arbolazo, arbolazo->root,
+				verdadero);
 #endif
 		caca_log_debug(
 				"insertado %d en seg %d. Despues de insertar el arbol es\n%s",
@@ -1724,13 +1746,13 @@ static inline void caca_x_actualiza_sumas_arbol_segmentado(
 		idx_a_actualizar = indices_a_actualizar[i];
 		arbolin_a_actualizar = arbol_numeros_unicos[idx_a_actualizar].arbolazo;
 
-		caca_log_debug("el valor original de la suma en seg %d es %d\n",
+		caca_log_debug("el valor original de la suma en seg %d es %lu\n",
 				idx_a_actualizar, sumas_arbol_segmentado[idx_a_actualizar]);
 
 		if (!caca_comun_checa_bit(nuevo_ya_existente, i)) {
 			sumas_arbol_segmentado[idx_a_actualizar] += nuevo_valor;
 			caca_log_debug(
-					"despues de ahora sumar %d en seg %d la suma en seg %d \n",
+					"despues de ahora sumar %d en seg %d la suma en seg %lu\n",
 					nuevo_valor, idx_a_actualizar,
 					sumas_arbol_segmentado[idx_a_actualizar]);
 		} else {
@@ -1740,7 +1762,7 @@ static inline void caca_x_actualiza_sumas_arbol_segmentado(
 		if (!caca_comun_checa_bit(viejo_aun_presente, i)) {
 			sumas_arbol_segmentado[idx_a_actualizar] -= viejo_pendejo;
 			caca_log_debug(
-					"despues de restar %d en seg %d la suma en seg %d \n",
+					"despues de restar %d en seg %d la suma en seg %lu\n",
 					viejo_pendejo, idx_a_actualizar,
 					sumas_arbol_segmentado[idx_a_actualizar]);
 		} else {
@@ -1792,6 +1814,49 @@ static inline void caca_x_actualiza_estado(int *numeros,
 			&nuevo_ya_existente, &viejo_aun_presente);
 
 	numeros[idx_actualizado] = nuevo_valor;
+}
+
+static inline void caca_x_validar_segmentos_int(
+		caca_x_numeros_unicos_en_rango *arbolin_segs, natural idx,
+		natural *conteo_por_nivel, natural num_nodos) {
+
+	caca_x_numeros_unicos_en_rango *arbolin_actual = NULL;
+
+	arbolin_actual = arbolin_segs + idx;
+
+	if (!arbolin_actual->num_numeros) {
+		caca_log_debug(
+				"oe o ea, la familia telo agradecera. encontrado arbol pendejo");
+		return;
+	}
+
+	assert_timeout(
+			arbolin_actual->num_numeros
+					== arbolin_actual->arbolazo->nodos_realmente_en_arbol);
+
+	conteo_por_nivel[arbolin_actual->altura] +=
+			arbolin_actual->arbolazo->nodos_realmente_en_arbol;
+
+	if (arbolin_actual->idx * 2 + 1 < num_nodos) {
+		caca_x_validar_segmentos_int(arbolin_segs, arbolin_actual->idx * 2 + 1,
+				conteo_por_nivel, num_nodos);
+		if (arbolin_actual->idx * 2 + 2 < num_nodos) {
+			caca_x_validar_segmentos_int(arbolin_segs,
+					arbolin_actual->idx * 2 + 2, conteo_por_nivel, num_nodos);
+		}
+	}
+}
+
+static inline void caca_x_validar_segmentos(
+		caca_x_numeros_unicos_en_rango *arbolin_segs, natural num_numeros,
+		natural num_nodos) {
+	natural conteo_por_nivel[19] = { 0 };
+
+	caca_x_validar_segmentos_int(arbolin_segs, 0, conteo_por_nivel, num_nodos);
+
+	for (int i = 0; i <= arbolin_segs->altura; i++) {
+		assert_timeout(conteo_por_nivel[i] == num_numeros);
+	}
 }
 
 static inline void caca_x_main() {
@@ -1861,6 +1926,10 @@ static inline void caca_x_main() {
 	caca_x_construye_arbol_binario_segmentado(numeros,
 			num_numeros_redondeado - 1, max_profundidad);
 
+#ifdef CACA_X_VALIDAR_ARBOLINES
+	caca_x_validar_segmentos(arbol_numeros_unicos, num_numeros, num_nodos);
+#endif
+
 	caca_x_suma_unicos(sumas_arbol_segmentado, num_nodos);
 
 	while (cont_queries < num_queries) {
@@ -1884,6 +1953,11 @@ static inline void caca_x_main() {
 			caca_x_actualiza_estado(numeros, arbol_numeros_unicos,
 					sumas_arbol_segmentado, idx_actualizado, nuevo_valor,
 					(2 << (max_profundidad + 0)) - 2);
+
+#ifdef CACA_X_VALIDAR_ARBOLINES
+			caca_x_validar_segmentos(arbol_numeros_unicos, num_numeros,
+					num_nodos);
+#endif
 			break;
 		default:
 			abort();
