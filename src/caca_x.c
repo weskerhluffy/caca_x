@@ -6,6 +6,7 @@
  Copyright   : a veces siento que
  Description : Hello World in C, Ansi-style
  ============================================================================
+ tamaño 41333
  */
 
 #include <stdio.h>
@@ -26,10 +27,10 @@
 
 #define CACA_X_VALIDAR_ARBOLINES
 
-/*
 #define caca_log_debug(formato, args...) 0
+/*
+ #define caca_log_debug printf
  */
-#define caca_log_debug printf
 
 #define assert_timeout(condition) assert(condition);
 /*
@@ -70,6 +71,9 @@ struct avl_tree_s {
 	natural max_nodos;
 	natural nodos_realmente_en_arbol;
 	natural nodos_usados;
+	natural nodos_realmente_en_arbol_utiles;
+	natural max_nodos_utiles;
+	natural ocurrencias_totales;
 	struct avl_tree_node_s *root;
 	avl_tree_node_t *nodos_mem;
 	natural *nodos_libres_idx;
@@ -121,7 +125,7 @@ static inline void avl_tree_destroy(avl_tree_t *arbolin) {
 }
 
 /* Initialize a new node. */
-avl_tree_node_t *avl_tree_create_node(avl_tree_t *arbolin) {
+avl_tree_node_t *avl_tree_create_node(avl_tree_t *arbolin, tipo_dato llave) {
 	avl_tree_node_t *node = NULL;
 
 	assert_timeout(
@@ -145,7 +149,11 @@ avl_tree_node_t *avl_tree_create_node(avl_tree_t *arbolin) {
 		node = arbolin->nodos_mem + arbolin->nodos_usados++;
 		node->indice_en_arreglo = arbolin->nodos_usados - 1;
 	}
+	node->llave = llave;
 	arbolin->nodos_realmente_en_arbol++;
+	if (llave) {
+		arbolin->nodos_realmente_en_arbol_utiles++;
+	}
 	caca_log_debug("aumentando nodos realmente en arbol a %u\n",
 			arbolin->nodos_realmente_en_arbol);
 	return node;
@@ -404,10 +412,12 @@ avl_tree_node_t *avl_tree_insert(avl_tree_t *tree, tipo_dato value) {
 	avl_tree_node_t *next = NULL;
 	avl_tree_node_t *last = NULL;
 
+	if (value) {
+		tree->ocurrencias_totales++;
+	}
 	/* Well, there must be a first case */
 	if (tree->root == NULL ) {
-		node = avl_tree_create_node(tree);
-		node->llave = value;
+		node = avl_tree_create_node(tree, value);
 
 		tree->root = node;
 
@@ -451,8 +461,7 @@ avl_tree_node_t *avl_tree_insert(avl_tree_t *tree, tipo_dato value) {
 			}
 		}
 
-		node = avl_tree_create_node(tree);
-		node->llave = value;
+		node = avl_tree_create_node(tree, value);
 
 		if (value < last->llave) {
 			last->left = node;
@@ -567,9 +576,10 @@ static inline void avl_tree_iterador_fini(avl_tree_iterator_t *iter) {
 }
 
 static inline bool avl_tree_iterador_hay_siguiente(avl_tree_iterator_t *iter) {
-	return !(iter->nodo_actual == iter->arbolin->root
-			&& iter->contador_visitas[iter->arbolin->root->indice_en_arreglo]
-					== 2);
+	return iter->arbolin->root
+			&& !(iter->nodo_actual == iter->arbolin->root
+					&& iter->contador_visitas[iter->arbolin->root->indice_en_arreglo]
+							== 2);
 }
 
 static inline avl_tree_node_t* avl_tree_iterador_siguiente(
@@ -813,7 +823,7 @@ static inline avl_tree_node_t* avl_tree_max_min(avl_tree_t *arbolin, bool max) {
 
 static inline void avl_tree_validar_arbolin_indices_int(avl_tree_t *arbolin,
 		avl_tree_node_t *nodo, natural *contador_total) {
-	if (nodo != NULL ) {
+	if (nodo && nodo->llave) {
 		assert_timeout(&arbolin->nodos_mem[nodo->indice_en_arreglo] == nodo);
 		assert_timeout(!nodo->left || nodo->left->padre == nodo);
 		avl_tree_validar_arbolin_indices_int(arbolin, nodo->left,
@@ -834,7 +844,12 @@ static inline void avl_tree_validar_arbolin_indices_ex(avl_tree_t *arbolin,
 	avl_tree_validar_arbolin_indices_int(arbolin, nodo, &contador_total);
 
 	assert_timeout(
-			!validar_conteo_total || contador_total == arbolin->max_nodos);
+			!validar_conteo_total
+					|| contador_total == arbolin->max_nodos_utiles);
+	assert_timeout(
+			!validar_conteo_total
+					|| arbolin->ocurrencias_totales
+							== arbolin->max_nodos_utiles);
 
 }
 
@@ -881,6 +896,10 @@ static inline avl_tree_node_t *avl_tree_nodo_borrar(avl_tree_t *arbolini,
 					ignora_conteo);
 			assert_timeout(!root->right || root->right->padre == root);
 		} else {
+			if (key && !ignora_conteo) {
+				arbolini->ocurrencias_totales--;
+			}
+
 			if ((root->ocurrencias - 1) == 0 || ignora_conteo) {
 				if (root->left == NULL || root->right == NULL ) {
 					avl_tree_node_t *temp =
@@ -916,9 +935,11 @@ static inline avl_tree_node_t *avl_tree_nodo_borrar(avl_tree_t *arbolini,
 					memset(temp, 0, sizeof(avl_tree_node_t));
 					temp->llave = AVL_TREE_VALOR_INVALIDO;
 					arbolini->nodos_realmente_en_arbol--;
+					if (key) {
+						arbolini->nodos_realmente_en_arbol_utiles--;
+					}
 					caca_log_debug("disminuiendo nodos realmente en arbol a %u",
 							arbolini->nodos_realmente_en_arbol);
-
 				} else {
 					// node with two children: Get the inorder successor (smallest
 					// in the right subtree)
@@ -990,15 +1011,14 @@ void avl_tree_borrar(avl_tree_t *tree, tipo_dato value) {
 	if (newroot != tree->root) {
 		tree->root = newroot;
 	}
-//	tree->nodos_realmente_en_arbol--;
 }
 
 #endif
 
 typedef struct caca_x_numeros_unicos_en_rango {
 	avl_tree_t *arbolazo;
-	int max_numeros;
-	int num_numeros;
+	natural max_numeros;
+	natural max_num_esperados;
 	int altura;
 	int idx;
 	int limite_izq;
@@ -1095,11 +1115,11 @@ static inline void caca_x_clona_nodos(avl_tree_t *arbol_dst,
 	int idx_en_arreglo_real = 0;
 	avl_tree_node_t *nodo_nuevo = NULL;
 
-	if (!nodo_ori) {
+	if (!nodo_ori || !nodo_ori->llave) {
 		return;
 	}
 
-	nodo_nuevo = avl_tree_create_node(arbol_dst);
+	nodo_nuevo = avl_tree_create_node(arbol_dst, nodo_ori->llave);
 	idx_en_arreglo_real = nodo_nuevo->indice_en_arreglo;
 
 	memcpy(nodo_nuevo, nodo_ori, offsetof(avl_tree_node_t,left));
@@ -1127,13 +1147,14 @@ static inline void caca_x_clona_arbol(avl_tree_t *arbol_dst,
 	int tam_arbol_ori = 0;
 
 	tam_arbol_dst = arbol_dst->max_nodos;
-	tam_arbol_ori = arbol_ori->nodos_realmente_en_arbol;
+	tam_arbol_ori = arbol_ori->nodos_realmente_en_arbol_utiles;
 
 	assert_timeout(tam_arbol_dst >= tam_arbol_ori);
 	assert_timeout(!arbol_dst->nodos_usados);
 
 	caca_x_clona_nodos(arbol_dst, arbol_ori->root, NULL, NULL );
 
+	arbol_dst->ocurrencias_totales = arbol_ori->ocurrencias_totales;
 }
 
 static inline void caca_x_mergear_arboles(avl_tree_t *arbolin_izq,
@@ -1147,8 +1168,8 @@ static inline void caca_x_mergear_arboles(avl_tree_t *arbolin_izq,
 
 	assert_timeout(arbolin_izq && arbolin_der);
 
-	tam_arbol_izq = arbolin_izq->nodos_realmente_en_arbol;
-	tam_arbol_der = arbolin_der->nodos_realmente_en_arbol;
+	tam_arbol_izq = arbolin_izq->nodos_realmente_en_arbol_utiles;
+	tam_arbol_der = arbolin_der->nodos_realmente_en_arbol_utiles;
 
 	if (tam_arbol_izq <= tam_arbol_der) {
 		tam_arbol_menor = tam_arbol_izq;
@@ -1163,8 +1184,8 @@ static inline void caca_x_mergear_arboles(avl_tree_t *arbolin_izq,
 	caca_x_clona_arbol(arbolin_resultante, arbol_mayor);
 
 	assert_timeout(
-			arbolin_resultante->nodos_realmente_en_arbol
-					== arbol_mayor->nodos_realmente_en_arbol);
+			arbolin_resultante->nodos_realmente_en_arbol_utiles
+					== arbol_mayor->nodos_realmente_en_arbol_utiles);
 
 	avl_tree_iterador_ini(arbol_menor, iter);
 
@@ -1180,8 +1201,16 @@ static inline void caca_x_mergear_arboles(avl_tree_t *arbolin_izq,
 			nodo_encontrado = avl_tree_insert(arbolin_resultante,
 					numero_actual);
 			nodo_encontrado->ocurrencias = nodo_actual->ocurrencias;
+			if (numero_actual) {
+				arbolin_resultante->ocurrencias_totales +=
+						nodo_actual->ocurrencias - 1;
+			}
 		} else {
 			nodo_encontrado->ocurrencias += nodo_actual->ocurrencias;
+			if (numero_actual) {
+				arbolin_resultante->ocurrencias_totales +=
+						nodo_actual->ocurrencias;
+			}
 		}
 
 		avl_tree_iterador_siguiente(iter);
@@ -1191,7 +1220,8 @@ static inline void caca_x_mergear_arboles(avl_tree_t *arbolin_izq,
 }
 
 static inline void caca_x_construye_arbol_binario_segmentado(int *numeros,
-		int num_numeros, int max_profundidad) {
+		int num_numeros, int max_profundidad,
+		natural ultimo_indice_numero_valido) {
 	int profundidad = -1;
 
 	estado->idx_ini = 0;
@@ -1294,14 +1324,23 @@ static inline void caca_x_construye_arbol_binario_segmentado(int *numeros,
 				caca_x_mergear_arboles(arbolin_izq, arbolin_der,
 						estado_actual->nodo->arbolazo);
 
+				estado_actual->nodo->max_num_esperados =
+						(ultimo_indice_numero_valido
+								>= estado_actual->nodo->limite_der) ?
+								estado_actual->nodo->max_numeros :
+						(ultimo_indice_numero_valido
+								>= estado_actual->nodo->limite_izq) ?
+								(ultimo_indice_numero_valido
+										- estado_actual->nodo->limite_izq + 1) :
+								0;
+				estado_actual->nodo->arbolazo->max_nodos_utiles =
+						estado_actual->nodo->max_num_esperados;
+
 #ifdef CACA_X_VALIDAR_ARBOLINES
 				avl_tree_validar_arbolin_indices_ex(
 						estado_actual->nodo->arbolazo,
 						estado_actual->nodo->arbolazo->root, verdadero);
 #endif
-
-				estado_actual->nodo->num_numeros =
-						estado_actual->nodo->arbolazo->nodos_realmente_en_arbol;
 
 				memset(estado_actual, 0, sizeof(caca_x_estado_recursion));
 				caca_log_debug("ultimo 'recursion' de nodo %d, nada q acer\n",
@@ -1327,20 +1366,21 @@ static inline void caca_x_construye_arbol_binario_segmentado(int *numeros,
 
 			numero_actual = numeros[idx_ini];
 
-			assert_timeout(!nodo->num_numeros);
-			assert_timeout(nodo->max_numeros == 1);
-			assert_timeout(nodo->limite_izq == nodo->limite_der);
-			assert_timeout(nodo->arbolazo->max_nodos == 1);
-			assert_timeout(!nodo->arbolazo->nodos_realmente_en_arbol);
+			if (numero_actual) {
+				assert_timeout(nodo->max_numeros == 1);
+				assert_timeout(nodo->limite_izq == nodo->limite_der);
+				assert_timeout(nodo->arbolazo->max_nodos == 1);
+				assert_timeout(!nodo->arbolazo->nodos_realmente_en_arbol_utiles);
 
-			assert_timeout(!avl_tree_find(nodo->arbolazo, numero_actual));
+				assert_timeout(!avl_tree_find(nodo->arbolazo, numero_actual));
 
-			avl_tree_insert(nodo->arbolazo, (tipo_dato) numero_actual);
-			nodo->num_numeros++;
+				avl_tree_insert(nodo->arbolazo, (tipo_dato) numero_actual);
+				nodo->arbolazo->max_nodos_utiles = nodo->max_num_esperados = 1;
 
-			caca_log_debug("asignado unico numero %d a indice de arbol %d\n",
-					numero_actual, idx_nodo);
-
+				caca_log_debug(
+						"asignado unico numero %d a indice de arbol %d\n",
+						numero_actual, idx_nodo);
+			}
 			memset(estado_actual, 0, sizeof(caca_x_estado_recursion));
 		}
 	}
@@ -1407,7 +1447,8 @@ static inline void caca_x_suma_unicos(long *sumas_arbol_segmentado,
 				caca_arreglo_a_cadena(numeros_unicos, num_numeros_unicos, buf));
 
 		assert_timeout(
-				nodo->num_numeros == arbolazo_actual->nodos_realmente_en_arbol);
+				nodo->max_num_esperados
+						>= arbolazo_actual->nodos_realmente_en_arbol_utiles);
 
 		caca_log_debug("la suma es %ld\n", sumas_arbol_segmentado[i]);
 	}
@@ -1527,8 +1568,7 @@ static inline long caca_x_generar_suma_repetidos(
 						break;
 					}
 					if (nodo_nueva_raiz_arbol_actual) {
-						caca_log_debug(
-								"cambiada la raiz a buscar de %u a %u\n",
+						caca_log_debug("cambiada la raiz a buscar de %u a %u\n",
 								nodo_raiz_arbol_actual->llave,
 								nodo_nueva_raiz_arbol_actual->llave);
 						nodo_raiz_arbol_actual = nodo_nueva_raiz_arbol_actual;
@@ -1824,18 +1864,19 @@ static inline void caca_x_validar_segmentos_int(
 
 	arbolin_actual = arbolin_segs + idx;
 
-	if (!arbolin_actual->num_numeros) {
+	if (!arbolin_actual->arbolazo
+			|| !arbolin_actual->arbolazo->nodos_realmente_en_arbol_utiles) {
 		caca_log_debug(
 				"oe o ea, la familia telo agradecera. encontrado arbol pendejo");
 		return;
 	}
 
 	assert_timeout(
-			arbolin_actual->num_numeros
-					== arbolin_actual->arbolazo->nodos_realmente_en_arbol);
+			arbolin_actual->max_num_esperados
+					>= arbolin_actual->arbolazo->nodos_realmente_en_arbol_utiles);
 
 	conteo_por_nivel[arbolin_actual->altura] +=
-			arbolin_actual->arbolazo->nodos_realmente_en_arbol;
+			arbolin_actual->arbolazo->ocurrencias_totales;
 
 	if (arbolin_actual->idx * 2 + 1 < num_nodos) {
 		caca_x_validar_segmentos_int(arbolin_segs, arbolin_actual->idx * 2 + 1,
@@ -1924,7 +1965,7 @@ static inline void caca_x_main() {
 #endif
 
 	caca_x_construye_arbol_binario_segmentado(numeros,
-			num_numeros_redondeado - 1, max_profundidad);
+			num_numeros_redondeado - 1, max_profundidad, num_numeros - 1);
 
 #ifdef CACA_X_VALIDAR_ARBOLINES
 	caca_x_validar_segmentos(arbol_numeros_unicos, num_numeros, num_nodos);
