@@ -1621,6 +1621,65 @@ static inline long caca_x_generar_suma_repetidos(
 	return suma_repetidos;
 }
 
+static inline unsigned long caca_x_generar_suma_unicos(
+		caca_x_numeros_unicos_en_rango *arbol_numeros_unicos,
+		long *sumas_arbol_segmentado, int *indices, int num_indices) {
+	unsigned long suma_unicos = 0;
+	avl_tree_t *arbolin_unicos = NULL;
+
+	caca_log_debug("sumando unicos\n");
+
+	avl_tree_create(&arbolin_unicos, MAX_NODOS);
+
+	for (int i = 0; i < num_indices; i++) {
+		avl_tree_t *arbolin_actual = NULL;
+
+		arbolin_actual = arbol_numeros_unicos[indices[i]].arbolazo;
+
+		if (!i) {
+			caca_log_debug("primer arbol en nodo %d\n", i);
+			caca_x_clona_arbol(arbolin_unicos, arbolin_actual);
+			suma_unicos += sumas_arbol_segmentado[indices[i]];
+		} else {
+			avl_tree_iterator_t *iter_actual = &(avl_tree_iterator_t ) { 0 };
+			avl_tree_node_t *nodo_actual = NULL;
+
+			avl_tree_iterador_ini(arbolin_actual, iter_actual);
+
+			while (avl_tree_iterador_hay_siguiente(iter_actual)) {
+				int numero_actual = 0;
+
+				nodo_actual = avl_tree_iterador_obtener_actual(iter_actual);
+				numero_actual = nodo_actual->llave;
+
+				if (!avl_tree_find(arbolin_unicos, numero_actual)) {
+					caca_log_debug("añadiendo %d al arbol de unicos\n%s\n",
+							numero_actual,
+							avl_tree_sprint_identado(arbolin_unicos, (char[100] ) { '\0' }));
+					avl_tree_insert(arbolin_unicos, numero_actual);
+					suma_unicos += numero_actual;
+				} else {
+					caca_log_debug(
+							"numero %d, se encontro que es duplicado en \n%s, proviene de segmento actual %d:\n%s\n",
+							numero_actual,
+							avl_tree_sprint_identado(arbolin_unicos, (char[100] ) { '\0' }),
+							i,
+							avl_tree_sprint_identado(arbolin_actual, (char[100] ) { '\0' }));
+				}
+
+				avl_tree_iterador_siguiente(iter_actual);
+			}
+
+			avl_tree_iterador_fini(iter_actual);
+		}
+	}
+
+	avl_tree_destroy(arbolin_unicos);
+
+	caca_log_debug("en total la suma de repetidos es %ld\n", suma_unicos);
+	return suma_unicos;
+}
+
 int caca_comun_compara_enteros(const void *a, const void *b) {
 	int a_int = 0;
 	int b_int = 0;
@@ -1653,14 +1712,19 @@ static inline long caca_x_suma_segmento(long *sumas_arbol_segmentado,
 	caca_log_debug("indices de segmento %d:%d %s\n", limite_izq, limite_der,
 			caca_arreglo_a_cadena(indices_nodos, num_indices_nodos, buf));
 
-	for (int i = 0; i < num_indices_nodos; i++) {
-		caca_log_debug("segmento %d aporta %lu\n", indices_nodos[i],
-				sumas_arbol_segmentado[indices_nodos[i]]);
-		res += sumas_arbol_segmentado[indices_nodos[i]];
-	}
+	/*
+	 for (int i = 0; i < num_indices_nodos; i++) {
+	 caca_log_debug("segmento %d aporta %lu\n", indices_nodos[i],
+	 sumas_arbol_segmentado[indices_nodos[i]]);
+	 res += sumas_arbol_segmentado[indices_nodos[i]];
+	 }
 
-	res -= caca_x_generar_suma_repetidos(arbol_numeros_unicos, indices_nodos,
-			num_indices_nodos);
+	 res -= caca_x_generar_suma_repetidos(arbol_numeros_unicos, indices_nodos,
+	 num_indices_nodos);
+	 */
+
+	res = caca_x_generar_suma_unicos(arbol_numeros_unicos,
+			sumas_arbol_segmentado, indices_nodos, num_indices_nodos);
 	caca_log_debug("La suma es %ld\n", res);
 
 	return res;
