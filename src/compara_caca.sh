@@ -20,8 +20,8 @@ do
 		echo "verga, fallo en $caca"
 		exit 1
 	fi
-#	python3 cagada/shit.py < $caca > $caca_log_piton
-#	diferencia_ojala=$(diff $caca_log_c $caca_log_piton)
-#	echo "la diferencia es"
-#	echo "$diferencia_ojala CACA"
+	python3 cagada/shit.py < $caca > $caca_log_piton
+	diferencia_ojala=$(diff $caca_log_c $caca_log_piton)
+	echo "la diferencia es"
+	echo "$diferencia_ojala CACA"
 done
