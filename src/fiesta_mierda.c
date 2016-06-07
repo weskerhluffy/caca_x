@@ -26,6 +26,14 @@
 #define MAX_NODOS (1 << 16)
 #define CACA_X_VALOR_INVALIDO -1
 
+#define FIESTA_MIERDA_MAX_VALOR_ST_1 1E6
+#define FIESTA_MIERDA_MIN_VALOR_ST_1 1
+#define FIESTA_MIERDA_MAX_VALOR_ST_2 -5E3
+#define FIESTA_MIERDA_MIN_VALOR_ST_2 5E3
+#define FIESTA_MIERDA_MAX_NUMS_ST_1 9E6
+#define FIESTA_MIERDA_MAX_NUMS_ST_2 9E3
+#define FIESTA_MIERDA_MAX_NUMS_REDONDEADO 67108864
+
 #define CACA_X_VALIDAR_ARBOLINES
 
 #define caca_log_debug(formato, args...) 0
@@ -843,11 +851,11 @@ static inline void avl_tree_validar_arbolin_indices_ex(avl_tree_t *arbolin,
 #if 0
 	assert_timeout(
 			!validar_conteo_total
-					|| contador_total == arbolin->max_nodos_utiles);
+			|| contador_total == arbolin->max_nodos_utiles);
 	assert_timeout(
 			!validar_conteo_total
-					|| arbolin->ocurrencias_totales
-							== arbolin->max_nodos_utiles);
+			|| arbolin->ocurrencias_totales
+			== arbolin->max_nodos_utiles);
 #endif
 
 }
@@ -1031,15 +1039,18 @@ typedef struct caca_x_estado_recursion {
 	caca_x_numeros_unicos_en_rango *nodo;
 } caca_x_estado_recursion;
 
-caca_x_numeros_unicos_en_rango *arbol_numeros_unicos = NULL;
-
 caca_x_estado_recursion *estado = NULL;
 
+typedef enum fiesta_mierda_tipo_sub_tarea {
+	st_tipo_desconocido, st_tipo_1, st_tipo_2
+} fiesta_mierda_tipo_sub_tarea;
+
 static inline int lee_matrix_long_stdin(tipo_dato *matrix, int *num_filas,
-		int *num_columnas, int num_max_filas, int num_max_columnas) {
+		int *num_columnas, int num_max_filas, int num_max_columnas,
+		fiesta_mierda_tipo_sub_tarea *tipo_st) {
 	int indice_filas = 0;
 	int indice_columnas = 0;
-	long numero = 0;
+	tipo_dato numero = 0;
 	char *siguiente_cadena_numero = NULL;
 	char *cadena_numero_actual = NULL;
 	char *linea = NULL;
@@ -1054,6 +1065,16 @@ static inline int lee_matrix_long_stdin(tipo_dato *matrix, int *num_filas,
 			numero = strtol(siguiente_cadena_numero, &cadena_numero_actual, 10);
 			if (cadena_numero_actual == siguiente_cadena_numero) {
 				break;
+			}
+			if (tipo_st) {
+				if (numero < FIESTA_MIERDA_MIN_VALOR_ST_1) {
+					assert_timeout(*tipo_st != st_tipo_1);
+					*tipo_st = st_tipo_2;
+				}
+				if (numero > FIESTA_MIERDA_MAX_VALOR_ST_2) {
+					assert_timeout(*tipo_st != st_tipo_2);
+					*tipo_st = st_tipo_1;
+				}
 			}
 			*(matrix + indice_filas * num_max_columnas + indice_columnas) =
 					numero;
@@ -1438,7 +1459,7 @@ static inline void caca_x_suma_unicos(long *sumas_arbol_segmentado,
 #if 0
 		assert_timeout(
 				nodo->max_num_esperados
-						>= arbolazo_actual->nodos_realmente_en_arbol_utiles);
+				>= arbolazo_actual->nodos_realmente_en_arbol_utiles);
 #endif
 
 		caca_log_debug("la suma es %ld\n", sumas_arbol_segmentado[i]);
@@ -1792,7 +1813,7 @@ static inline void caca_x_validar_segmentos_int(
 #if 0
 	assert_timeout(
 			arbolin_actual->max_num_esperados
-					>= arbolin_actual->arbolazo->nodos_realmente_en_arbol_utiles);
+			>= arbolin_actual->arbolazo->nodos_realmente_en_arbol_utiles);
 #endif
 	conteo_por_nivel[arbolin_actual->altura] +=
 			arbolin_actual->arbolazo->ocurrencias_totales;
@@ -1822,114 +1843,104 @@ static inline void caca_x_validar_segmentos(
 static inline void caca_x_main() {
 	int *matriz_nums = NULL;
 	int num_filas = 0;
-	int num_numeros = 0;
-	int *numeros = NULL;
-	int num_queries = 0;
-	int cont_queries = 0;
-	char tipo_query = 0;
-	int idx_query_ini = 0;
-	int idx_query_fin = 0;
-	int max_profundidad = 0;
-	int num_numeros_redondeado = 0;
-	int num_nodos = 0;
-	long *sumas_arbol_segmentado = NULL;
+	natural num_casos = 0;
 
 	char buf[100] = { '\0' };
 
-	matriz_nums = calloc(MAX_NUMEROS_REDONDEADO * 3, sizeof(int));
+	matriz_nums = calloc(FIESTA_MIERDA_MAX_NUMS_REDONDEADO * 2,
+			sizeof(tipo_dato));
 	assert_timeout(matriz_nums);
 
-	num_filas = 3;
-	lee_matrix_long_stdin(matriz_nums, &num_filas, NULL, 3,
-			MAX_NUMEROS_REDONDEADO);
+	num_filas = 1;
+	lee_matrix_long_stdin(matriz_nums, &num_filas, NULL, 1, 1, NULL );
+	num_casos = *matriz_nums;
 
-	num_numeros = *matriz_nums;
-	numeros = matriz_nums + MAX_NUMEROS_REDONDEADO;
-	num_queries = *(numeros + MAX_NUMEROS_REDONDEADO);
-
-	caca_log_debug("a vece siento q %d\n", num_numeros);
-	caca_log_debug("as corrido con algo de s %s\n",
-			caca_arreglo_a_cadena(numeros, num_numeros, buf));
-	caca_log_debug("en estas paginas %d\n", num_queries);
-
-	while ((num_numeros >> max_profundidad)) {
-		max_profundidad++;
-	}
-	num_numeros_redondeado = (1 << max_profundidad);
-
-	caca_log_debug("en estas paginas %s\n",
-			caca_arreglo_a_cadena(numeros, num_numeros_redondeado, buf));
-
-	num_nodos = (2 << (max_profundidad + 0));
-
-	caca_log_debug("el numero de nodos %d\n", num_nodos);
-
-	arbol_numeros_unicos = calloc(num_nodos,
-			sizeof(caca_x_numeros_unicos_en_rango));
-	assert_timeout(arbol_numeros_unicos);
-
-	sumas_arbol_segmentado = calloc(num_nodos, sizeof(long));
-	assert_timeout(sumas_arbol_segmentado);
-
-	caca_log_debug("llamando a func rec con max prof %d\n",
-			max_profundidad + 2);
-
-#ifdef USA_MALLOC
-	estado = malloc((max_profundidad +2) * sizeof(caca_x_estado_recursion));
-	assert_timeout(estado);
-	memset(estado, 0, (max_profundidad+2 )* sizeof(caca_x_estado_recursion));
-#else
-	estado = calloc(max_profundidad + 2, sizeof(caca_x_estado_recursion));
-	assert_timeout(estado);
-#endif
-
-	caca_x_construye_arbol_binario_segmentado(numeros,
-			num_numeros_redondeado - 1, max_profundidad, num_numeros - 1);
-
-#ifdef CACA_X_VALIDAR_ARBOLINES
-	caca_x_validar_segmentos(arbol_numeros_unicos, num_numeros_redondeado, num_nodos);
-#endif
-
-	caca_x_suma_unicos(sumas_arbol_segmentado, num_nodos);
-
-	while (cont_queries < num_queries) {
-		int idx_actualizado = 0;
-		int nuevo_valor = 0;
+	for (int i = 0; i < num_casos; i++) {
 		long sum = 0;
-		scanf("%c %d %d\n", &tipo_query, &idx_query_ini, &idx_query_fin);
-		caca_log_debug("q: %c, ini %d, fin %d\n", tipo_query, idx_query_ini,
-				idx_query_fin);
+		natural max_profundidad = 0;
+		natural num_numeros_redondeado = 0;
+		natural num_nodos = 0;
+		natural num_numeros = 0;
+		fiesta_mierda_tipo_sub_tarea tipo_st = st_tipo_desconocido;
+		long *sumas_arbol_segmentado = NULL;
+		tipo_dato *numeros = NULL;
+		caca_x_numeros_unicos_en_rango *arbol_numeros_unicos = NULL;
 
-		switch (tipo_query) {
-		case 'Q':
-			sum = caca_x_suma_segmento(sumas_arbol_segmentado,
-					idx_query_ini - 1, idx_query_fin - 1);
-			printf("%lu\n", sum);
-			break;
-		case 'U':
+		num_filas = 2;
+		lee_matrix_long_stdin(matriz_nums, &num_filas, NULL, 2,
+				FIESTA_MIERDA_MAX_NUMS_REDONDEADO, &tipo_st);
 
-			idx_actualizado = idx_query_ini - 1;
-			nuevo_valor = idx_query_fin;
-			caca_x_actualiza_estado(numeros, arbol_numeros_unicos,
-					sumas_arbol_segmentado, idx_actualizado, nuevo_valor,
-					(2 << (max_profundidad + 0)) - 2);
+		num_numeros = *matriz_nums;
+		numeros = matriz_nums + FIESTA_MIERDA_MAX_NUMS_REDONDEADO;
 
-#ifdef CACA_X_VALIDAR_ARBOLINES
-			caca_x_validar_segmentos(arbol_numeros_unicos, num_numeros_redondeado,
-					num_nodos);
-#endif
-			break;
-		default:
-			abort();
-			break;
+		caca_log_debug("a vece siento q %d\n", num_numeros);
+		caca_log_debug("as corrido con algo de s %s\n",
+				caca_arreglo_a_cadena(numeros, num_numeros, buf));
+		if (num_numeros > FIESTA_MIERDA_MAX_NUMS_ST_2) {
+			assert_timeout(tipo_st != st_tipo_2);
+			tipo_st = st_tipo_1;
 		}
 
-		cont_queries++;
-	}
+		while ((num_numeros >> max_profundidad)) {
+			max_profundidad++;
+		}
+		num_numeros_redondeado = (1 << max_profundidad);
 
+		caca_log_debug("en estas paginas %s\n",
+				caca_arreglo_a_cadena(numeros, num_numeros_redondeado, buf));
+
+		num_nodos = (2 << (max_profundidad + 0));
+
+		caca_log_debug("el numero de nodos %d\n", num_nodos);
+
+		arbol_numeros_unicos = calloc(num_nodos,
+				sizeof(caca_x_numeros_unicos_en_rango));
+		assert_timeout(arbol_numeros_unicos);
+
+		sumas_arbol_segmentado = calloc(num_nodos, sizeof(long));
+		assert_timeout(sumas_arbol_segmentado);
+
+		caca_log_debug("llamando a func rec con max prof %d\n",
+				max_profundidad + 2);
+
+#ifdef USA_MALLOC
+		estado = malloc((max_profundidad +2) * sizeof(caca_x_estado_recursion));
+		assert_timeout(estado);
+		memset(estado, 0, (max_profundidad+2 )* sizeof(caca_x_estado_recursion));
+#else
+		estado = calloc(max_profundidad + 2, sizeof(caca_x_estado_recursion));
+		assert_timeout(estado);
+#endif
+
+		caca_x_construye_arbol_binario_segmentado(numeros,
+				num_numeros_redondeado - 1, max_profundidad, num_numeros - 1);
+
+#ifdef CACA_X_VALIDAR_ARBOLINES
+		caca_x_validar_segmentos(arbol_numeros_unicos, num_numeros_redondeado,
+				num_nodos);
+		for (int i = 0; i < num_numeros; i++) {
+			if (tipo_st == st_tipo_1) {
+				assert_timeout(numeros[i] >=FIESTA_MIERDA_MIN_VALOR_ST_1);
+				assert_timeout(numeros[i] <=FIESTA_MIERDA_MAX_VALOR_ST_1);
+				assert_timeout(num_numeros<=FIESTA_MIERDA_MAX_NUMS_ST_1);
+			}
+			if (tipo_st == st_tipo_2) {
+				assert_timeout(numeros[i] >=FIESTA_MIERDA_MIN_VALOR_ST_2);
+				assert_timeout(numeros[i] <=FIESTA_MIERDA_MAX_VALOR_ST_2);
+				assert_timeout(num_numeros<=FIESTA_MIERDA_MAX_NUMS_ST_2);
+			}
+		}
+#endif
+
+		caca_x_suma_unicos(sumas_arbol_segmentado, num_nodos);
+
+		sum = caca_x_suma_segmento(sumas_arbol_segmentado, 0,
+				num_numeros_redondeado);
+
+		free(arbol_numeros_unicos);
+		free(sumas_arbol_segmentado);
+	}
 	free(matriz_nums);
-	free(arbol_numeros_unicos);
-	free(sumas_arbol_segmentado);
 	free(estado);
 }
 
