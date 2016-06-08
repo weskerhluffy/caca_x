@@ -28,17 +28,17 @@
 
 #define FIESTA_MIERDA_MAX_VALOR_ST_1 1E6
 #define FIESTA_MIERDA_MIN_VALOR_ST_1 1
-#define FIESTA_MIERDA_MAX_VALOR_ST_2 -5E3
-#define FIESTA_MIERDA_MIN_VALOR_ST_2 5E3
+#define FIESTA_MIERDA_MAX_VALOR_ST_2 5E3
+#define FIESTA_MIERDA_MIN_VALOR_ST_2 -5E3
 #define FIESTA_MIERDA_MAX_NUMS_ST_1 9E6
 #define FIESTA_MIERDA_MAX_NUMS_ST_2 9E3
 #define FIESTA_MIERDA_MAX_NUMS_REDONDEADO 67108864
 
 #define CACA_X_VALIDAR_ARBOLINES
 
-#define caca_log_debug(formato, args...) 0
+ #define caca_log_debug(formato, args...) 0
 /*
- #define caca_log_debug printf
+#define caca_log_debug printf
  */
 
 #define assert_timeout(condition) assert(condition);
@@ -1057,6 +1057,9 @@ static inline int lee_matrix_long_stdin(tipo_dato *matrix, int *num_filas,
 
 	linea = calloc(TAM_MAX_LINEA, sizeof(char));
 
+	if (tipo_st) {
+		*tipo_st = st_tipo_desconocido;
+	}
 	while (indice_filas < num_max_filas && fgets(linea, TAM_MAX_LINEA, stdin)) {
 		indice_columnas = 0;
 		cadena_numero_actual = linea;
@@ -1070,15 +1073,19 @@ static inline int lee_matrix_long_stdin(tipo_dato *matrix, int *num_filas,
 				if (numero < FIESTA_MIERDA_MIN_VALOR_ST_1) {
 					assert_timeout(*tipo_st != st_tipo_1);
 					*tipo_st = st_tipo_2;
+					caca_log_debug("debido a %u el tipo1 es %u\n", numero,
+							*tipo_st);
 				}
 				if (numero > FIESTA_MIERDA_MAX_VALOR_ST_2) {
 					assert_timeout(*tipo_st != st_tipo_2);
 					*tipo_st = st_tipo_1;
+					caca_log_debug("debido a %u el tipo2 es %u\n", numero,
+							*tipo_st);
 				}
 			}
 			*(matrix + indice_filas * num_max_columnas + indice_columnas) =
 					numero;
-			caca_log_debug("en col %d, fil %d, el valor %lu\n", indice_columnas,
+			caca_log_debug("en col %d, fil %d, el valor %u\n", indice_columnas,
 					indice_filas, numero);
 			indice_columnas++;
 			caca_log_debug("las columnas son %d\n", indice_columnas);
@@ -1233,8 +1240,8 @@ static inline void caca_x_mergear_arboles(avl_tree_t *arbolin_izq,
 }
 
 static inline void caca_x_construye_arbol_binario_segmentado(int *numeros,
-		int num_numeros, int max_profundidad,
-		natural ultimo_indice_numero_valido) {
+		caca_x_numeros_unicos_en_rango *arbol_numeros_unicos, int num_numeros,
+		int max_profundidad, natural ultimo_indice_numero_valido) {
 	int profundidad = -1;
 
 	estado->idx_ini = 0;
@@ -1398,7 +1405,7 @@ static inline void caca_x_construye_arbol_binario_segmentado(int *numeros,
 }
 
 static inline void caca_x_suma_unicos(long *sumas_arbol_segmentado,
-		int num_nodos) {
+		caca_x_numeros_unicos_en_rango *arbol_numeros_unicos, int num_nodos) {
 	int *numeros_unicos = NULL;
 	char *buf = NULL;
 
@@ -1531,16 +1538,18 @@ static inline unsigned long caca_x_generar_suma_unicos(
 				if (!avl_tree_find(arbolin_unicos, numero_actual)) {
 					caca_log_debug("añadiendo %d al arbol de unicos\n%s\n",
 							numero_actual,
-							avl_tree_sprint_identado(arbolin_unicos, (char[100] ) { '\0' }));
+							avl_tree_sprint_identado(arbolin_unicos,
+									(char[100] ) { '\0' }));
 					avl_tree_insert(arbolin_unicos, numero_actual);
 					suma_unicos += numero_actual;
 				} else {
 					caca_log_debug(
 							"numero %d, se encontro que es duplicado en \n%s, proviene de segmento actual %d:\n%s\n",
 							numero_actual,
-							avl_tree_sprint_identado(arbolin_unicos, (char[100] ) { '\0' }),
-							i,
-							avl_tree_sprint_identado(arbolin_actual, (char[100] ) { '\0' }));
+							avl_tree_sprint_identado(arbolin_unicos,
+									(char[100] ) { '\0' }), i,
+							avl_tree_sprint_identado(arbolin_actual,
+									(char[100] ) { '\0' }));
 				}
 
 				avl_tree_iterador_siguiente(iter_actual);
@@ -1570,7 +1579,8 @@ int caca_comun_compara_enteros(const void *a, const void *b) {
 }
 
 static inline long caca_x_suma_segmento(long *sumas_arbol_segmentado,
-		int limite_izq, int limite_der) {
+		caca_x_numeros_unicos_en_rango *arbol_numeros_unicos, int limite_izq,
+		int limite_der) {
 	long res = 0;
 	int num_indices_nodos = 0;
 	int *indices_nodos = (int[30] ) { 0 };
@@ -1779,7 +1789,8 @@ static inline void caca_x_actualiza_estado(int *numeros,
 	assert_timeout(num_indices_afectados_actualizacion < 18);
 
 	caca_log_debug("los idx afectados %s\n",
-			caca_arreglo_a_cadena(indices_afectados_actualizacion, num_indices_afectados_actualizacion, buf));
+			caca_arreglo_a_cadena(indices_afectados_actualizacion,
+					num_indices_afectados_actualizacion, buf));
 
 	caca_log_debug("el viejo %d y el nuevo %d\n", viejo_pendejo, nuevo_valor);
 
@@ -1912,7 +1923,7 @@ static inline void caca_x_main() {
 		assert_timeout(estado);
 #endif
 
-		caca_x_construye_arbol_binario_segmentado(numeros,
+		caca_x_construye_arbol_binario_segmentado(numeros, arbol_numeros_unicos,
 				num_numeros_redondeado - 1, max_profundidad, num_numeros - 1);
 
 #ifdef CACA_X_VALIDAR_ARBOLINES
@@ -1932,10 +1943,13 @@ static inline void caca_x_main() {
 		}
 #endif
 
-		caca_x_suma_unicos(sumas_arbol_segmentado, num_nodos);
+		caca_x_suma_unicos(sumas_arbol_segmentado, arbol_numeros_unicos,
+				num_nodos);
 
-		sum = caca_x_suma_segmento(sumas_arbol_segmentado, 0,
-				num_numeros_redondeado);
+		sum = caca_x_suma_segmento(sumas_arbol_segmentado, arbol_numeros_unicos,
+				0, num_numeros_redondeado);
+
+		printf("%ld\n",sum);
 
 		free(arbol_numeros_unicos);
 		free(sumas_arbol_segmentado);
