@@ -8,6 +8,7 @@
  ============================================================================
  tamaño 41333
  https://www.codechef.com/problems/DUPSUM
+ http://www.spojtoolkit.com/TestCaseGenerator/
  */
 
 #include <stdio.h>
@@ -32,21 +33,22 @@
 #define FIESTA_MIERDA_MIN_VALOR_ST_2 -5E3
 #define FIESTA_MIERDA_MAX_NUMS_ST_1 9E6
 #define FIESTA_MIERDA_MAX_NUMS_ST_2 9E3
-#define FIESTA_MIERDA_MAX_NUMS_REDONDEADO 67108864
+#define FIESTA_MIERDA_MAX_NUMS_REDONDEADO 16777216
 
 #define CACA_X_VALIDAR_ARBOLINES
 
 int printf_apocrifo(const char * __restrict, ...);
-#define caca_log_debug printf_apocrifo
-/*
- #define caca_log_debug printf
- */
+#ifdef ONLINE_JUDGE
+	#define caca_log_debug printf_apocrifo
+#else
+	#define caca_log_debug printf
+#endif
 
+#define assert_timeout(condition) assert(condition);
 /*
- #define assert_timeout(condition) assert(condition);
  #define assert_timeout(condition) 0
+ #define assert_timeout(condition) if(!(condition)){printf("fuck\n");sleep(10);}
  */
-#define assert_timeout(condition) if(!(condition)){printf("fuck\n");sleep(10);}
 
 typedef int tipo_dato;
 typedef unsigned int natural;
@@ -988,7 +990,7 @@ typedef enum fiesta_mierda_tipo_sub_tarea {
 	st_tipo_desconocido, st_tipo_1, st_tipo_2
 } fiesta_mierda_tipo_sub_tarea;
 
-int printf_apocrifo(const char * cad, ...){
+int printf_apocrifo(const char * cad, ...) {
 	return 0;
 }
 static inline int lee_matrix_long_stdin(tipo_dato *matrix, int *num_filas,
@@ -1054,6 +1056,10 @@ static inline char *caca_arreglo_a_cadena(tipo_dato *arreglo, int tam_arreglo,
 	int i;
 	char *ap_buffer = NULL;
 	int characteres_escritos = 0;
+
+#ifdef ONLINE_JUDGE
+	return NULL;
+#endif
 
 	memset(buffer, 0, 100);
 	ap_buffer = buffer;
@@ -1481,16 +1487,18 @@ static inline unsigned long caca_x_generar_suma_unicos(
 				if (!avl_tree_find(arbolin_unicos, numero_actual)) {
 					caca_log_debug("añadiendo %d al arbol de unicos\n%s\n",
 							numero_actual,
-							avl_tree_sprint_identado(arbolin_unicos, (char[100] ) { '\0' }));
+							avl_tree_sprint_identado(arbolin_unicos,
+									(char[100] ) { '\0' }));
 					avl_tree_insert(arbolin_unicos, numero_actual);
 					suma_unicos += numero_actual;
 				} else {
 					caca_log_debug(
 							"numero %d, se encontro que es duplicado en \n%s, proviene de segmento actual %d:\n%s\n",
 							numero_actual,
-							avl_tree_sprint_identado(arbolin_unicos, (char[100] ) { '\0' }),
-							i,
-							avl_tree_sprint_identado(arbolin_actual, (char[100] ) { '\0' }));
+							avl_tree_sprint_identado(arbolin_unicos,
+									(char[100] ) { '\0' }), i,
+							avl_tree_sprint_identado(arbolin_actual,
+									(char[100] ) { '\0' }));
 				}
 
 				avl_tree_iterador_siguiente(iter_actual);
@@ -1638,11 +1646,9 @@ static inline void caca_x_main() {
 
 	char buf[100] = { '\0' };
 
-	matriz_nums = calloc(FIESTA_MIERDA_MAX_NUMS_REDONDEADO * 2,
-			sizeof(tipo_dato));
+	matriz_nums = calloc(FIESTA_MIERDA_MAX_NUMS_REDONDEADO, sizeof(tipo_dato));
 	assert_timeout(matriz_nums);
 
-	num_filas = 1;
 	lee_matrix_long_stdin(matriz_nums, &num_filas, NULL, 1, 1, NULL );
 	num_casos = *matriz_nums;
 
@@ -1657,14 +1663,17 @@ static inline void caca_x_main() {
 		tipo_dato *numeros = NULL;
 		caca_x_numeros_unicos_en_rango *arbol_numeros_unicos = NULL;
 
-		num_filas = 2;
-		lee_matrix_long_stdin(matriz_nums, &num_filas, NULL, 2,
-				FIESTA_MIERDA_MAX_NUMS_REDONDEADO, &tipo_st);
+		lee_matrix_long_stdin(matriz_nums, &num_filas, NULL, 1, 1, NULL );
 
 		num_numeros = *matriz_nums;
-		numeros = matriz_nums + FIESTA_MIERDA_MAX_NUMS_REDONDEADO;
 
 		caca_log_debug("a vece siento q %d\n", num_numeros);
+
+		lee_matrix_long_stdin(matriz_nums, &num_filas, NULL, 1,
+				FIESTA_MIERDA_MAX_NUMS_REDONDEADO, &tipo_st);
+
+		numeros = matriz_nums;
+
 		caca_log_debug("as corrido con algo de s %s\n",
 				caca_arreglo_a_cadena(numeros, num_numeros, buf));
 		if (num_numeros > FIESTA_MIERDA_MAX_NUMS_ST_2) {
