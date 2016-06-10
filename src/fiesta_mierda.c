@@ -707,6 +707,11 @@ static inline char *avl_tree_inoder_node_travesti(avl_tree_node_t *nodo,
 	return buf;
 }
 
+static inline char* avl_tree_sprint(avl_tree_t *arbolini, char *buf) {
+	avl_tree_inoder_node_travesti(arbolini->root, buf, -1);
+	return buf;
+}
+
 static inline char *avl_tree_inoder_node_travesti_conteo(avl_tree_node_t *nodo,
 		char *buf, int profundidad_maxima) {
 	char num_buf[100] = { '\0' };
@@ -750,6 +755,21 @@ static inline char *avl_tree_inoder_node_travesti_conteo(avl_tree_node_t *nodo,
 		 }
 		 */
 	}
+	return buf;
+}
+
+static inline char* avl_tree_sprint_identado(avl_tree_t *arbolini, char *buf) {
+	int profundidad_maxima = 0;
+
+	*buf = '\0';
+
+	if (!arbolini->root) {
+		return buf;
+	}
+
+	profundidad_maxima = arbolini->root->altura;
+	avl_tree_inoder_node_travesti_conteo(arbolini->root, buf,
+			profundidad_maxima);
 	return buf;
 }
 
