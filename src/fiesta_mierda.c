@@ -36,16 +36,17 @@
 
 #define CACA_X_VALIDAR_ARBOLINES
 
+int printf_apocrifo(const char * __restrict, ...);
+#define caca_log_debug printf_apocrifo
 /*
- #define caca_log_debug(formato, args...) 0
+ #define caca_log_debug printf
  */
-#define caca_log_debug printf
 
-#define assert_timeout(condition) assert(condition);
 /*
- #define assert_timeout(condition) if(!(condition)){printf("fuck\n");sleep(10);}
+ #define assert_timeout(condition) assert(condition);
  #define assert_timeout(condition) 0
  */
+#define assert_timeout(condition) if(!(condition)){printf("fuck\n");sleep(10);}
 
 typedef int tipo_dato;
 typedef unsigned int natural;
@@ -987,6 +988,9 @@ typedef enum fiesta_mierda_tipo_sub_tarea {
 	st_tipo_desconocido, st_tipo_1, st_tipo_2
 } fiesta_mierda_tipo_sub_tarea;
 
+int printf_apocrifo(const char * cad, ...){
+	return 0;
+}
 static inline int lee_matrix_long_stdin(tipo_dato *matrix, int *num_filas,
 		int *num_columnas, int num_max_filas, int num_max_columnas,
 		fiesta_mierda_tipo_sub_tarea *tipo_st) {
@@ -1128,7 +1132,6 @@ static inline void caca_x_mergear_arboles(avl_tree_t *arbolin_izq,
 		avl_tree_t *arbolin_der, avl_tree_t *arbolin_resultante) {
 	int tam_arbol_izq = 0;
 	int tam_arbol_der = 0;
-	int tam_arbol_menor = 0;
 	avl_tree_iterator_t *iter = &(avl_tree_iterator_t ) { 0 };
 	avl_tree_t *arbol_menor = NULL;
 	avl_tree_t *arbol_mayor = NULL;
@@ -1139,11 +1142,9 @@ static inline void caca_x_mergear_arboles(avl_tree_t *arbolin_izq,
 	tam_arbol_der = arbolin_der->nodos_realmente_en_arbol_utiles;
 
 	if (tam_arbol_izq <= tam_arbol_der) {
-		tam_arbol_menor = tam_arbol_izq;
 		arbol_menor = arbolin_izq;
 		arbol_mayor = arbolin_der;
 	} else {
-		tam_arbol_menor = tam_arbol_der;
 		arbol_menor = arbolin_der;
 		arbol_mayor = arbolin_izq;
 	}
@@ -1480,18 +1481,16 @@ static inline unsigned long caca_x_generar_suma_unicos(
 				if (!avl_tree_find(arbolin_unicos, numero_actual)) {
 					caca_log_debug("añadiendo %d al arbol de unicos\n%s\n",
 							numero_actual,
-							avl_tree_sprint_identado(arbolin_unicos,
-									(char[100] ) { '\0' }));
+							avl_tree_sprint_identado(arbolin_unicos, (char[100] ) { '\0' }));
 					avl_tree_insert(arbolin_unicos, numero_actual);
 					suma_unicos += numero_actual;
 				} else {
 					caca_log_debug(
 							"numero %d, se encontro que es duplicado en \n%s, proviene de segmento actual %d:\n%s\n",
 							numero_actual,
-							avl_tree_sprint_identado(arbolin_unicos,
-									(char[100] ) { '\0' }), i,
-							avl_tree_sprint_identado(arbolin_actual,
-									(char[100] ) { '\0' }));
+							avl_tree_sprint_identado(arbolin_unicos, (char[100] ) { '\0' }),
+							i,
+							avl_tree_sprint_identado(arbolin_actual, (char[100] ) { '\0' }));
 				}
 
 				avl_tree_iterador_siguiente(iter_actual);
@@ -1526,8 +1525,6 @@ static inline long caca_x_suma_segmento(long *sumas_arbol_segmentado,
 	long res = 0;
 	int num_indices_nodos = 0;
 	int *indices_nodos = (int[30] ) { 0 };
-	caca_x_numeros_unicos_en_rango *nodo_izq = NULL;
-	caca_x_numeros_unicos_en_rango *nodo_der = NULL;
 	char buf[100] = { '\0' };
 
 	caca_x_encuentra_indices_segmento(arbol_numeros_unicos, 0, limite_izq,
@@ -1732,7 +1729,7 @@ static inline void caca_x_main() {
 		sum = caca_x_suma_segmento(sumas_arbol_segmentado, arbol_numeros_unicos,
 				0, num_numeros_redondeado);
 
-		printf("%ld\n",sum);
+		printf("%ld\n", sum);
 
 		free(arbol_numeros_unicos);
 		free(sumas_arbol_segmentado);
