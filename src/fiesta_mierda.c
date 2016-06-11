@@ -711,6 +711,9 @@ static inline char *avl_tree_inoder_node_travesti(avl_tree_node_t *nodo,
 }
 
 static inline char* avl_tree_sprint(avl_tree_t *arbolini, char *buf) {
+#ifdef ONLINE_JUDGE
+	return NULL;
+#endif
 	avl_tree_inoder_node_travesti(arbolini->root, buf, -1);
 	return buf;
 }
