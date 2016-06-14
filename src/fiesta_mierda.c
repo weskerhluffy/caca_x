@@ -51,6 +51,10 @@ int printf_apocrifo(const char * __restrict, ...);
  #define assert_timeout(condition) if(!(condition)){printf("fuck\n");sleep(10);}
  */
 
+#define fiesta_mierda_calloc(multiplicador, tamanio) \
+  caca_log_debug("allocando %u",multiplicador*tamanio); \
+  calloc(multiplicador, tamanio)
+
 typedef int tipo_dato;
 typedef unsigned int natural;
 
@@ -108,13 +112,13 @@ avl_tree_t *avl_tree_create(avl_tree_t **arbolin, int max_nodos) {
 
 	assert_timeout(arbolin);
 
-	tree = calloc(1, sizeof(avl_tree_t));
+	tree = fiesta_mierda_calloc(1, sizeof(avl_tree_t));
 
 	assert_timeout(tree);
 
 	tree->max_nodos = max_nodos;
 
-	tree->nodos_mem = calloc(max_nodos * 2, sizeof(avl_tree_node_t));
+	tree->nodos_mem = fiesta_mierda_calloc(max_nodos * 2, sizeof(avl_tree_node_t));
 
 	assert_timeout(tree->nodos_mem);
 
@@ -122,7 +126,7 @@ avl_tree_t *avl_tree_create(avl_tree_t **arbolin, int max_nodos) {
 
 	*arbolin = tree;
 
-	tree->nodos_libres_idx = calloc(max_nodos, sizeof(natural));
+	tree->nodos_libres_idx = fiesta_mierda_calloc(max_nodos, sizeof(natural));
 	memset(tree->nodos_libres_idx, 0xffff, sizeof(natural) * max_nodos);
 
 	assert_timeout(tree->nodos_libres_idx);
@@ -575,7 +579,7 @@ void avl_tree_traverse_dfs(avl_tree_t *tree) {
 
 static inline void avl_tree_iterador_ini(avl_tree_t *arbolin,
 		avl_tree_iterator_t *iter) {
-	iter->contador_visitas = calloc(arbolin->nodos_usados, sizeof(char));
+	iter->contador_visitas = fiesta_mierda_calloc(arbolin->nodos_usados, sizeof(char));
 	assert_timeout(iter->contador_visitas);
 	iter->arbolin = arbolin;
 }
@@ -1007,7 +1011,7 @@ static inline int lee_matrix_long_stdin(tipo_dato *matrix, int *num_filas,
 	char *cadena_numero_actual = NULL;
 	char *linea = NULL;
 
-	linea = calloc(TAM_MAX_LINEA, sizeof(char));
+	linea = fiesta_mierda_calloc(TAM_MAX_LINEA, sizeof(char));
 
 	if (tipo_st) {
 		*tipo_st = st_tipo_desconocido;
@@ -1062,6 +1066,10 @@ static inline char *caca_arreglo_a_cadena(tipo_dato *arreglo, int tam_arreglo,
 	int characteres_escritos = 0;
 
 #ifdef ONLINE_JUDGE
+	return NULL;
+#endif
+
+#ifndef FIESTA_MIERDA_LOG
 	return NULL;
 #endif
 
@@ -1362,9 +1370,9 @@ static inline void caca_x_suma_unicos(long *sumas_arbol_segmentado,
 	int *numeros_unicos = NULL;
 	char *buf = NULL;
 
-	buf = calloc(1000, sizeof(char));
+	buf = fiesta_mierda_calloc(1000, sizeof(char));
 
-	numeros_unicos = calloc(MAX_NODOS, sizeof(int));
+	numeros_unicos = fiesta_mierda_calloc(MAX_NODOS, sizeof(int));
 	assert(numeros_unicos);
 
 	for (int i = 0; i < num_nodos; i++) {
@@ -1651,7 +1659,7 @@ static inline void caca_x_main() {
 
 	char buf[100] = { '\0' };
 
-	matriz_nums = calloc(FIESTA_MIERDA_MAX_NUMS_REDONDEADO, sizeof(tipo_dato));
+	matriz_nums = fiesta_mierda_calloc(FIESTA_MIERDA_MAX_NUMS_REDONDEADO, sizeof(tipo_dato));
 	assert_timeout(matriz_nums);
 
 	lee_matrix_long_stdin(matriz_nums, &num_filas, NULL, 1, 1, NULL );
@@ -1662,7 +1670,7 @@ static inline void caca_x_main() {
 	assert_timeout(estado);
 	memset(estado, 0, (max_profundidad+2 )* sizeof(caca_x_estado_recursion));
 #else
-	estado = calloc(FIESTA_MIERDA_MAX_PROFUNDIDAD + 1,
+	estado = fiesta_mierda_calloc(FIESTA_MIERDA_MAX_PROFUNDIDAD + 1,
 			sizeof(caca_x_estado_recursion));
 	assert_timeout(estado);
 #endif
@@ -1708,11 +1716,11 @@ static inline void caca_x_main() {
 
 		caca_log_debug("el numero de nodos %d\n", num_nodos);
 
-		arbol_numeros_unicos = calloc(num_nodos,
+		arbol_numeros_unicos = fiesta_mierda_calloc(num_nodos,
 				sizeof(caca_x_numeros_unicos_en_rango));
 		assert_timeout(arbol_numeros_unicos);
 
-		sumas_arbol_segmentado = calloc(num_nodos, sizeof(long));
+		sumas_arbol_segmentado = fiesta_mierda_calloc(num_nodos, sizeof(long));
 		assert_timeout(sumas_arbol_segmentado);
 
 		caca_log_debug("llamando a func rec con max prof %d\n",
