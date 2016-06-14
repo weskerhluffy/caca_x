@@ -51,10 +51,6 @@ int printf_apocrifo(const char * __restrict, ...);
  #define assert_timeout(condition) if(!(condition)){printf("fuck\n");sleep(10);}
  */
 
-#define fiesta_mierda_calloc(multiplicador, tamanio) \
-  caca_log_debug("allocando %u",multiplicador*tamanio); \
-  calloc(multiplicador, tamanio)
-
 typedef int tipo_dato;
 typedef unsigned int natural;
 
@@ -66,6 +62,8 @@ typedef enum BOOLEANOS {
 
 #define max(x,y) ((x) < (y) ? (y) : (x))
 #define min(x,y) ((x) < (y) ? (x) : (y))
+
+static inline void *fiesta_mierda_calloc(int multiplicador, int tamanio);
 
 #if 1
 
@@ -118,7 +116,8 @@ avl_tree_t *avl_tree_create(avl_tree_t **arbolin, int max_nodos) {
 
 	tree->max_nodos = max_nodos;
 
-	tree->nodos_mem = fiesta_mierda_calloc(max_nodos * 2, sizeof(avl_tree_node_t));
+	tree->nodos_mem = fiesta_mierda_calloc(max_nodos * 2,
+			sizeof(avl_tree_node_t));
 
 	assert_timeout(tree->nodos_mem);
 
@@ -579,7 +578,8 @@ void avl_tree_traverse_dfs(avl_tree_t *tree) {
 
 static inline void avl_tree_iterador_ini(avl_tree_t *arbolin,
 		avl_tree_iterator_t *iter) {
-	iter->contador_visitas = fiesta_mierda_calloc(arbolin->nodos_usados, sizeof(char));
+	iter->contador_visitas = fiesta_mierda_calloc(arbolin->nodos_usados,
+			sizeof(char));
 	assert_timeout(iter->contador_visitas);
 	iter->arbolin = arbolin;
 }
@@ -1070,11 +1070,11 @@ static inline char *caca_arreglo_a_cadena(tipo_dato *arreglo, int tam_arreglo,
 #endif
 
 #ifndef FIESTA_MIERDA_LOG
-	return NULL;
+	return NULL ;
 #endif
 
 #ifndef FIESTA_MIERDA_LOG
-	return NULL;
+	return NULL ;
 #endif
 
 	memset(buffer, 0, 100);
@@ -1656,6 +1656,11 @@ static inline void caca_x_validar_segmentos(
 	}
 }
 
+static inline void *fiesta_mierda_calloc(int multiplicador, int tamanio) {
+	caca_log_debug("allocando %u", multiplicador * tamanio);
+	return calloc(multiplicador, tamanio);
+}
+
 static inline void caca_x_main() {
 	int *matriz_nums = NULL;
 	int num_filas = 0;
@@ -1663,7 +1668,8 @@ static inline void caca_x_main() {
 
 	char buf[100] = { '\0' };
 
-	matriz_nums = fiesta_mierda_calloc(FIESTA_MIERDA_MAX_NUMS_REDONDEADO, sizeof(tipo_dato));
+	matriz_nums = fiesta_mierda_calloc(FIESTA_MIERDA_MAX_NUMS_REDONDEADO,
+			sizeof(tipo_dato));
 	assert_timeout(matriz_nums);
 
 	lee_matrix_long_stdin(matriz_nums, &num_filas, NULL, 1, 1, NULL );
