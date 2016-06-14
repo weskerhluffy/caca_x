@@ -34,6 +34,7 @@
 #define FIESTA_MIERDA_MAX_NUMS_ST_1 9E6
 #define FIESTA_MIERDA_MAX_NUMS_ST_2 9E3
 #define FIESTA_MIERDA_MAX_NUMS_REDONDEADO 16777216
+#define FIESTA_MIERDA_MAX_PROFUNDIDAD 24
 
 #define CACA_X_VALIDAR_ARBOLINES
 
@@ -1422,6 +1423,7 @@ static inline void caca_x_suma_unicos(long *sumas_arbol_segmentado,
 #endif
 
 		caca_log_debug("la suma es %ld\n", sumas_arbol_segmentado[i]);
+		avl_tree_iterador_fini(iterador);
 	}
 
 	free(buf);
@@ -1655,6 +1657,16 @@ static inline void caca_x_main() {
 	lee_matrix_long_stdin(matriz_nums, &num_filas, NULL, 1, 1, NULL );
 	num_casos = *matriz_nums;
 
+#ifdef USA_MALLOC
+	estado = malloc((max_profundidad +2) * sizeof(caca_x_estado_recursion));
+	assert_timeout(estado);
+	memset(estado, 0, (max_profundidad+2 )* sizeof(caca_x_estado_recursion));
+#else
+	estado = calloc(FIESTA_MIERDA_MAX_PROFUNDIDAD + 1,
+			sizeof(caca_x_estado_recursion));
+	assert_timeout(estado);
+#endif
+
 	for (int i = 0; i < num_casos; i++) {
 		long sum = 0;
 		natural max_profundidad = 0;
@@ -1706,15 +1718,6 @@ static inline void caca_x_main() {
 		caca_log_debug("llamando a func rec con max prof %d\n",
 				max_profundidad + 2);
 
-#ifdef USA_MALLOC
-		estado = malloc((max_profundidad +2) * sizeof(caca_x_estado_recursion));
-		assert_timeout(estado);
-		memset(estado, 0, (max_profundidad+2 )* sizeof(caca_x_estado_recursion));
-#else
-		estado = calloc(max_profundidad + 2, sizeof(caca_x_estado_recursion));
-		assert_timeout(estado);
-#endif
-
 		caca_x_construye_arbol_binario_segmentado(numeros, arbol_numeros_unicos,
 				num_numeros_redondeado - 1, max_profundidad, num_numeros - 1);
 
@@ -1749,7 +1752,6 @@ static inline void caca_x_main() {
 			nodo_segmento_actual = arbol_numeros_unicos + i;
 			if (nodo_segmento_actual->arbolazo) {
 				avl_tree_destroy(nodo_segmento_actual->arbolazo);
-				nodo_segmento_actual->arbolazo=NULL;
 			}
 		}
 		free(arbol_numeros_unicos);
