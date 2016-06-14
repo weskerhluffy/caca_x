@@ -39,9 +39,9 @@
 
 int printf_apocrifo(const char * __restrict, ...);
 #ifdef ONLINE_JUDGE
-	#define caca_log_debug printf_apocrifo
+#define caca_log_debug printf_apocrifo
 #else
-	#define caca_log_debug printf
+#define caca_log_debug printf
 #endif
 
 #define assert_timeout(condition) assert(condition);
@@ -1743,6 +1743,15 @@ static inline void caca_x_main() {
 
 		printf("%ld\n", sum);
 
+		for (int i = 0; i < num_nodos; i++) {
+			caca_x_numeros_unicos_en_rango *nodo_segmento_actual = NULL;
+
+			nodo_segmento_actual = arbol_numeros_unicos + i;
+			if (nodo_segmento_actual->arbolazo) {
+				avl_tree_destroy(nodo_segmento_actual->arbolazo);
+				nodo_segmento_actual->arbolazo=NULL;
+			}
+		}
 		free(arbol_numeros_unicos);
 		free(sumas_arbol_segmentado);
 	}
