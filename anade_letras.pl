@@ -4,6 +4,7 @@ use warnings;
 use Tie::File;
 use Math::Random::Secure qw(irand);
 
+#aaaa
 my @arreglo;
 
 tie @arreglo, 'Tie::File', "ass.txt" or die "when theres trouble \n";
