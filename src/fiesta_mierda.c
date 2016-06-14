@@ -1657,7 +1657,7 @@ static inline void caca_x_validar_segmentos(
 }
 
 static inline void *fiesta_mierda_calloc(int multiplicador, int tamanio) {
-	caca_log_debug("allocando %u", multiplicador * tamanio);
+	caca_log_debug("allocando %u\n", multiplicador * tamanio);
 	return calloc(multiplicador, tamanio);
 }
 
