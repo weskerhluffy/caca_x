@@ -1065,6 +1065,10 @@ static inline char *caca_arreglo_a_cadena(tipo_dato *arreglo, int tam_arreglo,
 	return NULL;
 #endif
 
+#ifndef FIESTA_MIERDA_LOG
+	return NULL;
+#endif
+
 	memset(buffer, 0, 100);
 	ap_buffer = buffer;
 
