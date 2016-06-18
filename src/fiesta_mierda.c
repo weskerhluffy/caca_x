@@ -1816,8 +1816,13 @@ static inline void caca_x_main() {
 			avl_tree_iterador_fini(iter);
 
 			avl_tree_destroy(arbolin_grandote);
+
 		}
+		caca_log_debug("limpiando %u numeros %u bytes\n", num_numeros,
+				sizeof(tipo_dato) * num_numeros);
+		memset(matriz_nums, 0, num_numeros * sizeof(tipo_dato));
 	}
+
 	free(matriz_nums);
 	free(estado);
 }
