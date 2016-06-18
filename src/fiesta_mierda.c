@@ -35,6 +35,7 @@
 #define FIESTA_MIERDA_MAX_NUMS_ST_2 9E3
 #define FIESTA_MIERDA_MAX_NUMS_REDONDEADO 16777216
 #define FIESTA_MIERDA_MAX_PROFUNDIDAD 24
+#define FIESTA_MIERDA_TAM_MAX_LINEA (FIESTA_MIERDA_MAX_NUMS_ST_1 * 8)
 
 #define CACA_X_VALIDAR_ARBOLINES
 
@@ -1011,12 +1012,13 @@ static inline int lee_matrix_long_stdin(tipo_dato *matrix, int *num_filas,
 	char *cadena_numero_actual = NULL;
 	char *linea = NULL;
 
-	linea = fiesta_mierda_calloc(TAM_MAX_LINEA, sizeof(char));
+	linea = fiesta_mierda_calloc(FIESTA_MIERDA_TAM_MAX_LINEA, sizeof(char));
 
 	if (tipo_st) {
 		*tipo_st = st_tipo_desconocido;
 	}
-	while (indice_filas < num_max_filas && fgets(linea, TAM_MAX_LINEA, stdin)) {
+	while (indice_filas < num_max_filas
+			&& fgets(linea, FIESTA_MIERDA_TAM_MAX_LINEA, stdin)) {
 		indice_columnas = 0;
 		cadena_numero_actual = linea;
 		for (siguiente_cadena_numero = linea;; siguiente_cadena_numero =
