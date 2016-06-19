@@ -1189,8 +1189,7 @@ static inline void caca_x_main() {
 		}
 		num_numeros_redondeado = (1 << max_profundidad);
 
-//		if (tipo_st != st_tipo_1) {
-		if (falso) {
+		if (tipo_st != st_tipo_1) {
 			num_nodos = (2 << (max_profundidad + 0));
 
 			arbol_numeros_unicos = fiesta_mierda_calloc(num_nodos,
