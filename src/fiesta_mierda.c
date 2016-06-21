@@ -1022,6 +1022,7 @@ static inline void caca_x_encuentra_indices_segmento(
 		}
 	}
 }
+
 static inline unsigned long caca_x_generar_suma_unicos(
 		caca_x_numeros_unicos_en_rango *arbol_numeros_unicos,
 		long *sumas_arbol_segmentado, int *indices, int num_indices) {
