@@ -2032,7 +2032,8 @@ static inline void caca_x_main() {
 			num_numeros_redondeado - 1, max_profundidad, num_numeros - 1);
 
 #ifdef CACA_X_VALIDAR_ARBOLINES
-	caca_x_validar_segmentos(arbol_numeros_unicos, num_numeros_redondeado, num_nodos);
+	caca_x_validar_segmentos(arbol_numeros_unicos, num_numeros_redondeado,
+			num_nodos);
 #endif
 
 	caca_x_suma_unicos(sumas_arbol_segmentado, arbol_numeros_unicos, num_nodos);
@@ -2057,11 +2058,11 @@ static inline void caca_x_main() {
 			nuevo_valor = idx_query_fin;
 			caca_x_actualiza_estado(numeros, arbol_numeros_unicos,
 					sumas_arbol_segmentado, idx_actualizado, nuevo_valor,
-					(2 << (max_profundidad + 0)) - 2);
+					num_nodos - 2);
 
 #ifdef CACA_X_VALIDAR_ARBOLINES
-			caca_x_validar_segmentos(arbol_numeros_unicos, num_numeros_redondeado,
-					num_nodos);
+			caca_x_validar_segmentos(arbol_numeros_unicos,
+					num_numeros_redondeado, num_nodos);
 #endif
 			break;
 		default:
