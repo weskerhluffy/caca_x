@@ -2137,8 +2137,14 @@ static inline void caca_x_main() {
 				tipo_dato valor_1 = 0;
 				tipo_dato valor_2 = 0;
 
+#ifdef __APPLE__
 				indice_1 = arc4random_uniform(num_numeros);
 				indice_2 = arc4random_uniform(num_numeros);
+#else
+				srand(time(NULL));
+				indice_1 = ( rand() % 6 ) + 1;
+				indice_2 = ( rand() % 6 ) + 1;
+#endif
 
 				caca_log_debug("talk to me %u %u\n", indice_1, indice_2);
 
