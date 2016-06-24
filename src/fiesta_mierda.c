@@ -18,6 +18,9 @@
 #include <assert.h>
 #include <stddef.h>
 #include <unistd.h>
+#ifndef __APPLE__
+	#include <time.h>
+#endif
 
 #define MAX_NUMEROS 50000
 #define MAX_NUMEROS_REDONDEADO 65536
