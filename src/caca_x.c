@@ -21,7 +21,8 @@
 #define MAX_NUMEROS_REDONDEADO 65536
 #define MAX_VALOR INT_MAX
 #define MAX_QUERIES 100000
-#define TAM_MAX_LINEA (MAX_NUMEROS*10+MAX_NUMEROS)
+// 12 es 10 de el num, 1 del espacio 1 de signo
+#define TAM_MAX_LINEA (MAX_NUMEROS*12) 
 #define MAX_NODOS (1 << 16)
 #define CACA_X_VALOR_INVALIDO -1
 
@@ -32,11 +33,11 @@
  #define caca_log_debug printf
  */
 
-#define assert_timeout(condition) assert(condition);
 /*
- #define assert_timeout(condition) if(!(condition)){printf("fuck\n");sleep(10);}
+ #define assert_timeout(condition) assert(condition);
  #define assert_timeout(condition) 0
  */
+#define assert_timeout(condition) if(!(condition)){printf("fuck\n");sleep(10);assert(condition);}
 
 typedef int tipo_dato;
 typedef unsigned int natural;
@@ -663,6 +664,9 @@ static inline char *avl_tree_inoder_node_travesti(avl_tree_node_t *nodo,
 	char num_buf[100] = { '\0' };
 	int profundidad = 0;
 	int i = 0;
+#ifdef ONLINE_JUDGE
+	return NULL;
+#endif
 
 	assert_timeout(profundidad_maxima == -1 || profundidad != -1);
 
@@ -1431,6 +1435,8 @@ static inline void caca_x_suma_unicos(long *sumas_arbol_segmentado,
 
 			if (nodo_arbol_actual) {
 
+				assert_timeout(num_numeros_unicos<MAX_NODOS-1);
+
 				numero_unico_actual = (int) nodo_arbol_actual->llave;
 
 				sumas_arbol_segmentado[i] += numero_unico_actual;
@@ -2043,6 +2049,12 @@ static inline void caca_x_main() {
 		int nuevo_valor = 0;
 		long sum = 0;
 		scanf("%c %d %d\n", &tipo_query, &idx_query_ini, &idx_query_fin);
+		if (tipo_query == 'Q' && idx_query_ini > idx_query_fin) {
+			tipo_dato tmp = 0;
+			tmp = idx_query_fin;
+			idx_query_fin = idx_query_ini;
+			idx_query_ini = tmp;
+		}
 		caca_log_debug("q: %c, ini %d, fin %d\n", tipo_query, idx_query_ini,
 				idx_query_fin);
 
@@ -2080,7 +2092,7 @@ static inline void caca_x_main() {
 }
 
 int main(void) {
-//	puts("he corrido con algo de suerte"); /* prints he corrido con algo de suerte */
+//	puts("he corrido con algo de suerte");
 //	sleep(10);
 	caca_x_main();
 	return EXIT_SUCCESS;
