@@ -13,16 +13,15 @@ do
 	caca_log_piton=$caca_truncada.piton.log
 	echo "la caca en c $caca_log_c"
 	echo "la caca en piton $caca_log_piton"
-#	./caca_x < $caca > $caca_log_c
-	./fiesta_mierda < $caca > $caca_log_c
+	./caca_x < $caca > $caca_log_c
 	return_codi=$?
 	if [ $return_codi -ne 0 ] 
 	then
 		echo "verga, fallo en $caca"
 		exit 1
 	fi
-#	python3 cagada/shit.py < $caca > $caca_log_piton
-#	diferencia_ojala=$(diff $caca_log_c $caca_log_piton)
-#	echo "la diferencia es"
-#	echo "$diferencia_ojala CACA"
+	python cagada/shit.py < $caca > $caca_log_piton
+	diferencia_ojala=$(diff $caca_log_c $caca_log_piton)
+	echo "la diferencia es"
+	echo "$diferencia_ojala CACA"
 done

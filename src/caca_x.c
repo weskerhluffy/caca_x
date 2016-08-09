@@ -2128,7 +2128,7 @@ static inline void caca_x_main() {
 #endif
 
 	caca_x_construye_arbol_binario_segmentado(numeros, arbol_numeros_unicos,
-			num_numeros_redondeado - 1, max_profundidad, num_numeros - 1);
+			num_numeros_redondeado, max_profundidad, num_numeros - 1);
 
 	caca_x_suma_unicos(sumas_arbol_segmentado, arbol_numeros_unicos, num_nodos);
 
