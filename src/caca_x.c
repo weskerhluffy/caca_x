@@ -1796,6 +1796,18 @@ static inline void caca_comun_asigna_bit(bitch_vector *bits,
 
 }
 
+static inline void caca_comun_limpia_bit(bitch_vector *bits,
+		unsigned long posicion) {
+	int idx_arreglo = 0;
+	int idx_registro = 0;
+
+	idx_arreglo = posicion / 64;
+	idx_registro = posicion % 64;
+
+	bits[idx_arreglo] &= (bitch_vector) ~(1 << idx_registro);
+
+}
+
 static inline void caca_x_actualiza_arbol_numeros_unicos(
 		caca_x_numeros_unicos_en_rango *arbol_numeros_unicos,
 		natural *indices_a_actualizar, natural num_indices_a_actualizar,
@@ -2001,6 +2013,7 @@ static inline void caca_x_valida_segmentos_sumas(
 				!num_numeros || nodo->max_num_esperados
 						|| num_idx_ini >= num_numeros);
 
+
 		if (nodo->max_num_esperados) {
 			long suma_presumado = 0;
 			long suma_mapa_unicos = 0;
@@ -2011,7 +2024,6 @@ static inline void caca_x_valida_segmentos_sumas(
 
 			suma_presumado = sumas_segmentos[indice_nodo];
 
-			memset(mapa_unicos, 0, CACA_X_MAX_VALORES_INT/8);
 
 			for (natural j = num_idx_ini; j <= num_idx_fin; j++) {
 				if (!caca_comun_checa_bit(mapa_unicos,
@@ -2023,6 +2035,13 @@ static inline void caca_x_valida_segmentos_sumas(
 									+ (unsigned long) ((unsigned long) INT_MAX
 											+ 1)));
 				}
+			}
+
+			for (natural j = num_idx_ini; j <= num_idx_fin; j++) {
+					caca_comun_limpia_bit(mapa_unicos,
+							(unsigned long) (numeros[j]
+									+ (unsigned long) ((unsigned long) INT_MAX
+											+ 1)));
 			}
 
 			avl_tree_iterador_ini(nodo->arbolazo, iter);
