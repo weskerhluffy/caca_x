@@ -44,7 +44,7 @@
 typedef int tipo_dato;
 typedef unsigned int natural;
 
-typedef long long bitch_vector;
+typedef unsigned long long bitch_vector;
 
 typedef enum BOOLEANOS {
 	falso = 0, verdadero
@@ -1779,7 +1779,8 @@ static inline bool caca_comun_checa_bit(bitch_vector *bits,
 	idx_arreglo = posicion / 64;
 	idx_registro = posicion % 64;
 
-	res = !!(bits[idx_arreglo] & (bitch_vector) (1 << idx_registro));
+	res = !!(bits[idx_arreglo]
+			& (bitch_vector) ((bitch_vector) 1 << idx_registro));
 
 	return res;
 }
@@ -1792,7 +1793,7 @@ static inline void caca_comun_asigna_bit(bitch_vector *bits,
 	idx_arreglo = posicion / 64;
 	idx_registro = posicion % 64;
 
-	bits[idx_arreglo] |= (bitch_vector) (1 << idx_registro);
+	bits[idx_arreglo] |= (bitch_vector) ((bitch_vector) 1 << idx_registro);
 
 }
 
@@ -1804,7 +1805,7 @@ static inline void caca_comun_limpia_bit(bitch_vector *bits,
 	idx_arreglo = posicion / 64;
 	idx_registro = posicion % 64;
 
-	bits[idx_arreglo] &= (bitch_vector) ~(1 << idx_registro);
+	bits[idx_arreglo] &= (bitch_vector) ~((bitch_vector) 1 << idx_registro);
 
 }
 
@@ -2013,17 +2014,17 @@ static inline void caca_x_valida_segmentos_sumas(
 				!num_numeros || nodo->max_num_esperados
 						|| num_idx_ini >= num_numeros);
 
-
 		if (nodo->max_num_esperados) {
 			long suma_presumado = 0;
 			long suma_mapa_unicos = 0;
 			long suma_arboles = 0;
+			natural encontrados_en_mapa = 0;
+			natural encontrados_en_arbol = 0;
 
 			avl_tree_node_t *nodo_act = NULL;
 			avl_tree_iterator_t *iter = &(avl_tree_iterator_t ) { 0 };
 
 			suma_presumado = sumas_segmentos[indice_nodo];
-
 
 			for (natural j = num_idx_ini; j <= num_idx_fin; j++) {
 				if (!caca_comun_checa_bit(mapa_unicos,
@@ -2034,14 +2035,9 @@ static inline void caca_x_valida_segmentos_sumas(
 							(unsigned long) (numeros[j]
 									+ (unsigned long) ((unsigned long) INT_MAX
 											+ 1)));
+					assert_timeout(avl_tree_find(nodo->arbolazo, numeros[j]));
+					encontrados_en_mapa += 1;
 				}
-			}
-
-			for (natural j = num_idx_ini; j <= num_idx_fin; j++) {
-					caca_comun_limpia_bit(mapa_unicos,
-							(unsigned long) (numeros[j]
-									+ (unsigned long) ((unsigned long) INT_MAX
-											+ 1)));
 			}
 
 			avl_tree_iterador_ini(nodo->arbolazo, iter);
@@ -2049,10 +2045,29 @@ static inline void caca_x_valida_segmentos_sumas(
 			while (avl_tree_iterador_hay_siguiente(iter)) {
 				nodo_act = avl_tree_iterador_obtener_actual(iter);
 				suma_arboles += nodo_act->llave;
+
+				assert_timeout(
+						caca_comun_checa_bit(mapa_unicos, (unsigned long) (nodo_act->llave + (unsigned long) ((unsigned long) INT_MAX + 1))));
 				avl_tree_iterador_siguiente(iter);
+				encontrados_en_arbol += 1;
+				caca_comun_limpia_bit(mapa_unicos,
+						(unsigned long) (nodo_act->llave
+								+ (unsigned long) ((unsigned long) INT_MAX + 1)));
 			}
 
+			assert_timeout(
+					encontrados_en_mapa
+							== nodo->arbolazo->nodos_realmente_en_arbol_utiles);
+
+			assert_timeout(encontrados_en_arbol == encontrados_en_mapa);
+
 			avl_tree_iterador_fini(iter);
+
+			for (natural j = num_idx_ini; j <= num_idx_fin; j++) {
+				caca_comun_limpia_bit(mapa_unicos,
+						(unsigned long) (numeros[j]
+								+ (unsigned long) ((unsigned long) INT_MAX + 1)));
+			}
 
 			assert_timeout(suma_presumado == suma_mapa_unicos);
 			assert_timeout(suma_presumado == suma_arboles);
