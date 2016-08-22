@@ -132,6 +132,7 @@ def sumar_cagada(arbolin_en_array, sumas_unicos, indice_inicio, indice_final, nu
     set_unicos = set()
     set_intersexion = set()
     
+    
     obtiene_indices_a_mergear.indices = array.array("i")
     indices = sorted(obtiene_indices_a_mergear(0, num_numeros, indice_inicio, indice_final, 0))
     
@@ -168,7 +169,7 @@ num_queries = 0
 num_nodos = 0
 max_profundidad = 0
 num_numeros_redondeado = 0
-numeros = array.array("d")
+numeros = array.array("i")
 arbolin_en_array = []
 sumas_unicos = []
 lineas = None
@@ -180,7 +181,7 @@ logger_cagada.setLevel(nivel_log)
 lineas = list(fileinput.input())
 
 num_numeros = int(lineas[0])
-numeros = [int(x.strip()) for x in lineas[1].split(" ")]
+numeros = [int(x.strip()) for x in lineas[1].strip().split(" ")]
 num_queries = int(lineas[2])
 
 while num_numeros >> max_profundidad:
@@ -211,6 +212,7 @@ for linea in lineas[3:]:
     param1 = 0
     param2 = 0
     suma = 0
+    param_tmp = 0
     tipo_query = ""
     param1_str = ""
     param2_str = ""
@@ -222,6 +224,10 @@ for linea in lineas[3:]:
     logger_cagada.debug("tipo query %s, param1 %d param2 %d" % (tipo_query, param1, param2))
     
     if tipo_query == "Q":
+        if(param1 > param2):
+            param_tmp = param1
+            param1 = param2
+            param2 = param_tmp
         suma = sumar_cagada(arbolin_en_array, sumas_unicos, param1 - 1, param2 - 1, num_numeros_redondeado - 1)
         print(suma)
     else:
