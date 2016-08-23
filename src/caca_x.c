@@ -35,10 +35,10 @@
  #define caca_log_debug printf
  */
 #define caca_log_debug(formato, args...) 0
- #define assert_timeout(condition) assert(condition);
+#define assert_timeout(condition) assert(condition);
 /*
  #define assert_timeout(condition) 0
-#define assert_timeout(condition) if(!(condition)){printf("fuck\n");sleep(10);assert(condition);}
+ #define assert_timeout(condition) if(!(condition)){printf("fuck\n");sleep(10);assert(condition);}
  */
 
 typedef int tipo_dato;
@@ -162,8 +162,8 @@ avl_tree_node_t *avl_tree_create_node(avl_tree_t *arbolin, tipo_dato llave) {
 }
 
 /* Find the height of an AVL no repulsivamente */
-int avl_tree_node_height(avl_tree_node_t *node) {
-	return node ? node->altura : 0;
+static inline int avl_tree_node_height(avl_tree_node_t *node) {
+	return node->altura;
 }
 
 static inline void avl_tree_node_actualizar_altura(avl_tree_node_t *node) {
@@ -325,13 +325,15 @@ avl_tree_node_t *avl_tree_rotate_rightright(avl_tree_node_t *node) {
 }
 
 /* Find the balance of an AVL node */
-int avl_tree_balance_factor(avl_tree_node_t *node) {
+static inline int avl_tree_balance_factor(avl_tree_node_t *node) {
 	int bf = 0;
 
-	if (node->left)
+	if (node->left) {
 		bf += avl_tree_node_height(node->left);
-	if (node->right)
+	}
+	if (node->right) {
 		bf -= avl_tree_node_height(node->right);
+	}
 
 	return bf;
 }
@@ -1703,7 +1705,8 @@ int caca_comun_compara_enteros(const void *a, const void *b) {
 	return resultado;
 }
 
-static inline entero_largo caca_x_suma_segmento(entero_largo *sumas_arbol_segmentado,
+static inline entero_largo caca_x_suma_segmento(
+		entero_largo *sumas_arbol_segmentado,
 		caca_x_numeros_unicos_en_rango *arbol_numeros_unicos, int limite_izq,
 		int limite_der) {
 	entero_largo res = 0;
