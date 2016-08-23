@@ -29,20 +29,21 @@
 
 #define CACA_X_BUF_STATICO_DUMP_ARBOL (char[1000] ) { '\0' }
 
-#define CACA_X_VALIDAR_ARBOLINES
+//#define CACA_X_VALIDAR_ARBOLINES
 
-#define caca_log_debug(formato, args...) 0
 /*
  #define caca_log_debug printf
  */
-/*
+#define caca_log_debug(formato, args...) 0
  #define assert_timeout(condition) assert(condition);
+/*
  #define assert_timeout(condition) 0
- */
 #define assert_timeout(condition) if(!(condition)){printf("fuck\n");sleep(10);assert(condition);}
+ */
 
 typedef int tipo_dato;
 typedef unsigned int natural;
+typedef long long entero_largo;
 
 typedef unsigned long long bitch_vector;
 
@@ -683,7 +684,7 @@ static inline char *avl_tree_inoder_node_travesti(avl_tree_node_t *nodo,
 				strcat(buf, " ");
 			}
 		}
-		sprintf(num_buf, "%u", nodo->llave);
+		sprintf(num_buf, "%d", nodo->llave);
 		strcat(buf, num_buf);
 		if (profundidad_maxima != -1) {
 			strcat(buf, "\n");
@@ -1042,7 +1043,7 @@ caca_x_estado_recursion *estado = NULL;
 
 static inline void caca_x_validar_segmentos(
 		caca_x_numeros_unicos_en_rango *arbolin_segs, tipo_dato *numeros,
-		long *sumas_segmentos, natural *indices, natural num_numeros,
+		entero_largo *sumas_segmentos, natural *indices, natural num_numeros,
 		natural num_numeros_redondeado, natural num_nodos, natural num_indices);
 
 static inline int lee_matrix_long_stdin(tipo_dato *matrix, int *num_filas,
@@ -1391,7 +1392,7 @@ static inline void caca_x_construye_arbol_binario_segmentado(int *numeros,
 	}
 }
 
-static inline void caca_x_suma_unicos(long *sumas_arbol_segmentado,
+static inline void caca_x_suma_unicos(entero_largo *sumas_arbol_segmentado,
 		caca_x_numeros_unicos_en_rango *arbol_numeros_unicos, int num_nodos) {
 	int *numeros_unicos = NULL;
 	char *buf = NULL;
@@ -1494,10 +1495,10 @@ static inline void caca_x_encuentra_indices_segmento(
 
 }
 
-static inline long caca_x_generar_suma_repetidos(
+static inline entero_largo caca_x_generar_suma_repetidos(
 		caca_x_numeros_unicos_en_rango *arbol_numeros_unicos, int *indices,
 		int num_indices) {
-	long suma_repetidos = 0;
+	entero_largo suma_repetidos = 0;
 	avl_tree_t *arbolin_unicos = NULL;
 
 	//
@@ -1630,10 +1631,10 @@ static inline long caca_x_generar_suma_repetidos(
 	return suma_repetidos;
 }
 
-static inline unsigned long caca_x_generar_suma_unicos(
+static inline entero_largo caca_x_generar_suma_unicos(
 		caca_x_numeros_unicos_en_rango *arbol_numeros_unicos,
-		long *sumas_arbol_segmentado, int *indices, int num_indices) {
-	unsigned long suma_unicos = 0;
+		entero_largo *sumas_arbol_segmentado, int *indices, int num_indices) {
+	entero_largo suma_unicos = 0;
 	avl_tree_t *arbolin_unicos = NULL;
 
 	caca_log_debug("sumando unicos\n");
@@ -1702,10 +1703,10 @@ int caca_comun_compara_enteros(const void *a, const void *b) {
 	return resultado;
 }
 
-static inline long caca_x_suma_segmento(long *sumas_arbol_segmentado,
+static inline entero_largo caca_x_suma_segmento(entero_largo *sumas_arbol_segmentado,
 		caca_x_numeros_unicos_en_rango *arbol_numeros_unicos, int limite_izq,
 		int limite_der) {
-	long res = 0;
+	entero_largo res = 0;
 	int num_indices_nodos = 0;
 	int *indices_nodos = (int[30] ) { 0 };
 	char buf[100] = { '\0' };
@@ -1862,7 +1863,7 @@ static inline void caca_x_actualiza_arbol_numeros_unicos(
 
 static inline void caca_x_actualiza_sumas_arbol_segmentado(
 		caca_x_numeros_unicos_en_rango *arbol_numeros_unicos,
-		long *sumas_arbol_segmentado, natural *indices_a_actualizar,
+		entero_largo *sumas_arbol_segmentado, natural *indices_a_actualizar,
 		natural num_indices_a_actualizar, tipo_dato nuevo_valor,
 		tipo_dato viejo_pendejo, bitch_vector *nuevo_ya_existente,
 		bitch_vector *viejo_aun_presente) {
@@ -1903,7 +1904,7 @@ static inline void caca_x_actualiza_sumas_arbol_segmentado(
 
 static inline void caca_x_actualiza_estado(tipo_dato *numeros,
 		caca_x_numeros_unicos_en_rango *arbol_numeros_unicos,
-		long *sumas_arbol_segmentado, natural idx_actualizado,
+		entero_largo *sumas_arbol_segmentado, natural idx_actualizado,
 		tipo_dato nuevo_valor, natural num_nodos,
 		natural num_numeros_redondeado) {
 	bitch_vector nuevo_ya_existente = 0;
@@ -1986,7 +1987,7 @@ static inline void caca_x_validar_segmentos_int(
 
 static inline void caca_x_valida_segmentos_sumas(
 		caca_x_numeros_unicos_en_rango *arbolini, tipo_dato *numeros,
-		long *sumas_segmentos, natural num_nodos, natural num_numeros,
+		entero_largo *sumas_segmentos, natural num_nodos, natural num_numeros,
 		natural *indices, natural num_indices) {
 	natural limite_iteracion = 0;
 	bitch_vector *mapa_unicos = NULL;
@@ -2015,9 +2016,9 @@ static inline void caca_x_valida_segmentos_sumas(
 						|| num_idx_ini >= num_numeros);
 
 		if (nodo->max_num_esperados) {
-			long suma_presumado = 0;
-			long suma_mapa_unicos = 0;
-			long suma_arboles = 0;
+			entero_largo suma_presumado = 0;
+			entero_largo suma_mapa_unicos = 0;
+			entero_largo suma_arboles = 0;
 			natural encontrados_en_mapa = 0;
 			natural encontrados_en_arbol = 0;
 
@@ -2080,7 +2081,7 @@ static inline void caca_x_valida_segmentos_sumas(
 
 static inline void caca_x_validar_segmentos(
 		caca_x_numeros_unicos_en_rango *arbolin_segs, tipo_dato *numeros,
-		long *sumas_segmentos, natural *indices, natural num_numeros,
+		entero_largo *sumas_segmentos, natural *indices, natural num_numeros,
 		natural num_numeros_redondeado, natural num_nodos, natural num_indices) {
 	natural conteo_por_nivel[19] = { 0 };
 
@@ -2108,7 +2109,7 @@ static inline void caca_x_main() {
 	int max_profundidad = 0;
 	natural num_numeros_redondeado = 0;
 	int num_nodos = 0;
-	long *sumas_arbol_segmentado = NULL;
+	entero_largo *sumas_arbol_segmentado = NULL;
 	caca_x_numeros_unicos_en_rango *arbol_numeros_unicos = NULL;
 
 	char buf[100] = { '\0' };
@@ -2145,7 +2146,7 @@ static inline void caca_x_main() {
 			sizeof(caca_x_numeros_unicos_en_rango));
 	assert_timeout(arbol_numeros_unicos);
 
-	sumas_arbol_segmentado = calloc(num_nodos, sizeof(long));
+	sumas_arbol_segmentado = calloc(num_nodos, sizeof(entero_largo));
 	assert_timeout(sumas_arbol_segmentado);
 
 	caca_log_debug("llamando a func rec con max prof %d\n",
@@ -2174,7 +2175,7 @@ static inline void caca_x_main() {
 	while (cont_queries < num_queries) {
 		int idx_actualizado = 0;
 		int nuevo_valor = 0;
-		long sum = 0;
+		entero_largo sum = 0;
 		scanf("%c %d %d\n", &tipo_query, &idx_query_ini, &idx_query_fin);
 		if (tipo_query == 'Q' && idx_query_ini > idx_query_fin) {
 			tipo_dato tmp = 0;
@@ -2189,7 +2190,7 @@ static inline void caca_x_main() {
 		case 'Q':
 			sum = caca_x_suma_segmento(sumas_arbol_segmentado,
 					arbol_numeros_unicos, idx_query_ini - 1, idx_query_fin - 1);
-			printf("%ld\n", sum);
+			printf("%lld\n", sum);
 			break;
 		case 'U':
 
