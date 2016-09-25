@@ -1,5 +1,7 @@
 #!/bin/sh
 
+ulimit -c unlimited
+ulimit -c
 rm -fv /cores/*
 for caca in $(ls *txt)
 do

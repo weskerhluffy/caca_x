@@ -342,18 +342,12 @@ static inline int avl_tree_balance_factor(avl_tree_node_t *node) {
 
 static inline avl_tree_node_t *avl_tree_balance_node_insertar(
 		const avl_tree_node_t *node, const tipo_dato llave_nueva) {
-	avl_tree_node_t *newroot = NULL;
-	avl_tree_node_t *nodo_actual = NULL;
+	avl_tree_node_t *newroot = (avl_tree_node_t *) node;
+	avl_tree_node_t *nodo_actual = node->padre;
 
-	newroot = (avl_tree_node_t *) node;
-	nodo_actual = node->padre;
 	while (nodo_actual) {
 
-		int bf = 0;
-		avl_tree_node_t *padre = NULL;
-		avl_tree_node_t **rama_padre = NULL;
-
-		bf = avl_tree_balance_factor(nodo_actual);
+		int bf = avl_tree_balance_factor(nodo_actual);
 
 		if (bf >= 2) {
 			/* Left Heavy */
@@ -380,7 +374,8 @@ static inline avl_tree_node_t *avl_tree_balance_node_insertar(
 		}
 
 		if (newroot->padre) {
-			padre = newroot->padre;
+			avl_tree_node_t *padre = newroot->padre;
+			avl_tree_node_t **rama_padre;
 			if (llave_nueva < padre->llave) {
 				rama_padre = &padre->left;
 			} else {
