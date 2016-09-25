@@ -1914,7 +1914,7 @@ static inline void caca_x_main() {
 
 #ifdef CACA_X_VALIDAR_ARBOLINES
 			caca_x_validar_segmentos(arbol_numeros_unicos, numeros, NULL,
-					num_numeros, num_numeros_redondeado, num_nodos + 1, 0);
+					num_numeros, num_numeros_redondeado, num_nodos, 0);
 #endif
 
 			break;
