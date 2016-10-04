@@ -1,0 +1,423 @@
+nohup: ignoring input
++ ulimit -c unlimited
++ ulimit -c
+unlimited
++ rm -fv '/cores/*'
++ rm -fv 'core*'
+++ ls caca_grande_actualizaciones_indice_fix_rev.txt caca_grande_actualizaciones_indice_fix.txt caca_grande_actualizaciones_queries_inicio_1.txt caca_grande_queries_inicio_1.txt caca_grande_random_1_a.txt caca_grande_random_1.txt caca_grande_random_negativos_1_a.txt caca_grande_random_negativos_1.txt caca_grande_random_negativos_2.txt caca_grande_reversa.txt caca_grande.txt caca_negativos.txt caca.txt
++ for caca in '$(ls *txt)'
++ caca_truncada=
++ return_codi=0
++ caca_truncada=caca_grande_actualizaciones_indice_fix_rev
++ echo 'la caca actual caca_grande_actualizaciones_indice_fix_rev.txt'
+la caca actual caca_grande_actualizaciones_indice_fix_rev.txt
++ echo 'la caca truncada caca_grande_actualizaciones_indice_fix_rev'
+la caca truncada caca_grande_actualizaciones_indice_fix_rev
++ caca_log_c=caca_grande_actualizaciones_indice_fix_rev.c.log
++ caca_log_piton=caca_grande_actualizaciones_indice_fix_rev.piton.log
++ echo 'la caca en c caca_grande_actualizaciones_indice_fix_rev.c.log'
+la caca en c caca_grande_actualizaciones_indice_fix_rev.c.log
++ echo 'la caca en piton caca_grande_actualizaciones_indice_fix_rev.piton.log'
+la caca en piton caca_grande_actualizaciones_indice_fix_rev.piton.log
++ date
+Wed Sep 28 15:21:55 PDT 2016
++ ./caca_x
++ date
+Wed Sep 28 23:36:26 PDT 2016
++ return_codi=0
++ '[' 0 -ne 0 ']'
++ date
+Wed Sep 28 23:36:26 PDT 2016
++ python cagada/shit.py
++ date
+Thu Sep 29 02:08:08 PDT 2016
+++ diff caca_grande_actualizaciones_indice_fix_rev.c.log caca_grande_actualizaciones_indice_fix_rev.piton.log
++ diferencia_ojala=
++ echo 'la diferencia es'
+la diferencia es
++ echo ' CACA'
+ CACA
++ for caca in '$(ls *txt)'
++ caca_truncada=
++ return_codi=0
++ caca_truncada=caca_grande_actualizaciones_indice_fix
++ echo 'la caca actual caca_grande_actualizaciones_indice_fix.txt'
+la caca actual caca_grande_actualizaciones_indice_fix.txt
++ echo 'la caca truncada caca_grande_actualizaciones_indice_fix'
+la caca truncada caca_grande_actualizaciones_indice_fix
++ caca_log_c=caca_grande_actualizaciones_indice_fix.c.log
++ caca_log_piton=caca_grande_actualizaciones_indice_fix.piton.log
++ echo 'la caca en c caca_grande_actualizaciones_indice_fix.c.log'
+la caca en c caca_grande_actualizaciones_indice_fix.c.log
++ echo 'la caca en piton caca_grande_actualizaciones_indice_fix.piton.log'
+la caca en piton caca_grande_actualizaciones_indice_fix.piton.log
++ date
+Thu Sep 29 02:08:08 PDT 2016
++ ./caca_x
++ date
+Thu Sep 29 10:39:35 PDT 2016
++ return_codi=0
++ '[' 0 -ne 0 ']'
++ date
+Thu Sep 29 10:39:35 PDT 2016
++ python cagada/shit.py
++ date
+Thu Sep 29 13:12:09 PDT 2016
+++ diff caca_grande_actualizaciones_indice_fix.c.log caca_grande_actualizaciones_indice_fix.piton.log
++ diferencia_ojala=
++ echo 'la diferencia es'
+la diferencia es
++ echo ' CACA'
+ CACA
++ for caca in '$(ls *txt)'
++ caca_truncada=
++ return_codi=0
++ caca_truncada=caca_grande_actualizaciones_queries_inicio_1
++ echo 'la caca actual caca_grande_actualizaciones_queries_inicio_1.txt'
+la caca actual caca_grande_actualizaciones_queries_inicio_1.txt
++ echo 'la caca truncada caca_grande_actualizaciones_queries_inicio_1'
+la caca truncada caca_grande_actualizaciones_queries_inicio_1
++ caca_log_c=caca_grande_actualizaciones_queries_inicio_1.c.log
++ caca_log_piton=caca_grande_actualizaciones_queries_inicio_1.piton.log
++ echo 'la caca en c caca_grande_actualizaciones_queries_inicio_1.c.log'
+la caca en c caca_grande_actualizaciones_queries_inicio_1.c.log
++ echo 'la caca en piton caca_grande_actualizaciones_queries_inicio_1.piton.log'
+la caca en piton caca_grande_actualizaciones_queries_inicio_1.piton.log
++ date
+Thu Sep 29 13:12:09 PDT 2016
++ ./caca_x
++ date
+Thu Sep 29 19:55:16 PDT 2016
++ return_codi=0
++ '[' 0 -ne 0 ']'
++ date
+Thu Sep 29 19:55:16 PDT 2016
++ python cagada/shit.py
++ date
+Thu Sep 29 23:10:58 PDT 2016
+++ diff caca_grande_actualizaciones_queries_inicio_1.c.log caca_grande_actualizaciones_queries_inicio_1.piton.log
++ diferencia_ojala=
++ echo 'la diferencia es'
+la diferencia es
++ echo ' CACA'
+ CACA
++ for caca in '$(ls *txt)'
++ caca_truncada=
++ return_codi=0
++ caca_truncada=caca_grande_queries_inicio_1
++ echo 'la caca actual caca_grande_queries_inicio_1.txt'
+la caca actual caca_grande_queries_inicio_1.txt
++ echo 'la caca truncada caca_grande_queries_inicio_1'
+la caca truncada caca_grande_queries_inicio_1
++ caca_log_c=caca_grande_queries_inicio_1.c.log
++ caca_log_piton=caca_grande_queries_inicio_1.piton.log
++ echo 'la caca en c caca_grande_queries_inicio_1.c.log'
+la caca en c caca_grande_queries_inicio_1.c.log
++ echo 'la caca en piton caca_grande_queries_inicio_1.piton.log'
+la caca en piton caca_grande_queries_inicio_1.piton.log
++ date
+Thu Sep 29 23:10:58 PDT 2016
++ ./caca_x
++ date
+Thu Sep 29 23:17:22 PDT 2016
++ return_codi=0
++ '[' 0 -ne 0 ']'
++ date
+Thu Sep 29 23:17:22 PDT 2016
++ python cagada/shit.py
++ date
+Fri Sep 30 00:10:41 PDT 2016
+++ diff caca_grande_queries_inicio_1.c.log caca_grande_queries_inicio_1.piton.log
++ diferencia_ojala=
++ echo 'la diferencia es'
+la diferencia es
++ echo ' CACA'
+ CACA
++ for caca in '$(ls *txt)'
++ caca_truncada=
++ return_codi=0
++ caca_truncada=caca_grande_random_1_a
++ echo 'la caca actual caca_grande_random_1_a.txt'
+la caca actual caca_grande_random_1_a.txt
++ echo 'la caca truncada caca_grande_random_1_a'
+la caca truncada caca_grande_random_1_a
++ caca_log_c=caca_grande_random_1_a.c.log
++ caca_log_piton=caca_grande_random_1_a.piton.log
++ echo 'la caca en c caca_grande_random_1_a.c.log'
+la caca en c caca_grande_random_1_a.c.log
++ echo 'la caca en piton caca_grande_random_1_a.piton.log'
+la caca en piton caca_grande_random_1_a.piton.log
++ date
+Fri Sep 30 00:10:41 PDT 2016
++ ./caca_x
++ date
+Fri Sep 30 01:45:20 PDT 2016
++ return_codi=0
++ '[' 0 -ne 0 ']'
++ date
+Fri Sep 30 01:45:20 PDT 2016
++ python cagada/shit.py
++ date
+Fri Sep 30 02:25:34 PDT 2016
+++ diff caca_grande_random_1_a.c.log caca_grande_random_1_a.piton.log
++ diferencia_ojala=
++ echo 'la diferencia es'
+la diferencia es
++ echo ' CACA'
+ CACA
++ for caca in '$(ls *txt)'
++ caca_truncada=
++ return_codi=0
++ caca_truncada=caca_grande_random_1
++ echo 'la caca actual caca_grande_random_1.txt'
+la caca actual caca_grande_random_1.txt
++ echo 'la caca truncada caca_grande_random_1'
+la caca truncada caca_grande_random_1
++ caca_log_c=caca_grande_random_1.c.log
++ caca_log_piton=caca_grande_random_1.piton.log
++ echo 'la caca en c caca_grande_random_1.c.log'
+la caca en c caca_grande_random_1.c.log
++ echo 'la caca en piton caca_grande_random_1.piton.log'
+la caca en piton caca_grande_random_1.piton.log
++ date
+Fri Sep 30 02:25:34 PDT 2016
++ ./caca_x
++ date
+Fri Sep 30 04:00:37 PDT 2016
++ return_codi=0
++ '[' 0 -ne 0 ']'
++ date
+Fri Sep 30 04:00:37 PDT 2016
++ python cagada/shit.py
++ date
+Fri Sep 30 04:41:14 PDT 2016
+++ diff caca_grande_random_1.c.log caca_grande_random_1.piton.log
++ diferencia_ojala=
++ echo 'la diferencia es'
+la diferencia es
++ echo ' CACA'
+ CACA
++ for caca in '$(ls *txt)'
++ caca_truncada=
++ return_codi=0
++ caca_truncada=caca_grande_random_negativos_1_a
++ echo 'la caca actual caca_grande_random_negativos_1_a.txt'
+la caca actual caca_grande_random_negativos_1_a.txt
++ echo 'la caca truncada caca_grande_random_negativos_1_a'
+la caca truncada caca_grande_random_negativos_1_a
++ caca_log_c=caca_grande_random_negativos_1_a.c.log
++ caca_log_piton=caca_grande_random_negativos_1_a.piton.log
++ echo 'la caca en c caca_grande_random_negativos_1_a.c.log'
+la caca en c caca_grande_random_negativos_1_a.c.log
++ echo 'la caca en piton caca_grande_random_negativos_1_a.piton.log'
+la caca en piton caca_grande_random_negativos_1_a.piton.log
++ date
+Fri Sep 30 04:41:14 PDT 2016
++ ./caca_x
++ date
+Fri Sep 30 04:41:17 PDT 2016
++ return_codi=0
++ '[' 0 -ne 0 ']'
++ date
+Fri Sep 30 04:41:17 PDT 2016
++ python cagada/shit.py
++ date
+Fri Sep 30 04:41:21 PDT 2016
+++ diff caca_grande_random_negativos_1_a.c.log caca_grande_random_negativos_1_a.piton.log
++ diferencia_ojala=
++ echo 'la diferencia es'
+la diferencia es
++ echo ' CACA'
+ CACA
++ for caca in '$(ls *txt)'
++ caca_truncada=
++ return_codi=0
++ caca_truncada=caca_grande_random_negativos_1
++ echo 'la caca actual caca_grande_random_negativos_1.txt'
+la caca actual caca_grande_random_negativos_1.txt
++ echo 'la caca truncada caca_grande_random_negativos_1'
+la caca truncada caca_grande_random_negativos_1
++ caca_log_c=caca_grande_random_negativos_1.c.log
++ caca_log_piton=caca_grande_random_negativos_1.piton.log
++ echo 'la caca en c caca_grande_random_negativos_1.c.log'
+la caca en c caca_grande_random_negativos_1.c.log
++ echo 'la caca en piton caca_grande_random_negativos_1.piton.log'
+la caca en piton caca_grande_random_negativos_1.piton.log
++ date
+Fri Sep 30 04:41:21 PDT 2016
++ ./caca_x
++ date
+Fri Sep 30 12:15:31 PDT 2016
++ return_codi=0
++ '[' 0 -ne 0 ']'
++ date
+Fri Sep 30 12:15:31 PDT 2016
++ python cagada/shit.py
++ date
+Fri Sep 30 15:52:31 PDT 2016
+++ diff caca_grande_random_negativos_1.c.log caca_grande_random_negativos_1.piton.log
++ diferencia_ojala=
++ echo 'la diferencia es'
+la diferencia es
++ echo ' CACA'
+ CACA
++ for caca in '$(ls *txt)'
++ caca_truncada=
++ return_codi=0
++ caca_truncada=caca_grande_random_negativos_2
++ echo 'la caca actual caca_grande_random_negativos_2.txt'
+la caca actual caca_grande_random_negativos_2.txt
++ echo 'la caca truncada caca_grande_random_negativos_2'
+la caca truncada caca_grande_random_negativos_2
++ caca_log_c=caca_grande_random_negativos_2.c.log
++ caca_log_piton=caca_grande_random_negativos_2.piton.log
++ echo 'la caca en c caca_grande_random_negativos_2.c.log'
+la caca en c caca_grande_random_negativos_2.c.log
++ echo 'la caca en piton caca_grande_random_negativos_2.piton.log'
+la caca en piton caca_grande_random_negativos_2.piton.log
++ date
+Fri Sep 30 15:52:31 PDT 2016
++ ./caca_x
++ date
+Fri Sep 30 23:21:38 PDT 2016
++ return_codi=0
++ '[' 0 -ne 0 ']'
++ date
+Fri Sep 30 23:21:38 PDT 2016
++ python cagada/shit.py
++ date
+Sat Oct  1 02:56:04 PDT 2016
+++ diff caca_grande_random_negativos_2.c.log caca_grande_random_negativos_2.piton.log
++ diferencia_ojala=
++ echo 'la diferencia es'
+la diferencia es
++ echo ' CACA'
+ CACA
++ for caca in '$(ls *txt)'
++ caca_truncada=
++ return_codi=0
++ caca_truncada=caca_grande_reversa
++ echo 'la caca actual caca_grande_reversa.txt'
+la caca actual caca_grande_reversa.txt
++ echo 'la caca truncada caca_grande_reversa'
+la caca truncada caca_grande_reversa
++ caca_log_c=caca_grande_reversa.c.log
++ caca_log_piton=caca_grande_reversa.piton.log
++ echo 'la caca en c caca_grande_reversa.c.log'
+la caca en c caca_grande_reversa.c.log
++ echo 'la caca en piton caca_grande_reversa.piton.log'
+la caca en piton caca_grande_reversa.piton.log
++ date
+Sat Oct  1 02:56:04 PDT 2016
++ ./caca_x
++ date
+Sat Oct  1 02:56:05 PDT 2016
++ return_codi=0
++ '[' 0 -ne 0 ']'
++ date
+Sat Oct  1 02:56:05 PDT 2016
++ python cagada/shit.py
++ date
+Sat Oct  1 02:56:09 PDT 2016
+++ diff caca_grande_reversa.c.log caca_grande_reversa.piton.log
++ diferencia_ojala=
++ echo 'la diferencia es'
+la diferencia es
++ echo ' CACA'
+ CACA
++ for caca in '$(ls *txt)'
++ caca_truncada=
++ return_codi=0
++ caca_truncada=caca_grande
++ echo 'la caca actual caca_grande.txt'
+la caca actual caca_grande.txt
++ echo 'la caca truncada caca_grande'
+la caca truncada caca_grande
++ caca_log_c=caca_grande.c.log
++ caca_log_piton=caca_grande.piton.log
++ echo 'la caca en c caca_grande.c.log'
+la caca en c caca_grande.c.log
++ echo 'la caca en piton caca_grande.piton.log'
+la caca en piton caca_grande.piton.log
++ date
+Sat Oct  1 02:56:09 PDT 2016
++ ./caca_x
++ date
+Sat Oct  1 02:56:10 PDT 2016
++ return_codi=0
++ '[' 0 -ne 0 ']'
++ date
+Sat Oct  1 02:56:10 PDT 2016
++ python cagada/shit.py
++ date
+Sat Oct  1 02:56:14 PDT 2016
+++ diff caca_grande.c.log caca_grande.piton.log
++ diferencia_ojala=
++ echo 'la diferencia es'
+la diferencia es
++ echo ' CACA'
+ CACA
++ for caca in '$(ls *txt)'
++ caca_truncada=
++ return_codi=0
++ caca_truncada=caca_negativos
++ echo 'la caca actual caca_negativos.txt'
+la caca actual caca_negativos.txt
++ echo 'la caca truncada caca_negativos'
+la caca truncada caca_negativos
++ caca_log_c=caca_negativos.c.log
++ caca_log_piton=caca_negativos.piton.log
++ echo 'la caca en c caca_negativos.c.log'
+la caca en c caca_negativos.c.log
++ echo 'la caca en piton caca_negativos.piton.log'
+la caca en piton caca_negativos.piton.log
++ date
+Sat Oct  1 02:56:14 PDT 2016
++ ./caca_x
++ date
+Sat Oct  1 02:56:14 PDT 2016
++ return_codi=0
++ '[' 0 -ne 0 ']'
++ date
+Sat Oct  1 02:56:14 PDT 2016
++ python cagada/shit.py
++ date
+Sat Oct  1 02:56:14 PDT 2016
+++ diff caca_negativos.c.log caca_negativos.piton.log
++ diferencia_ojala=
++ echo 'la diferencia es'
+la diferencia es
++ echo ' CACA'
+ CACA
++ for caca in '$(ls *txt)'
++ caca_truncada=
++ return_codi=0
++ caca_truncada=caca
++ echo 'la caca actual caca.txt'
+la caca actual caca.txt
++ echo 'la caca truncada caca'
+la caca truncada caca
++ caca_log_c=caca.c.log
++ caca_log_piton=caca.piton.log
++ echo 'la caca en c caca.c.log'
+la caca en c caca.c.log
++ echo 'la caca en piton caca.piton.log'
+la caca en piton caca.piton.log
++ date
+Sat Oct  1 02:56:14 PDT 2016
++ ./caca_x
++ date
+Sat Oct  1 02:56:14 PDT 2016
++ return_codi=0
++ '[' 0 -ne 0 ']'
++ date
+Sat Oct  1 02:56:14 PDT 2016
++ python cagada/shit.py
++ date
+Sat Oct  1 02:56:14 PDT 2016
+++ diff caca.c.log caca.piton.log
++ diferencia_ojala=
++ echo 'la diferencia es'
+la diferencia es
++ echo ' CACA'
+ CACA
