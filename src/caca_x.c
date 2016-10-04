@@ -1347,7 +1347,7 @@ static inline void caca_x_encuentra_indices_segmento(natural idx_nodo) {
 		caca_x_encuentra_indices_segmento(idx_nodo_hijo_izq + 1);
 		return;
 	}
-	assert_timeout(limite_izq <= nodo_lim_izq && nodo_lim_der <= limite_der)
+	assert_timeout(limite_izq <= nodo_lim_izq && nodo_lim_der <= limite_der);
 	caca_log_debug("te vas a acordar de mi %d,%d\n", nodo->limite_izq,
 			nodo->limite_der);
 	indices_nodos[num_indices_nodos++] = idx_nodo;
