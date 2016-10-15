@@ -454,7 +454,7 @@ avl_tree_node_t *avl_tree_insert(avl_tree_t *tree, tipo_dato value) {
 
 #ifdef CACA_X_VALIDAR_ARBOLINES
 					while (ancestro_actal) {
-						caca_log_debug("bajando decendientes de %u",
+						caca_log_debug("bajando decendientes de %u\n",
 								ancestro_actal->llave);
 						ancestro_actal->num_decendientes--;
 						ancestro_actal = ancestro_actal->padre;
@@ -1521,7 +1521,7 @@ static inline entero_largo caca_x_generar_suma_unicos() {
 		while (avl_tree_iterador_hay_siguiente(iter_actual)) {
 			avl_tree_node_t *nodo_actual = avl_tree_iterador_obtener_actual(
 					iter_actual);
-			tipo_dato numero_actual = nodo_actual->llave;
+			entero_largo numero_actual = nodo_actual->llave;
 
 			if (!avl_tree_find(arbolin_unicos, numero_actual)) {
 				caca_log_debug("añadiendo %d al arbol de unicos\n%s\n",
