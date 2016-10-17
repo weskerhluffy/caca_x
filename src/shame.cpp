@@ -56,52 +56,45 @@ void newnode(int &p) {
 	pl[p].r = -1;
 }
 void refresh(int& p, int pz, int py, int pos, LL vv) {
-	printf("entrando a refresh con %lld %u %u %u %lld\n", (long long) p, pz, py,
-			pos, vv);
 	int mid = (pz + py) >> 1;
-	if (p < 0) {
+	if (p < 0)
 		newnode(p);
-	}
 	if (pz == py) {
-		printf("pz=py, sumando a %lld %lld en %u\n", pl[p].v, vv, p);
+		printf("buried %lld %lld en %u\n", pl[p].v, vv, p);
 		pl[p].v += vv;
 		return;
 	}
-	if (pos <= mid) {
+	if (pos <= mid)
 		refresh(pl[p].l, Left, pos, vv);
-	} else {
+	else
 		refresh(pl[p].r, Right, pos, vv);
+	if (pl[p].l != -1) {
+
+		pl[p].v = pl[pl[p].l].v;
 	}
-	printf("sumando de %d y %d a %u valores %lld y %lld\n", pl[p].l, pl[p].r, p,
-			pl[pl[p].l].v, pl[pl[p].r].v);
-	pl[p].v = pl[pl[p].l].v + pl[pl[p].r].v;
+	if (pl[p].r != -1) {
+		pl[p].v += pl[pl[p].r].v;
+	}
+	printf("mierda %lld en %u de %d y %d vals %lld y %lld\n", pl[p].v, p,
+			pl[p].l, pl[p].r, pl[pl[p].l].v, pl[pl[p].r].v);
 }
 LL query(int p, int pz, int py, int zz, int yy) {
 	int mid = (pz + py) >> 1;
-	LL res = 0;
 	if (p < 0) {
-		printf("query regresa 0\n");
 		return 0;
 	}
 	if (pz == zz && py == yy) {
-		printf("query pz[%u] regresa %lld\n", p, pl[p].v);
+		printf("wana b %lld en %u\n", pl[p].v, p);
 		return pl[p].v;
 	}
 	if (yy <= mid) {
-		res = query(pl[p].l, Left, zz, yy);
-		printf("query yy regresa %lld\n", res);
-		return res;
+		return query(pl[p].l, Left, zz, yy);
 	} else {
 		if (mid < zz) {
-			res = query(pl[p].r, Right, zz, yy);
-
-			printf("query mid regresa %lld\n", res);
-			return res;
+			return query(pl[p].r, Right, zz, yy);
 		} else {
 			LL t1 = query(pl[p].l, Left, zz, mid);
 			LL t2 = query(pl[p].r, Right, mid + 1, yy);
-			printf("query t1 regresa %lld\n", t1);
-			printf("query t2 regresa %lld\n", t2);
 			return t1 + t2;
 		}
 	}
@@ -127,7 +120,6 @@ struct BIT {
 		LL ret = 0;
 		for (x += 3; x > 0; x -= x & -x) {
 			ret += query(r[x], 1, n + 1, y1, y2);
-			printf("chingao %lld\n", ret);
 		}
 		return ret;
 	}
@@ -170,6 +162,9 @@ int main() {
 //    freopen("9066in.txt","r",stdin);
 //    freopen("9066out.txt","w",stdout);
 	int i, j, nq, root;
+	memset(pl, 0, sizeof(pl));
+	memset(B.r, 0, sizeof(B.r));
+	memset(q, 0, sizeof(q));
 	scanf("%d", &n);
 	for (i = 1; i <= n; i++)
 		scanf("%d", &a[i]);
@@ -180,14 +175,12 @@ int main() {
 		q[i].tp = buff[0];
 		q[i].id = i;
 	}
-	memset(pl, 0, sizeof(pl));
 	std::sort(q + 1, q + nq + 1, cmp1);
 	pos.clear();
 	pcnt = 0;
 	newnode(root);
-	for (j = 1; j <= nq && q[j].tp == 'U'; j++) {
-		printf("pasandode de %u\n", j);
-	}
+	for (j = 1; j <= nq && q[j].tp == 'U'; j++)
+		;
 	for (i = 1; i <= n; i++) {
 		std::set<int>::iterator it;
 		std::set<int>&th = pos[a[i]];
@@ -203,18 +196,15 @@ int main() {
 		}
 		while (j <= nq && q[j].y <= i) {
 			q[j].ans = query(root, 1, n, q[j].x, q[j].y);
-			printf("no one cares %lld i %u j %u\n", q[j].ans, i, j);
 			j++;
 		}
 	}
 	std::sort(q + 1, q + nq + 1, cmp2);
 	pcnt = 0;
 	B.init(n);
-	printf("inicializado B\n");
 	for (i = 1; i <= nq; i++) {
 		if (q[i].tp == 'Q') {
 			LL del = B.sum(q[i].x, 1, q[i].y);
-			printf("q la mierda %lld\n", del);
 			printf("%lld\n", del + q[i].ans);
 		} else {
 			PII range;
