@@ -56,35 +56,52 @@ void newnode(int &p) {
 	pl[p].r = -1;
 }
 void refresh(int& p, int pz, int py, int pos, LL vv) {
+	printf("entrando a refresh con %lld %u %u %u %lld\n", (long long) p, pz, py,
+			pos, vv);
 	int mid = (pz + py) >> 1;
-	if (p < 0)
+	if (p < 0) {
 		newnode(p);
+	}
 	if (pz == py) {
+		printf("pz=py, sumando a %lld %lld en %u\n", pl[p].v, vv, p);
 		pl[p].v += vv;
 		return;
 	}
-	if (pos <= mid)
+	if (pos <= mid) {
 		refresh(pl[p].l, Left, pos, vv);
-	else
+	} else {
 		refresh(pl[p].r, Right, pos, vv);
+	}
+	printf("sumando de %d y %d a %u valores %lld y %lld\n", pl[p].l, pl[p].r, p,
+			pl[pl[p].l].v, pl[pl[p].r].v);
 	pl[p].v = pl[pl[p].l].v + pl[pl[p].r].v;
 }
 LL query(int p, int pz, int py, int zz, int yy) {
 	int mid = (pz + py) >> 1;
+	LL res = 0;
 	if (p < 0) {
+		printf("query regresa 0\n");
 		return 0;
 	}
 	if (pz == zz && py == yy) {
+		printf("query pz[%u] regresa %lld\n", p, pl[p].v);
 		return pl[p].v;
 	}
 	if (yy <= mid) {
-		return query(pl[p].l, Left, zz, yy);
+		res = query(pl[p].l, Left, zz, yy);
+		printf("query yy regresa %lld\n", res);
+		return res;
 	} else {
 		if (mid < zz) {
-			return query(pl[p].r, Right, zz, yy);
+			res = query(pl[p].r, Right, zz, yy);
+
+			printf("query mid regresa %lld\n", res);
+			return res;
 		} else {
 			LL t1 = query(pl[p].l, Left, zz, mid);
 			LL t2 = query(pl[p].r, Right, mid + 1, yy);
+			printf("query t1 regresa %lld\n", t1);
+			printf("query t2 regresa %lld\n", t2);
 			return t1 + t2;
 		}
 	}
@@ -163,12 +180,14 @@ int main() {
 		q[i].tp = buff[0];
 		q[i].id = i;
 	}
+	memset(pl, 0, sizeof(pl));
 	std::sort(q + 1, q + nq + 1, cmp1);
 	pos.clear();
 	pcnt = 0;
 	newnode(root);
-	for (j = 1; j <= nq && q[j].tp == 'U'; j++)
-		;
+	for (j = 1; j <= nq && q[j].tp == 'U'; j++) {
+		printf("pasandode de %u\n", j);
+	}
 	for (i = 1; i <= n; i++) {
 		std::set<int>::iterator it;
 		std::set<int>&th = pos[a[i]];
@@ -191,6 +210,7 @@ int main() {
 	std::sort(q + 1, q + nq + 1, cmp2);
 	pcnt = 0;
 	B.init(n);
+	printf("inicializado B\n");
 	for (i = 1; i <= nq; i++) {
 		if (q[i].tp == 'Q') {
 			LL del = B.sum(q[i].x, 1, q[i].y);
