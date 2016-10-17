@@ -60,7 +60,6 @@ void refresh(int& p, int pz, int py, int pos, LL vv) {
 	if (p < 0)
 		newnode(p);
 	if (pz == py) {
-		printf("buried %lld %lld en %u\n", pl[p].v, vv, p);
 		pl[p].v += vv;
 		return;
 	}
@@ -68,15 +67,15 @@ void refresh(int& p, int pz, int py, int pos, LL vv) {
 		refresh(pl[p].l, Left, pos, vv);
 	else
 		refresh(pl[p].r, Right, pos, vv);
-	if (pl[p].l != -1) {
-
+	pl[p].v = 0;
+	if (pl[p].l != -1)
+	{
 		pl[p].v = pl[pl[p].l].v;
 	}
-	if (pl[p].r != -1) {
+	if (pl[p].r != -1)
+	{
 		pl[p].v += pl[pl[p].r].v;
 	}
-	printf("mierda %lld en %u de %d y %d vals %lld y %lld\n", pl[p].v, p,
-			pl[p].l, pl[p].r, pl[pl[p].l].v, pl[pl[p].r].v);
 }
 LL query(int p, int pz, int py, int zz, int yy) {
 	int mid = (pz + py) >> 1;
@@ -84,7 +83,6 @@ LL query(int p, int pz, int py, int zz, int yy) {
 		return 0;
 	}
 	if (pz == zz && py == yy) {
-		printf("wana b %lld en %u\n", pl[p].v, p);
 		return pl[p].v;
 	}
 	if (yy <= mid) {
