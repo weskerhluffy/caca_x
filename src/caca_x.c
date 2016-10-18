@@ -1379,33 +1379,28 @@ static inline void caca_x_encuentra_indices_segmento(natural idx_nodo) {
 
 }
 
-static inline entero_largo caca_x_generar_suma_repetidos(
-		caca_x_numeros_unicos_en_rango *arbol_numeros_unicos, int *indices,
-		int num_indices) {
+static inline entero_largo caca_x_generar_suma_repetidos() {
 	entero_largo suma_repetidos = 0;
 	avl_tree_t *arbolin_unicos = NULL;
-
-	//
 
 	caca_log_debug("sumando repetidos\n");
 
 	avl_tree_create(&arbolin_unicos, CACA_X_MAX_NODOS);
 
-	for (int i = 0; i < num_indices; i++) {
-		avl_tree_t *arbolin_actual = NULL;
-
-		arbolin_actual = arbol_numeros_unicos[indices[i]].arbolazo;
+	for (int i = 0; i < num_indices_nodos; i++) {
+		avl_tree_t *arbolin_actual =
+				arbol_numeros_unicos[indices_nodos[i]].arbolazo;
 
 		if (!i) {
 			caca_log_debug("primer arbol en nodo %d\n", i);
 			caca_x_clona_arbol(arbolin_unicos, arbolin_actual);
 		} else {
 			bool tope_topado = falso;
-			int tope = 0;
-			int numero_minimo_arbol_actual = 0;
-			int numero_maximo_arbol_unicos = 0;
-			int num_encontrados_en_unicos = 0;
-			int num_encontrados_en_actual = 0;
+			natural tope = 0;
+			natural numero_minimo_arbol_actual = 0;
+			natural numero_maximo_arbol_unicos = 0;
+			natural num_encontrados_en_unicos = 0;
+			natural num_encontrados_en_actual = 0;
 			avl_tree_iterator_t *iter_actual = &(avl_tree_iterator_t ) { 0 };
 			avl_tree_iterator_t *iter_unicos = &(avl_tree_iterator_t ) { 0 };
 			avl_tree_node_t *nodo_minimo_arbol_actual = NULL;
@@ -1433,7 +1428,7 @@ static inline entero_largo caca_x_generar_suma_repetidos(
 						numero_minimo_arbol_actual);
 
 				while (avl_tree_iterador_hay_siguiente(iter_unicos)) {
-					int numero_unicos = 0;
+					natural numero_unicos = 0;
 					avl_tree_node_t *nodo_unicos = NULL;
 					avl_tree_node_t *nodo_nueva_raiz_arbol_actual = NULL;
 
@@ -1476,8 +1471,9 @@ static inline entero_largo caca_x_generar_suma_repetidos(
 				caca_log_debug("no ay coincidencias entre segmentos\n");
 			}
 
+#ifdef CACA_X_VALIDAR_ARBOLINES
 			while (avl_tree_iterador_hay_siguiente(iter_actual)) {
-				int numero_actual = 0;
+				natural numero_actual = 0;
 				avl_tree_node_t *nodo_actual = NULL;
 
 				nodo_actual = avl_tree_iterador_obtener_actual(iter_actual);
@@ -1504,6 +1500,7 @@ static inline entero_largo caca_x_generar_suma_repetidos(
 			assert_timeout(
 					num_encontrados_en_actual == num_encontrados_en_unicos);
 
+#endif
 			avl_tree_iterador_fini(iter_actual);
 			avl_tree_iterador_fini(iter_unicos);
 		}
@@ -1604,20 +1601,21 @@ static inline entero_largo caca_x_suma_segmento() {
 			limite_der, num_indices_nodos,
 			caca_arreglo_a_cadena((tipo_dato *) indices_nodos, num_indices_nodos, buf));
 
-#if 0
+#if 1
 	for (int i = 0; i < num_indices_nodos; i++) {
 		caca_log_debug("segmento %d aporta %lu\n", indices_nodos[i],
-				sumas_arbol_segmentado[indices_nodos[i]]);
-		res += sumas_arbol_segmentado[indices_nodos[i]];
+				arbol_numeros_unicos[indices_nodos[i]].suma);
+		res += arbol_numeros_unicos[indices_nodos[i]].suma;
 	}
 
-	res -= caca_x_generar_suma_repetidos(arbol_numeros_unicos, indices_nodos,
-			num_indices_nodos);
+	res -= caca_x_generar_suma_repetidos();
 #endif
 
+#if 0
 	res = caca_x_generar_suma_unicos();
 	caca_log_debug("La suma es %lld\n", res);
 
+#endif
 	return res;
 }
 
