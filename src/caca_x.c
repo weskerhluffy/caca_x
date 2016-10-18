@@ -744,9 +744,9 @@ static inline char *avl_tree_inoder_node_travesti_conteo(avl_tree_node_t *nodo,
 
 #ifdef CACA_X_LOG
 #ifndef ONLINE_JUDGE
-		sprintf(num_buf, "%u [%u,%u] (%u) ocu %u", nodo->llave,
+		sprintf(num_buf, "%u [%u,%u]  ocu %u", nodo->llave,
 				(natural )(nodo->llave >> 32), (natural )nodo->llave,
-				nodo->num_decendientes, nodo->ocurrencias);
+				nodo->ocurrencias);
 #endif
 #endif
 
@@ -1158,7 +1158,7 @@ static inline void caca_x_clona_nodos(avl_tree_t *arbol_dst,
 
 	avl_tree_node_t *nodo_nuevo = avl_tree_create_node(arbol_dst,
 			nodo_ori->llave);
-	int idx_en_arreglo_real = nodo_nuevo->indice_en_arreglo;
+	natural idx_en_arreglo_real = nodo_nuevo->indice_en_arreglo;
 
 	memcpy(nodo_nuevo, nodo_ori, offsetof(avl_tree_node_t,left));
 
@@ -1216,6 +1216,9 @@ static inline void caca_x_mergear_arboles(avl_tree_t *arbolin_izq,
 			}
 
 			caca_x_clona_arbol(arbolin_resultante, arbol_mayor);
+			caca_log_debug(
+					"ay arbol der, el res de la copia del mas grande es %s\n",
+					avl_tree_sprint_identado(arbolin_resultante, CACA_X_BUF_STATICO_DUMP_ARBOL));
 
 			assert_timeout(
 					arbolin_resultante->nodos_realmente_en_arbol_utiles
@@ -1231,12 +1234,16 @@ static inline void caca_x_mergear_arboles(avl_tree_t *arbolin_izq,
 
 				if (!(nodo_encontrado = avl_tree_find(arbolin_resultante,
 						numero_actual))) {
+					caca_log_debug("el num %u no se encontraba, añadiendo\n",
+							numero_actual);
+
 					nodo_encontrado = avl_tree_insert(arbolin_resultante,
 							numero_actual);
 					nodo_encontrado->ocurrencias = nodo_actual->ocurrencias;
 					arbolin_resultante->ocurrencias_totales +=
 							nodo_actual->ocurrencias - 1;
 				} else {
+					caca_log_debug("el num %u ya estaba\n", numero_actual);
 					nodo_encontrado->ocurrencias += nodo_actual->ocurrencias;
 					arbolin_resultante->ocurrencias_totales +=
 							nodo_actual->ocurrencias;
@@ -1246,9 +1253,13 @@ static inline void caca_x_mergear_arboles(avl_tree_t *arbolin_izq,
 			}
 
 			avl_tree_iterador_fini(iter);
+
+			caca_log_debug("el arbol mergeado es %s\n",
+					avl_tree_sprint_identado(arbolin_resultante, CACA_X_BUF_STATICO_DUMP_ARBOL));
 		} else {
 			caca_x_clona_arbol(arbolin_resultante, arbolin_izq);
-
+			caca_log_debug("no ay arbol der, el res es %s\n",
+					avl_tree_sprint_identado(arbolin_resultante, CACA_X_BUF_STATICO_DUMP_ARBOL));
 			assert_timeout(
 					arbolin_resultante->nodos_realmente_en_arbol_utiles
 							== arbolin_izq->nodos_realmente_en_arbol_utiles);
@@ -1264,14 +1275,18 @@ static inline avl_tree_t *caca_x_construye_arbol_binario_segmentado(
 	caca_x_inicializar_nodo(nodo, altura, idx_nodo, idx_num_ini, idx_num_fin);
 
 	if (idx_num_ini <= idx_numeros_max) {
+		caca_log_debug("construyendo intervalo %u-%u\n", idx_num_ini,
+				idx_num_fin);
 		if (idx_num_ini != idx_num_fin) {
-
 			natural idx_hijo_izq = idx_nodo << 1 | 1;
 			natural altura_sig = altura - 1;
 			natural idx_medio = idx_num_ini
 					+ ((idx_num_fin - idx_num_ini) >> 1);
 			avl_tree_t *arbolazo = nodo->arbolazo;
 
+			caca_log_debug(
+					"esto no es una elegia, digo oja, idx %u, altura %u\n",
+					idx_nodo, altura);
 			caca_x_mergear_arboles(
 					caca_x_construye_arbol_binario_segmentado(idx_hijo_izq,
 							idx_num_ini, idx_medio, altura_sig),
@@ -1288,6 +1303,8 @@ static inline avl_tree_t *caca_x_construye_arbol_binario_segmentado(
 			}
 
 			if (arbolazo) {
+				caca_log_debug("hay arbolin %s\n",
+						avl_tree_sprint_identado(arbolazo, CACA_X_BUF_STATICO_DUMP_ARBOL));
 				entero_largo suma_unicos = 0;
 				avl_tree_iterator_t * iterador = &(avl_tree_iterator_t ) { 0 };
 
@@ -1298,13 +1315,16 @@ static inline avl_tree_t *caca_x_construye_arbol_binario_segmentado(
 							(avl_tree_node_t*) avl_tree_iterador_obtener_actual(
 									iterador);
 					tipo_dato numero_unico_actual = nodo_arbol_actual->llave;
-
+					caca_log_debug("sumando %u a suma aunicos \n",
+							numero_unico_actual);
 					suma_unicos += numero_unico_actual;
+					caca_log_debug("la suma aora es %lld\n", suma_unicos);
 
 					avl_tree_iterador_siguiente(iterador);
 				}
 
 				avl_tree_iterador_fini(iterador);
+				caca_log_debug("la suma final es %lld\n", suma_unicos);
 
 				nodo->suma = suma_unicos;
 			}
@@ -1318,9 +1338,14 @@ static inline avl_tree_t *caca_x_construye_arbol_binario_segmentado(
 
 			assert_timeout(!avl_tree_find(nodo->arbolazo, numero_actual));
 
+#ifdef CACA_X_LOG
+			avl_tree_node_t *res=avl_tree_insert(nodo->arbolazo, numero_actual);
 			assert_timeout(
-					avl_tree_insert(nodo->arbolazo, numero_actual)->ocurrencias
-							== 1);
+					res->ocurrencias
+					== 1);
+#else
+			avl_tree_insert(nodo->arbolazo, numero_actual);
+#endif
 			nodo->arbolazo->max_nodos_utiles = nodo->max_num_esperados = 1;
 			return nodo->arbolazo;
 		}
