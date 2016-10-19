@@ -31,7 +31,7 @@
 
 #define CACA_X_BUF_STATICO_DUMP_ARBOL (char[1000] ) { '\0' }
 
-#define CACA_X_VALIDAR_ARBOLINES
+//#define CACA_X_VALIDAR_ARBOLINES
 
 /*
  #define caca_log_debug printf
@@ -204,7 +204,7 @@ static inline void avl_tree_node_actualizar_num_decendientes(
 	}
 	if (node->left || node->right) {
 		node->num_decendientes = conteo_left + conteo_right
-				+ (node->left ? 1 : 0) + (node->right ? 1 : 0);
+		+ (node->left ? 1 : 0) + (node->right ? 1 : 0);
 	} else {
 		node->num_decendientes = 0;
 	}
@@ -1152,35 +1152,34 @@ static inline void caca_x_clona_nodos(avl_tree_t *arbol_dst,
 		avl_tree_node_t *nodo_ori, avl_tree_node_t *nodo_dst_padre,
 		avl_tree_node_t **apuntador_hijo) {
 
-	if (!nodo_ori) {
-		return;
-	}
+	if (nodo_ori) {
 
-	avl_tree_node_t *nodo_nuevo = avl_tree_create_node(arbol_dst,
-			nodo_ori->llave);
-	natural idx_en_arreglo_real = nodo_nuevo->indice_en_arreglo;
+		avl_tree_node_t *nodo_nuevo = avl_tree_create_node(arbol_dst,
+				nodo_ori->llave);
 
-	memcpy(nodo_nuevo, nodo_ori, offsetof(avl_tree_node_t,left));
+		nodo_nuevo->altura = nodo_ori->altura;
+		nodo_nuevo->ocurrencias = nodo_ori->ocurrencias;
+		nodo_nuevo->left = nodo_ori->left;
+		nodo_nuevo->right = nodo_ori->right;
+		nodo_nuevo->padre = nodo_ori->padre;
 
-	nodo_nuevo->indice_en_arreglo = idx_en_arreglo_real;
+#ifdef CACA_X_VALIDAR_ARBOLINES
+		memcpy(nodo_nuevo, nodo_ori, offsetof(avl_tree_node_t,left));
+#endif
 
-	if (!arbol_dst->root) {
-		arbol_dst->root = nodo_nuevo;
-	}
-
-	if (nodo_dst_padre) {
 		nodo_nuevo->padre = nodo_dst_padre;
 		*apuntador_hijo = nodo_nuevo;
-	}
 
-	caca_x_clona_nodos(arbol_dst, nodo_ori->left, nodo_nuevo,
-			&nodo_nuevo->left);
-	caca_x_clona_nodos(arbol_dst, nodo_ori->right, nodo_nuevo,
-			&nodo_nuevo->right);
+		caca_x_clona_nodos(arbol_dst, nodo_ori->left, nodo_nuevo,
+				&nodo_nuevo->left);
+		caca_x_clona_nodos(arbol_dst, nodo_ori->right, nodo_nuevo,
+				&nodo_nuevo->right);
+	}
 }
 
 static inline void caca_x_clona_arbol(avl_tree_t *arbol_dst,
 		avl_tree_t *arbol_ori) {
+#ifdef CACA_X_VALIDAR_ARBOLINES
 	int tam_arbol_dst = 0;
 	int tam_arbol_ori = 0;
 
@@ -1189,10 +1188,28 @@ static inline void caca_x_clona_arbol(avl_tree_t *arbol_dst,
 
 	assert_timeout(tam_arbol_dst >= tam_arbol_ori);
 	assert_timeout(!arbol_dst->nodos_usados);
+#endif
 
-	caca_x_clona_nodos(arbol_dst, arbol_ori->root, NULL, NULL );
+	if (arbol_ori->root) {
+		avl_tree_node_t *nodo_ori = arbol_ori->root;
+		avl_tree_node_t *nodo_nuevo = avl_tree_create_node(arbol_dst,
+				nodo_ori->llave);
 
-	arbol_dst->ocurrencias_totales = arbol_ori->ocurrencias_totales;
+		nodo_nuevo->altura = nodo_ori->altura;
+		nodo_nuevo->ocurrencias = nodo_ori->ocurrencias;
+		nodo_nuevo->left = nodo_ori->left;
+		nodo_nuevo->right = nodo_ori->right;
+		nodo_nuevo->padre = nodo_ori->padre;
+
+		arbol_dst->root = nodo_nuevo;
+
+		caca_x_clona_nodos(arbol_dst, nodo_ori->left, nodo_nuevo,
+				&nodo_nuevo->left);
+		caca_x_clona_nodos(arbol_dst, nodo_ori->right, nodo_nuevo,
+				&nodo_nuevo->right);
+
+		arbol_dst->ocurrencias_totales = arbol_ori->ocurrencias_totales;
+	}
 }
 
 static inline void caca_x_mergear_arboles(avl_tree_t *arbolin_izq,
@@ -1261,8 +1278,9 @@ static inline void caca_x_mergear_arboles(avl_tree_t *arbolin_izq,
 			caca_log_debug("no ay arbol der, el res es %s\n",
 					avl_tree_sprint_identado(arbolin_resultante, CACA_X_BUF_STATICO_DUMP_ARBOL));
 			assert_timeout(
-					arbolin_resultante->nodos_realmente_en_arbol_utiles
-							== arbolin_izq->nodos_realmente_en_arbol_utiles);
+					!arbolin_izq->root
+							|| arbolin_resultante->nodos_realmente_en_arbol_utiles
+									== arbolin_izq->nodos_realmente_en_arbol_utiles);
 		}
 	}
 }
