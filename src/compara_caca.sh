@@ -26,7 +26,8 @@ do
 		exit 1
 	fi
 	date
-	python cagada/shit.py < $caca > $caca_log_piton
+#	python cagada/shit.py < $caca > $caca_log_piton
+	./shame < $caca > $caca_log_piton
 	date
 	diferencia_ojala=$(diff $caca_log_c $caca_log_piton)
 	echo "la diferencia es"
