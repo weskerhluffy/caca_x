@@ -204,7 +204,7 @@ static inline void avl_tree_node_actualizar_num_decendientes(
 	}
 	if (node->left || node->right) {
 		node->num_decendientes = conteo_left + conteo_right
-				+ (node->left ? 1 : 0) + (node->right ? 1 : 0);
+		+ (node->left ? 1 : 0) + (node->right ? 1 : 0);
 	} else {
 		node->num_decendientes = 0;
 	}
@@ -1471,6 +1471,7 @@ static inline entero_largo caca_x_generar_suma_repetidos() {
 			avl_tree_iterador_ini(arbolin_actual, iter_actual);
 			avl_tree_iterador_ini(arbolin_unicos, iter_unicos);
 
+#ifdef CACA_X_VALIDAR_ARBOLINES
 			if (numero_minimo_arbol_actual <= numero_maximo_arbol_unicos) {
 				avl_tree_iterador_asignar_actual(iter_unicos,
 						numero_minimo_arbol_actual);
@@ -1490,18 +1491,19 @@ static inline entero_largo caca_x_generar_suma_repetidos() {
 									nodo_raiz_arbol_actual->altura));
 
 					if (avl_tree_find_descartando(nodo_raiz_arbol_actual,
-							&nodo_nueva_raiz_arbol_actual, numero_unicos,
-							numero_maximo_arbol_unicos, &tope_topado)) {
+									&nodo_nueva_raiz_arbol_actual, numero_unicos,
+									numero_maximo_arbol_unicos, &tope_topado)) {
 						caca_log_debug(
 								"numero %d, se encontro que es duplicado en segment %d \n%s, proviene de unicos:\n%s\n",
 								numero_unicos, i,
 								avl_tree_inoder_node_travesti(
 										nodo_raiz_arbol_actual, (char[100] ) {
-														'\0' },
+											'\0'},
 										nodo_raiz_arbol_actual->altura),
 								avl_tree_sprint_identado(arbolin_unicos,
 										CACA_X_BUF_STATICO_DUMP_ARBOL));
-						suma_repetidos += numero_unicos;
+						caca_log_debug("suma de repetidos asta aora %lld\n",
+								suma_repetidos);
 						num_encontrados_en_actual++;
 					}
 
@@ -1526,7 +1528,7 @@ static inline entero_largo caca_x_generar_suma_repetidos() {
 				caca_log_debug("no ay coincidencias entre segmentos\n");
 			}
 
-#ifdef CACA_X_VALIDAR_ARBOLINES
+#endif
 			while (avl_tree_iterador_hay_siguiente(iter_actual)) {
 				natural numero_actual = 0;
 				avl_tree_node_t *nodo_actual = NULL;
@@ -1549,15 +1551,17 @@ static inline entero_largo caca_x_generar_suma_repetidos() {
 							avl_tree_sprint_identado(arbolin_actual,
 									CACA_X_BUF_STATICO_DUMP_ARBOL));
 					num_encontrados_en_unicos++;
+					suma_repetidos += numero_actual;
 				}
 
 				avl_tree_iterador_siguiente(iter_actual);
 			}
 
+#ifdef CACA_X_VALIDAR_ARBOLINES
 			assert_timeout(
 					num_encontrados_en_actual == num_encontrados_en_unicos);
-
 #endif
+
 			avl_tree_iterador_fini(iter_actual);
 			avl_tree_iterador_fini(iter_unicos);
 		}
