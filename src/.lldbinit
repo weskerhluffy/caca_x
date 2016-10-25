@@ -6,7 +6,7 @@ command alias nodos memory read -s 16 -f int64_t -c 31 me-> odes
 br s -l 2183 -c "cont_queries==849"
 br s -l 2183 -c "cont_queries==761"
 
-#settings set target.run-args < caca.txt
+settings set target.run-args < caca.txt
 #settings set target.run-args < caca1.txt
 #settings set target.run-args < caca2.txt
 #settings set target.run-args < caca3.txt
@@ -18,4 +18,4 @@ br s -l 2183 -c "cont_queries==761"
 #settings set target.run-args < caca_grande_actualizaciones_indice_fix.txt
 #settings set target.run-args < caca_grande_random_1.txt > /dev/null
 #settings set target.run-args < caca_fiesta_mision_2_random_big.txt
-settings set target.run-args < caca7a.txt
+#settings set target.run-args < caca7a.txt
