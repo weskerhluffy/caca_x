@@ -55,9 +55,6 @@ typedef enum BOOLEANOS {
 #define max(x,y) ((x) < (y) ? (y) : (x))
 #define min(x,y) ((x) < (y) ? (x) : (y))
 
-natural num_numeros_unicos_anadidos = 0;
-natural numeros_unicos_anadidos[MAX_NUMEROS] = { 0 };
-
 #if 1
 
 typedef unsigned int khint32_t;
@@ -311,6 +308,107 @@ static inline __attribute__ ((__unused__)) void kh_del_caca(kh_caca_t *h,
 
 #endif
 
+#if 1
+
+typedef struct node {
+	int data;
+	struct node *next;
+} nodo_lista;
+
+void append(nodo_lista *head, int num) {
+	nodo_lista *temp, *right;
+	temp = (nodo_lista *) malloc(sizeof(nodo_lista));
+	temp->data = num;
+	right = (nodo_lista *) head;
+	while (right->next != NULL )
+		right = right->next;
+	right->next = temp;
+	right = temp;
+	right->next = NULL;
+}
+
+void add(nodo_lista **headp, int num) {
+	nodo_lista *temp;
+	nodo_lista *head = *headp;
+	temp = (nodo_lista *) malloc(sizeof(nodo_lista));
+	temp->data = num;
+	if (head == NULL ) {
+		head = temp;
+		head->next = NULL;
+	} else {
+		temp->next = head;
+		head = temp;
+	}
+	*headp = head;
+}
+void addafter(nodo_lista **headp, int num, int loc) {
+	int i;
+	nodo_lista *temp, *left, *right;
+	nodo_lista *head = *headp;
+	right = head;
+	for (i = 1; i < loc; i++) {
+		left = right;
+		right = right->next;
+	}
+	temp = (nodo_lista *) malloc(sizeof(nodo_lista));
+	temp->data = num;
+	left->next = temp;
+	left = temp;
+	left->next = right;
+	*headp = head;
+	return;
+}
+
+void insert(nodo_lista **headp, int num) {
+	int c = 0;
+	nodo_lista *temp;
+	nodo_lista *head = *headp;
+	temp = head;
+	if (temp == NULL ) {
+		add(num);
+	} else {
+		while (temp != NULL ) {
+			if (temp->data < num)
+				c++;
+			temp = temp->next;
+		}
+		if (c == 0)
+			add(num);
+		else if (c < count())
+			addafter(num, ++c);
+		else
+			append(num);
+	}
+	*headp = head;
+}
+
+int delete(nodo_lista **headp, int num) {
+	nodo_lista *temp, *prev;
+	nodo_lista *head = *headp;
+	temp = head;
+	while (temp != NULL ) {
+		if (temp->data == num) {
+			if (temp == head) {
+				head = temp->next;
+				free(temp);
+				*headp = head;
+				return 1;
+			} else {
+				prev->next = temp->next;
+				free(temp);
+				return 1;
+			}
+		} else {
+			prev = temp;
+			temp = temp->next;
+		}
+	}
+	*headp = head;
+	return 0;
+}
+
+#endif
+
 typedef struct caca_x_numeros_unicos_en_rango {
 	kh_caca_t *tablon;
 	natural max_numeros;
@@ -321,6 +419,11 @@ typedef struct caca_x_numeros_unicos_en_rango {
 	natural limite_izq;
 	natural limite_der;
 } caca_x_numeros_unicos_en_rango;
+
+typedef struct caca_preprocesada {
+	kh_caca_t *tablon;
+	entero_largo suma;
+} caca_preprocesada;
 
 natural num_numeros = 0;
 natural num_numeros_redondeado = 0;
@@ -335,6 +438,9 @@ tipo_dato viejo_pendejo = 0;
 natural *indices_nodos = (natural[CACA_X_MAX_NODOS_AFECTADOS] ) { 0 };
 tipo_dato *numeros = NULL;
 caca_x_numeros_unicos_en_rango *arbol_numeros_unicos = NULL;
+caca_preprocesada *datos_prepro = NULL;
+kh_caca_t *posicion_a_idx_datos_prepro = NULL;
+natural
 
 static inline void caca_x_validar_segmentos(
 		caca_x_numeros_unicos_en_rango *arbolin_segs, tipo_dato *numeros,
@@ -575,16 +681,16 @@ static inline void caca_x_encuentra_indices_segmento(natural idx_nodo) {
 
 }
 
-static inline entero_largo caca_x_generar_suma_repetidos() {
+static inline entero_largo caca_x_generar_suma_repetidos(
+		kh_caca_t *tablon_unicos) {
 	entero_largo suma_repetidos = 0;
-	kh_caca_t *tablon_unicos = NULL;
 
 	caca_log_debug("sumando repetidos\n");
 
-	tablon_unicos = arbol_numeros_unicos[indices_nodos[0]].tablon;
+//	tablon_unicos = arbol_numeros_unicos[indices_nodos[0]].tablon;
 	num_numeros_unicos_anadidos = 0;
 
-	for (int i = 1; i < num_indices_nodos; i++) {
+	for (int i = 0; i < num_indices_nodos; i++) {
 		khiter_t iter_actual;
 		kh_caca_t *tablon_actual = arbol_numeros_unicos[indices_nodos[i]].tablon;
 
@@ -599,29 +705,14 @@ static inline entero_largo caca_x_generar_suma_repetidos() {
 					iter_unicos = kh_put_caca(tablon_unicos, numero_actual,
 							&ret);
 					assert_timeout(ret == 1 || ret == 2);
-					kh_val(tablon_unicos,iter_unicos)=1;
-					numeros_unicos_anadidos[num_numeros_unicos_anadidos++] =
-							numero_actual;
+					kh_val(tablon_unicos,iter_unicos)=kh_val(tablon_actual,iter_actual);
 				} else {
 					suma_repetidos += numero_actual;
+					kh_val(tablon_unicos,iter_unicos)+=kh_val(tablon_actual,iter_actual);
 				}
 			}
 		}
 
-	}
-
-	for (int i = 0; i < num_numeros_unicos_anadidos; i++) {
-		natural num_actual = numeros_unicos_anadidos[i];
-		khiter_t iter_unicos;
-
-		iter_unicos = kh_get_caca(tablon_unicos, num_actual);
-
-		assert_timeout(iter_unicos!=kh_end(tablon_unicos));
-
-		kh_del_caca(tablon_unicos, iter_unicos);
-
-		iter_unicos = kh_get_caca(tablon_unicos, num_actual);
-		assert_timeout(iter_unicos==kh_end(tablon_unicos));
 	}
 
 	caca_log_debug("en total la suma de repetidos es %lld\n", suma_repetidos);
@@ -641,7 +732,7 @@ int caca_comun_compara_enteros(const void *a, const void *b) {
 	return resultado;
 }
 
-static inline entero_largo caca_x_suma_segmento() {
+static inline entero_largo caca_x_suma_segmento(kh_caca_t *tablon_unicos) {
 	entero_largo res = 0;
 #ifdef CACA_X_LOG
 	char buf[100] = {'\0'};
@@ -665,7 +756,7 @@ static inline entero_largo caca_x_suma_segmento() {
 		res += arbol_numeros_unicos[indices_nodos[i]].suma;
 	}
 
-	res -= caca_x_generar_suma_repetidos();
+	res -= caca_x_generar_suma_repetidos(tablon_unicos);
 #endif
 
 #if 0
@@ -896,6 +987,26 @@ static inline void caca_x_validar_segmentos(
 	caca_x_valida_segmentos_sumas(arbolin_segs, numeros, num_nodos, num_numeros,
 			indices, num_indices);
 
+}
+
+static inline void crea_datos_preprocesados() {
+	natural tam_bloque = 0;
+	natural num_bloques = 0;
+	natural idx_dato_prepro = 0;
+
+	tam_bloque = ceil(pow(num_numeros));
+	num_bloques = (num_numeros / tam_bloque) + 1;
+
+	caca_log_debug("el tam bloq %u num de bloqs %u\n", tam_bloque, num_bloques);
+
+	datos_prepro = calloc(num_bloques * num_bloques, sizeof(caca_preprocesada));
+
+	for (int i = 0; i < num_bloques; i++) {
+		for (int j = i + 1; i < num_bloques; j++) {
+			natural *suma = datos_prepro[idx_dato_prepro];
+			idx_dato_prepro++;
+		}
+	}
 }
 
 static inline void caca_x_main() {
