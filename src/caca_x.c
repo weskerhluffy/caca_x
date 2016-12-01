@@ -32,12 +32,12 @@
 
 #define CACA_X_BUF_STATICO_DUMP_ARBOL (char[1000] ) { '\0' }
 
-#define CACA_X_VALIDAR_ARBOLINES
+//#define CACA_X_VALIDAR_ARBOLINES
 
-#define caca_log_debug printf
 /*
- #define caca_log_debug(formato, args...) 0
+#define caca_log_debug printf
  */
+ #define caca_log_debug(formato, args...) 0
 #define assert_timeout(condition) assert(condition);
 /*
  #define assert_timeout(condition) 0
@@ -332,112 +332,59 @@ typedef struct node {
 	struct node *next;
 } nodo_lista;
 
-static inline int listilla_count(nodo_lista *head) {
-	struct node *n;
-	int c = 0;
-	n = head;
-	while (n != NULL ) {
-		n = n->next;
-		c++;
-	}
-	return c;
-}
+typedef struct lista_pendeja
+{
+        nodo_lista *cabeza;
+        nodo_lista *cola;
+} lista_pendeja;
 
-void listilla_append(nodo_lista *head, natural num) {
+void listilla_append(lista_pendeja *lista, natural num) {
 	nodo_lista *temp, *right;
 	temp = (nodo_lista *) malloc(sizeof(nodo_lista));
 	temp->data = num;
-	right = (nodo_lista *) head;
-	while (right->next != NULL )
-		right = right->next;
+	right = (nodo_lista *) lista->cola;
+	assert_timeout(!right->next);
 	right->next = temp;
 	right = temp;
 	right->next = NULL;
+	lista->cola=right;
 }
 
-void listilla_add(nodo_lista **headp, natural num) {
+void listilla_add(lista_pendeja *lista, natural num) {
 	nodo_lista *temp;
-	nodo_lista *head = *headp;
+	nodo_lista *head = lista->cabeza;
+	nodo_lista *cola= NULL;
 	temp = (nodo_lista *) malloc(sizeof(nodo_lista));
 	temp->data = num;
 	if (head == NULL ) {
 		head = temp;
 		head->next = NULL;
+		cola=head;
 	} else {
 		temp->next = head;
 		head = temp;
+		cola=lista->cola;
 	}
-	*headp = head;
-}
-void listilla_addafter(nodo_lista **headp, natural num, natural loc) {
-	natural i;
-	nodo_lista *temp, *left, *right;
-	nodo_lista *head = *headp;
-	right = head;
-	for (i = 1; i < loc; i++) {
-		left = right;
-		right = right->next;
-	}
-	temp = (nodo_lista *) malloc(sizeof(nodo_lista));
-	temp->data = num;
-	left->next = temp;
-	left = temp;
-	left->next = right;
-	*headp = head;
-	return;
+	lista->cabeza= head;
+	lista->cola=cola;
 }
 
-void listilla_insert(nodo_lista **headp, natural num) {
+void listilla_insert(lista_pendeja *lista, natural num) {
 	natural c = 0;
 	nodo_lista *temp;
-	nodo_lista *head = *headp;
+	nodo_lista *head = lista->cabeza;
 	temp = head;
 	if (temp == NULL ) {
-		listilla_add(&head, num);
+		listilla_add(lista, num);
 	} else {
-		while (temp != NULL ) {
-			if (temp->data < num)
-				c++;
-			temp = temp->next;
-		}
-		if (c == 0)
-			listilla_add(&head, num);
-		else if (c < listilla_count(head))
-			listilla_addafter(&head, num, ++c);
-		else
-			listilla_append(head, num);
+		listilla_append(lista, num);
 	}
-	*headp = head;
+	lista->cabeza= head;
 }
 
-natural listilla_delete(nodo_lista **headp, natural num) {
-	nodo_lista *temp, *prev;
-	nodo_lista *head = *headp;
-	temp = head;
-	while (temp != NULL ) {
-		if (temp->data == num) {
-			if (temp == head) {
-				head = temp->next;
-				free(temp);
-				*headp = head;
-				return 1;
-			} else {
-				prev->next = temp->next;
-				free(temp);
-				return 1;
-			}
-		} else {
-			prev = temp;
-			temp = temp->next;
-		}
-	}
-	*headp = head;
-	return 0;
-}
-
-static inline char *listilla_a_cadena(nodo_lista *cabeza, char *buf) {
+static inline char *listilla_a_cadena(lista_pendeja *lista, char *buf) {
 	nodo_lista *right;
-	right = (nodo_lista *) cabeza;
+	right = (nodo_lista *) lista->cabeza;
 #ifndef ONLINE_JUDGE
 	while (right != NULL ) {
 		char *buf_tmp = CACA_X_BUF_STATICO_DUMP_ARBOL;
@@ -483,7 +430,7 @@ tipo_dato *numeros = NULL;
 caca_x_numeros_unicos_en_rango *arbol_numeros_unicos = NULL;
 caca_preprocesada *datos_prepro = NULL;
 kh_caca_t *posicion_a_idx_datos_prepro = NULL;
-nodo_lista *idx_bloques_by_posiciones[MAX_NUMEROS];
+lista_pendeja idx_bloques_by_posiciones[MAX_NUMEROS];
 
 static inline void caca_x_validar_segmentos(
 		caca_x_numeros_unicos_en_rango *arbolin_segs, tipo_dato *numeros,
@@ -1068,11 +1015,10 @@ static inline void caca_x_crea_datos_preprocesados() {
 			caca_log_debug("la suma %lld, el mapa %s\n", *suma,
 					kh_shit_dumpear(tablon, CACA_X_BUF_STATICO_DUMP_ARBOL));
 			for (int k = limite_izq; k <= limite_der; k++) {
-				nodo_lista *cabeza_pos = idx_bloques_by_posiciones[k];
-				listilla_insert(&cabeza_pos, idx_dato_prepro);
-				idx_bloques_by_posiciones[k] = cabeza_pos;
+				lista_pendeja *lista_pos= idx_bloques_by_posiciones+k;
+				listilla_insert(lista_pos, idx_dato_prepro);
 				caca_log_debug("aora la lista de bloques de pops %u es %s\n", k,
-						listilla_a_cadena(idx_bloques_by_posiciones[k],
+						listilla_a_cadena(lista_pos,
 								CACA_X_BUF_STATICO_DUMP_ARBOL));
 			}
 		}
