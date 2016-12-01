@@ -107,3 +107,9 @@ src/shame.dSYM/Contents/Resources/DWARF/shame
 src/example.log
 
 *.lprof
+
+*.bak
+
+src/example.log
+
+*.lprof
