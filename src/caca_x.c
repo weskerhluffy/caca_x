@@ -32,12 +32,12 @@
 
 #define CACA_X_BUF_STATICO_DUMP_ARBOL (char[1000] ) { '\0' }
 
-//#define CACA_X_VALIDAR_ARBOLINES
+#define CACA_X_VALIDAR_ARBOLINES
 
 /*
-#define caca_log_debug printf
+ #define caca_log_debug printf
  */
- #define caca_log_debug(formato, args...) 0
+#define caca_log_debug(formato, args...) 0
 #define assert_timeout(condition) assert(condition);
 /*
  #define assert_timeout(condition) 0
@@ -241,6 +241,18 @@ static inline __attribute__ ((__unused__)) int kh_resize_caca(kh_caca_t *h,
 	}
 	return 0;
 }
+
+/*! @function
+ @abstract     Insert a key to the hash table.
+ @param  name  Name of the hash table [symbol]
+ @param  h     Pointer to the hash table [khash_t(name)*]
+ @param  k     Key [type of keys]
+ @param  r     Extra return code: -1 if the operation failed;
+ 0 if the key is present in the hash table;
+ 1 if the bucket is empty (never used); 2 if the element in
+ the bucket has been deleted [int*]
+ @return       Iterator to the inserted element [khint_t]
+ */
 static inline __attribute__ ((__unused__)) khint_t kh_put_caca(kh_caca_t *h,
 		khint32_t key, int *ret) {
 	khint_t x;
@@ -332,10 +344,9 @@ typedef struct node {
 	struct node *next;
 } nodo_lista;
 
-typedef struct lista_pendeja
-{
-        nodo_lista *cabeza;
-        nodo_lista *cola;
+typedef struct lista_pendeja {
+	nodo_lista *cabeza;
+	nodo_lista *cola;
 } lista_pendeja;
 
 void listilla_append(lista_pendeja *lista, natural num) {
@@ -347,26 +358,26 @@ void listilla_append(lista_pendeja *lista, natural num) {
 	right->next = temp;
 	right = temp;
 	right->next = NULL;
-	lista->cola=right;
+	lista->cola = right;
 }
 
 void listilla_add(lista_pendeja *lista, natural num) {
 	nodo_lista *temp;
 	nodo_lista *head = lista->cabeza;
-	nodo_lista *cola= NULL;
+	nodo_lista *cola = NULL;
 	temp = (nodo_lista *) malloc(sizeof(nodo_lista));
 	temp->data = num;
 	if (head == NULL ) {
 		head = temp;
 		head->next = NULL;
-		cola=head;
+		cola = head;
 	} else {
 		temp->next = head;
 		head = temp;
-		cola=lista->cola;
+		cola = lista->cola;
 	}
-	lista->cabeza= head;
-	lista->cola=cola;
+	lista->cabeza = head;
+	lista->cola = cola;
 }
 
 void listilla_insert(lista_pendeja *lista, natural num) {
@@ -379,7 +390,6 @@ void listilla_insert(lista_pendeja *lista, natural num) {
 	} else {
 		listilla_append(lista, num);
 	}
-	lista->cabeza= head;
 }
 
 static inline char *listilla_a_cadena(lista_pendeja *lista, char *buf) {
@@ -431,6 +441,9 @@ caca_x_numeros_unicos_en_rango *arbol_numeros_unicos = NULL;
 caca_preprocesada *datos_prepro = NULL;
 kh_caca_t *posicion_a_idx_datos_prepro = NULL;
 lista_pendeja idx_bloques_by_posiciones[MAX_NUMEROS];
+natural tam_bloque = 0;
+natural num_bloques = 0;
+bitch_vector *mapa_unicos = NULL;
 
 static inline void caca_x_validar_segmentos(
 		caca_x_numeros_unicos_en_rango *arbolin_segs, tipo_dato *numeros,
@@ -542,7 +555,7 @@ static inline void caca_x_mergear_arboles(kh_caca_t *tablin_izq,
 						assert_timeout(
 								ret == 1 );
 						kh_value(tablin_res_int, iter_res)= kh_val(tablin_izq,iter_izq);
-						suma_unicos_int+=kh_key(tablin_res_int, iter_res);
+						suma_unicos_int+=(tipo_dato)kh_key(tablin_res_int, iter_res);
 						caca_log_debug("sumando de izq %u de llave %u para sumar %u\n",kh_value(tablin_izq, iter_izq),kh_key(tablin_izq, iter_izq) ,kh_value(tablin_res_int, iter_res));
 					}
 			}
@@ -566,7 +579,7 @@ static inline void caca_x_mergear_arboles(kh_caca_t *tablin_izq,
 					}
 					else {
 						kh_value(tablin_res_int, iter_res)= kh_val(tablin_der,iter_der);
-						suma_unicos_int+=kh_key(tablin_res_int, iter_res);
+						suma_unicos_int+=(tipo_dato)kh_key(tablin_res_int, iter_res);
 						caca_log_debug("anadiendo de der %u x q NO staba %u\n",kh_value(tablin_res_int, iter_res),llave_der);
 					}
 
@@ -736,8 +749,7 @@ static inline entero_largo caca_x_suma_segmento(kh_caca_t *tablon_unicos) {
 			caca_comun_compara_enteros);
 	caca_log_debug("indices de segmento %d:%d son %u: %s\n", limite_izq,
 			limite_der, num_indices_nodos,
-			caca_arreglo_a_cadena((tipo_dato *) indices_nodos,
-					num_indices_nodos, buf));
+			caca_arreglo_a_cadena((tipo_dato *) indices_nodos, num_indices_nodos, buf));
 
 #if 1
 	for (int i = 0; i < num_indices_nodos; i++) {
@@ -938,7 +950,7 @@ static inline void caca_x_valida_segmentos_sumas(
 			for (iter = kh_begin(nodo->tablon) ; iter != kh_end(nodo->tablon);
 					++iter) {
 				if (kh_exist(nodo->tablon, iter)) {
-					natural num_act = kh_key(nodo->tablon,iter);
+					tipo_dato num_act = kh_key(nodo->tablon,iter);
 					suma_arboles += num_act;
 					assert_timeout(
 							caca_comun_checa_bit(mapa_unicos, (unsigned long) (num_act+ (unsigned long) ((unsigned long) INT_MAX + 1))));
@@ -980,8 +992,6 @@ static inline void caca_x_validar_segmentos(
 }
 
 static inline void caca_x_crea_datos_preprocesados() {
-	natural tam_bloque = 0;
-	natural num_bloques = 0;
 	natural idx_dato_prepro = 0;
 
 	tam_bloque = ceil(pow(num_numeros, 2.0 / 3.0));
@@ -998,9 +1008,7 @@ static inline void caca_x_crea_datos_preprocesados() {
 		for (int j = i; j < num_bloques; j++) {
 			idx_dato_prepro = i * num_bloques + j;
 			entero_largo *suma = &datos_prepro[idx_dato_prepro].suma;
-			kh_caca_t *tablon = datos_prepro[idx_dato_prepro].tablon;
-
-			tablon = kh_init_caca();
+			kh_caca_t *tablon = kh_init_caca();
 
 			limite_izq = i * tam_bloque;
 			limite_der = (j + 1) * tam_bloque - 1;
@@ -1015,14 +1023,74 @@ static inline void caca_x_crea_datos_preprocesados() {
 			caca_log_debug("la suma %lld, el mapa %s\n", *suma,
 					kh_shit_dumpear(tablon, CACA_X_BUF_STATICO_DUMP_ARBOL));
 			for (int k = limite_izq; k <= limite_der; k++) {
-				lista_pendeja *lista_pos= idx_bloques_by_posiciones+k;
+				lista_pendeja *lista_pos = idx_bloques_by_posiciones + k;
 				listilla_insert(lista_pos, idx_dato_prepro);
 				caca_log_debug("aora la lista de bloques de pops %u es %s\n", k,
-						listilla_a_cadena(lista_pos,
-								CACA_X_BUF_STATICO_DUMP_ARBOL));
+						listilla_a_cadena(lista_pos, CACA_X_BUF_STATICO_DUMP_ARBOL));
 			}
+
+			datos_prepro[idx_dato_prepro].tablon = tablon;
 		}
 	}
+}
+
+static inline void caca_x_actualizar_datos_preprocesados(
+		natural idx_pos_actualizar, tipo_dato nuevo_valor) {
+	tipo_dato viejo_pendejo = numeros[idx_pos_actualizar];
+	lista_pendeja *lista_idx_bloques = idx_bloques_by_posiciones
+			+ idx_pos_actualizar;
+	nodo_lista *nodo_act = NULL;
+
+	caca_log_debug("la lista de bloques para idx %u es %s\n",
+			idx_pos_actualizar,
+			listilla_a_cadena(lista_idx_bloques, CACA_X_BUF_STATICO_DUMP_ARBOL));
+	nodo_act = lista_idx_bloques->cabeza;
+
+	while (nodo_act) {
+		natural idx_bloque_actual = nodo_act->data;
+		natural ocurrencias = 0;
+		khiter_t iter = 0;
+		int ret = 0;
+
+		entero_largo *suma = &datos_prepro[idx_bloque_actual].suma;
+		kh_caca_t *tablon = datos_prepro[idx_bloque_actual].tablon;
+		caca_log_debug("en nodo %u el tablon %p\n", idx_bloque_actual, tablon);
+		if (tablon) {
+
+			caca_log_debug("el bloke %u tiene suma %lld i tablon %s\n",
+					idx_bloque_actual, *suma,
+					kh_shit_dumpear(tablon, CACA_X_BUF_STATICO_DUMP_ARBOL));
+
+			iter = kh_get_caca(tablon, viejo_pendejo);
+			assert_timeout(iter!=kh_end(tablon));
+			ocurrencias = kh_val(tablon,iter);
+			caca_log_debug("las ocurrencias de %u son %u\n", viejo_pendejo,
+					ocurrencias);
+			assert_timeout(ocurrencias >= 1);
+			ocurrencias--;
+			kh_val(tablon,iter)=ocurrencias;
+			if (!ocurrencias) {
+				caca_log_debug("a suma actual %lld se le resta %u\n", *suma,
+						viejo_pendejo);
+				(*suma) -= viejo_pendejo;
+				kh_del_caca(tablon, iter);
+			}
+
+			iter = kh_put_caca(tablon, nuevo_valor, &ret);
+			assert_timeout(ret != -1);
+			if (ret) {
+				kh_val(tablon,iter)=1;
+				caca_log_debug("en valor nuevo %u no estaba, sumandolo a %lld\n",nuevo_valor,*suma);
+				(*suma)+=nuevo_valor;
+			}
+			else {
+				kh_val(tablon,iter)+=1;
+				caca_log_debug("en valor nuevo %u ya estaba, aora ai %u ocurrencias\n",nuevo_valor,kh_val(tablon,iter));
+			}
+		}
+		nodo_act = nodo_act->next;
+	}
+
 }
 
 static inline void caca_x_main() {
@@ -1084,48 +1152,53 @@ static inline void caca_x_main() {
 #endif
 
 	caca_x_crea_datos_preprocesados();
-	/*
-	 while (cont_queries < num_queries) {
-	 entero_largo sum = 0;
-	 scanf("%c %d %d\n", &tipo_query, &idx_query_ini, &idx_query_fin);
-	 if (tipo_query == 'Q' && idx_query_ini > idx_query_fin) {
-	 tipo_dato tmp = 0;
-	 tmp = idx_query_fin;
-	 idx_query_fin = idx_query_ini;
-	 idx_query_ini = tmp;
-	 }
-	 caca_log_debug("q: %c, ini %d, fin %d\n", tipo_query, idx_query_ini,
-	 idx_query_fin);
 
-	 switch (tipo_query) {
-	 case 'Q':
-	 limite_izq = idx_query_ini - 1;
-	 limite_der = idx_query_fin - 1;
-	 sum = caca_x_suma_segmento();
-	 printf("%lld\n", sum);
-	 break;
-	 case 'U':
+	mapa_unicos = calloc(CACA_X_MAX_VALORES_INT / (sizeof(bitch_vector) * 8),
+			sizeof(bitch_vector));
+	assert_timeout(mapa_unicos);
 
-	 idx_actualizado = idx_query_ini - 1;
-	 nuevo_valor = idx_query_fin;
-	 viejo_pendejo = numeros[idx_actualizado];
-	 caca_x_actualiza_segmentos(0);
+	while (cont_queries < num_queries) {
+		entero_largo sum = 0;
+		scanf("%c %d %d\n", &tipo_query, &idx_query_ini, &idx_query_fin);
+		if (tipo_query == 'Q' && idx_query_ini > idx_query_fin) {
+			tipo_dato tmp = 0;
+			tmp = idx_query_fin;
+			idx_query_fin = idx_query_ini;
+			idx_query_ini = tmp;
+		}
+		caca_log_debug("q: %c, ini %d, fin %d\n", tipo_query, idx_query_ini,
+				idx_query_fin);
 
-	 #ifdef CACA_X_VALIDAR_ARBOLINES
-	 caca_x_validar_segmentos(arbol_numeros_unicos, numeros, NULL,
-	 num_numeros, num_numeros_redondeado, num_nodos, 0);
-	 #endif
+		switch (tipo_query) {
+		case 'Q':
+			/*
+			 limite_izq = idx_query_ini - 1;
+			 limite_der = idx_query_fin - 1;
+			 sum = caca_x_suma_segmento();
+			 printf("%lld\n", sum);
+			 */
+			break;
+		case 'U':
 
-	 break;
-	 default:
-	 abort();
-	 break;
-	 }
+			idx_actualizado = idx_query_ini - 1;
+			nuevo_valor = idx_query_fin;
+			caca_x_actualizar_datos_preprocesados(idx_actualizado, nuevo_valor);
 
-	 cont_queries++;
-	 }
-	 */
+#ifdef CACA_X_VALIDAR_ARBOLINES
+			caca_x_validar_segmentos(arbol_numeros_unicos, numeros, NULL,
+					num_numeros, num_numeros_redondeado, num_nodos, 0);
+#endif
 
+			break;
+		default:
+			abort();
+			break;
+		}
+
+		cont_queries++;
+	}
+
+	free(mapa_unicos);
 	free(matriz_nums);
 	free(arbol_numeros_unicos);
 }
