@@ -1091,6 +1091,7 @@ static inline void caca_x_actualizar_datos_preprocesados(
 		nodo_act = nodo_act->next;
 	}
 
+	numeros[idx_pos_actualizar] = nuevo_valor;
 }
 
 static inline void caca_x_main() {
