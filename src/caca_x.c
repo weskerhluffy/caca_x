@@ -32,7 +32,7 @@
 
 #define CACA_X_BUF_STATICO_DUMP_ARBOL (char[1000] ) { '\0' }
 
-#define CACA_X_VALIDAR_ARBOLINES
+//#define CACA_X_VALIDAR_ARBOLINES
 
 /*
  #define caca_log_debug printf
@@ -86,6 +86,7 @@ typedef struct kh_caca_s {
 	khint32_t *flags;
 	khint32_t *keys;
 	int *vals;
+	natural tam_inicial;
 } kh_caca_t;
 
 #define kh_key(h, x) ((h)->keys[x])
@@ -105,8 +106,17 @@ typedef struct kh_caca_s {
 #define __ac_set_isdel_true(flag, i) (flag[i>>4]|=1ul<<((i&0xfU)<<1))
 #define __ac_fsize(m) ((m) < 16? 1 : (m)>>4)
 
-static inline __attribute__ ((__unused__)) kh_caca_t *kh_init_caca(void) {
-	return (kh_caca_t*) calloc(1, sizeof(kh_caca_t));
+static inline __attribute__ ((__unused__)) kh_caca_t *kh_init_caca(
+		natural tam_inicial) {
+	natural tam_inicial_redondeado = 0;
+	natural max_profundidad = 0;
+	kh_caca_t *mierda = calloc(1, sizeof(kh_caca_t));
+	while ((tam_inicial >> max_profundidad)) {
+		max_profundidad++;
+	}
+	tam_inicial_redondeado = (1 << max_profundidad);
+	mierda->tam_inicial = tam_inicial_redondeado << 1;
+	return mierda;
 }
 static inline __attribute__ ((__unused__)) void kh_destroy_caca(kh_caca_t *h) {
 	if (h) {
@@ -152,8 +162,10 @@ static inline __attribute__ ((__unused__)) int kh_resize_caca(kh_caca_t *h,
 		(--(new_n_buckets), (new_n_buckets) |= (new_n_buckets) >> 1, (new_n_buckets) |=
 				(new_n_buckets) >> 2, (new_n_buckets) |= (new_n_buckets) >> 4, (new_n_buckets) |=
 				(new_n_buckets) >> 8, (new_n_buckets) |= (new_n_buckets) >> 16, ++(new_n_buckets));
-		if (new_n_buckets < 4)
-			new_n_buckets = 4;
+		if (new_n_buckets < 4) {
+//			new_n_buckets = 512;
+			new_n_buckets = h->tam_inicial;
+		}
 		if (h->size >= (khint_t) (new_n_buckets * __ac_HASH_UPPER + 0.5))
 			j = 0;
 		else {
@@ -523,8 +535,8 @@ static inline void caca_x_inicializar_nodo(caca_x_numeros_unicos_en_rango *nodo,
 	nodo->altura = altura;
 	nodo->max_numeros = 1 << nodo->altura;
 	if (limite_izq <= idx_numeros_max) {
-		//TODO: max_numeros
-		nodo->tablon = kh_init_caca();
+		nodo->tablon = kh_init_caca(nodo->max_numeros);
+//		nodo->tablon = kh_init_caca();
 	}
 	nodo->idx = idx_nodo;
 	nodo->limite_izq = limite_izq;
@@ -544,7 +556,7 @@ static inline void caca_x_mergear_arboles(kh_caca_t *tablin_izq,
 		khiter_t iter_res;
 		kh_caca_t *tablin_res_int;
 
-		tablin_res_int = kh_init_caca();
+		tablin_res_int = *tablin_res;
 
 		for (iter_izq = kh_begin(tablin_izq) ; iter_izq != kh_end(tablin_izq);
 				++iter_izq) {
@@ -552,12 +564,14 @@ static inline void caca_x_mergear_arboles(kh_caca_t *tablin_izq,
 					tablin_izq, iter_izq)) {
 				iter_res = kh_put_caca(tablin_res_int,
 						kh_key(tablin_izq, iter_izq), &ret);
-						assert_timeout(
-								ret == 1 );
+						assert_timeout(ret == 1);
 						kh_value(tablin_res_int, iter_res)= kh_val(tablin_izq,iter_izq);
-						suma_unicos_int+=(tipo_dato)kh_key(tablin_res_int, iter_res);
-						caca_log_debug("sumando de izq %u de llave %u para sumar %u\n",kh_value(tablin_izq, iter_izq),kh_key(tablin_izq, iter_izq) ,kh_value(tablin_res_int, iter_res));
-					}
+			suma_unicos_int += (tipo_dato) kh_key(tablin_res_int, iter_res);
+			caca_log_debug("sumando de izq %u de llave %u para sumar %u\n",
+					kh_value(tablin_izq, iter_izq),
+					kh_key(tablin_izq, iter_izq),
+					kh_value(tablin_res_int, iter_res));
+		}
 			}
 
 		assert_timeout(kh_size(tablin_izq)==kh_size(tablin_res_int));
@@ -1008,7 +1022,8 @@ static inline void caca_x_crea_datos_preprocesados() {
 		for (int j = i; j < num_bloques; j++) {
 			idx_dato_prepro = i * num_bloques + j;
 			entero_largo *suma = &datos_prepro[idx_dato_prepro].suma;
-			kh_caca_t *tablon = kh_init_caca();
+			kh_caca_t *tablon = kh_init_caca(tam_bloque);
+//			kh_caca_t *tablon = kh_init_caca();
 
 			limite_izq = i * tam_bloque;
 			limite_der = (j + 1) * tam_bloque - 1;
