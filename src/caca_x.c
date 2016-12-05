@@ -390,7 +390,6 @@ void listilla_add(lista_pendeja *lista, natural num) {
 }
 
 void listilla_insert(lista_pendeja *lista, natural num) {
-	natural c = 0;
 	nodo_lista *temp;
 	nodo_lista *head = lista->cabeza;
 	temp = head;
@@ -411,12 +410,13 @@ static inline char *listilla_a_cadena(lista_pendeja *lista, char *buf) {
 		strcat(buf, buf_tmp);
 		right = right->next;
 	}
+#endif
 	return buf;
 }
 
-#endif
 
 #endif
+
 
 typedef struct caca_x_numeros_unicos_en_rango {
 	kh_caca_t *tablon;
