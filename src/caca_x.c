@@ -276,21 +276,6 @@ static inline __attribute__ ((__unused__)) int kh_resize_caca(kh_caca_t *h,
 static inline __attribute__ ((__unused__)) khint_t kh_put_caca(kh_caca_t *h,
 		khint32_t key, int *ret) {
 	khint_t x;
-	if (h->n_occupied >= h->upper_bound) {
-		if (h->n_buckets > (h->size << 1)) {
-			if (kh_resize_caca(h, h->n_buckets + 1) < 0) {
-				*ret = -1;
-				return h->n_buckets;
-			}
-		} else {
-			printf("en %p me lleva la meirda esperado %u %u %u\n", h,
-					h->tam_inicial, h->n_occupied, h->upper_bound);
-			if (kh_resize_caca(h, h->n_buckets + 1) < 0) {
-				*ret = -1;
-				return h->n_buckets;
-			}
-		}
-	}
 	{
 		khint_t k, i, site, last, mask = h->n_buckets - 1, step = 0;
 		x = site = h->n_buckets;
@@ -1226,10 +1211,12 @@ static inline void caca_x_main() {
 		cont_queries++;
 	}
 
+	/*
 	while (1) {
 		printf("dormdo\n");
 		sleep(10);
 	}
+	*/
 	free(mapa_unicos);
 	free(matriz_nums);
 	free(arbol_numeros_unicos);
