@@ -106,6 +106,9 @@ typedef struct kh_caca_s {
 #define __ac_set_isdel_true(flag, i) (flag[i>>4]|=1ul<<((i&0xfU)<<1))
 #define __ac_fsize(m) ((m) < 16? 1 : (m)>>4)
 
+static inline __attribute__ ((__unused__)) int kh_resize_caca(kh_caca_t *h,
+		khint_t new_n_buckets);
+
 static inline __attribute__ ((__unused__)) kh_caca_t *kh_init_caca(
 		natural tam_inicial) {
 	natural tam_inicial_redondeado = 0;
@@ -116,6 +119,10 @@ static inline __attribute__ ((__unused__)) kh_caca_t *kh_init_caca(
 	}
 	tam_inicial_redondeado = (1 << max_profundidad);
 	mierda->tam_inicial = tam_inicial_redondeado << 1;
+	printf("en %p tam inicial %u redondeado %u\n", mierda, tam_inicial,
+			mierda->tam_inicial);
+	assert_timeout(kh_resize_caca(mierda, mierda->n_buckets + 1) >= 0);
+
 	return mierda;
 }
 static inline __attribute__ ((__unused__)) void kh_destroy_caca(kh_caca_t *h) {
@@ -166,6 +173,7 @@ static inline __attribute__ ((__unused__)) int kh_resize_caca(kh_caca_t *h,
 //			new_n_buckets = 512;
 			new_n_buckets = h->tam_inicial;
 		}
+		printf("redimensionando a %u\n", new_n_buckets);
 		if (h->size >= (khint_t) (new_n_buckets * __ac_HASH_UPPER + 0.5))
 			j = 0;
 		else {
@@ -270,13 +278,17 @@ static inline __attribute__ ((__unused__)) khint_t kh_put_caca(kh_caca_t *h,
 	khint_t x;
 	if (h->n_occupied >= h->upper_bound) {
 		if (h->n_buckets > (h->size << 1)) {
-			if (kh_resize_caca(h, h->n_buckets - 1) < 0) {
+			if (kh_resize_caca(h, h->n_buckets + 1) < 0) {
 				*ret = -1;
 				return h->n_buckets;
 			}
-		} else if (kh_resize_caca(h, h->n_buckets + 1) < 0) {
-			*ret = -1;
-			return h->n_buckets;
+		} else {
+			printf("en %p me lleva la meirda esperado %u %u %u\n", h,
+					h->tam_inicial, h->n_occupied, h->upper_bound);
+			if (kh_resize_caca(h, h->n_buckets + 1) < 0) {
+				*ret = -1;
+				return h->n_buckets;
+			}
 		}
 	}
 	{
@@ -536,7 +548,6 @@ static inline void caca_x_inicializar_nodo(caca_x_numeros_unicos_en_rango *nodo,
 	nodo->max_numeros = 1 << nodo->altura;
 	if (limite_izq <= idx_numeros_max) {
 		nodo->tablon = kh_init_caca(nodo->max_numeros);
-//		nodo->tablon = kh_init_caca();
 	}
 	nodo->idx = idx_nodo;
 	nodo->limite_izq = limite_izq;
@@ -1022,8 +1033,7 @@ static inline void caca_x_crea_datos_preprocesados() {
 		for (int j = i; j < num_bloques; j++) {
 			idx_dato_prepro = i * num_bloques + j;
 			entero_largo *suma = &datos_prepro[idx_dato_prepro].suma;
-			kh_caca_t *tablon = kh_init_caca(tam_bloque);
-//			kh_caca_t *tablon = kh_init_caca();
+			kh_caca_t *tablon = kh_init_caca(tam_bloque << 5);
 
 			limite_izq = i * tam_bloque;
 			limite_der = (j + 1) * tam_bloque - 1;
@@ -1167,7 +1177,9 @@ static inline void caca_x_main() {
 			num_numeros_redondeado, num_nodos, 0);
 #endif
 
+	printf("armando caca \n");
 	caca_x_crea_datos_preprocesados();
+	printf("ya caca \n");
 
 	mapa_unicos = calloc(CACA_X_MAX_VALORES_INT / (sizeof(bitch_vector) * 8),
 			sizeof(bitch_vector));
@@ -1214,6 +1226,10 @@ static inline void caca_x_main() {
 		cont_queries++;
 	}
 
+	while (1) {
+		printf("dormdo\n");
+		sleep(10);
+	}
 	free(mapa_unicos);
 	free(matriz_nums);
 	free(arbol_numeros_unicos);
