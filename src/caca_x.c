@@ -82,8 +82,8 @@ typedef const char *kh_cstr_t;
 typedef struct kh_caca_s {
 	khint_t n_buckets, size, n_occupied, upper_bound;
 	khint32_t *flags;
-	khint32_t *keys;
-	int *vals;
+	khint64_t *keys;
+	long long *vals;
 	natural tam_inicial;
 } kh_caca_t;
 
@@ -140,19 +140,15 @@ static inline __attribute__ ((__unused__)) void kh_clear_caca(kh_caca_t *h) {
 	}
 }
 static inline __attribute__ ((__unused__)) khint_t kh_get_caca(
-		const kh_caca_t *h, khint32_t key) {
+		const kh_caca_t *h, khint64_t key) {
 	khint_t k, i, last, mask, step = 0;
 	mask = h->n_buckets - 1;
-	k = (khint32_t) (key);
+	k = (khint32_t) ((key) >> 33 ^ (key) ^ (key) << 11);
 	i = k & mask;
 	last = i;
-	/*
-	 while (!((h->flags[i >> 4] >> ((i & 0xfU) << 1)) & 2)
-	 && (((h->flags[i >> 4] >> ((i & 0xfU) << 1)) & 1)
-	 */
 	khint32_t bandera_caca;
 	khint32_t *flags = h->flags;
-	khint32_t *keys = h->keys;
+	khint64_t *keys = h->keys;
 	while (!((bandera_caca = (flags[i >> 4] >> ((i & 0xfU) << 1))) & 2)
 			&& ((bandera_caca & 1) || !((keys[i]) == (key)))) {
 		i = (i + (++step)) & mask;
@@ -161,6 +157,7 @@ static inline __attribute__ ((__unused__)) khint_t kh_get_caca(
 	}
 	return ((flags[i >> 4] >> ((i & 0xfU) << 1)) & 3) ? h->n_buckets : i;
 }
+
 static inline __attribute__ ((__unused__)) int kh_resize_caca(kh_caca_t *h,
 		khint_t new_n_buckets) {
 	khint32_t *new_flags = 0;
@@ -169,10 +166,8 @@ static inline __attribute__ ((__unused__)) int kh_resize_caca(kh_caca_t *h,
 		(--(new_n_buckets), (new_n_buckets) |= (new_n_buckets) >> 1, (new_n_buckets) |=
 				(new_n_buckets) >> 2, (new_n_buckets) |= (new_n_buckets) >> 4, (new_n_buckets) |=
 				(new_n_buckets) >> 8, (new_n_buckets) |= (new_n_buckets) >> 16, ++(new_n_buckets));
-		if (new_n_buckets < 4) {
-//			new_n_buckets = 512;
-			new_n_buckets = h->tam_inicial;
-		}
+		if (new_n_buckets < 4)
+			new_n_buckets = 4;
 		if (h->size >= (khint_t) (new_n_buckets * __ac_HASH_UPPER + 0.5))
 			j = 0;
 		else {
@@ -186,16 +181,16 @@ static inline __attribute__ ((__unused__)) int kh_resize_caca(kh_caca_t *h,
 							* sizeof(khint32_t),
 					__builtin_object_size(new_flags, 0));
 			if (h->n_buckets < new_n_buckets) {
-				khint32_t *new_keys = (khint32_t*) realloc((void *) h->keys,
-						new_n_buckets * sizeof(khint32_t));
+				khint64_t *new_keys = (khint64_t*) realloc((void *) h->keys,
+						new_n_buckets * sizeof(khint64_t));
 				if (!new_keys) {
 					free(new_flags);
 					return -1;
 				}
 				h->keys = new_keys;
 				if (1) {
-					int *new_vals = (int*) realloc((void *) h->vals,
-							new_n_buckets * sizeof(int));
+					long long *new_vals = (long long*) realloc((void *) h->vals,
+							new_n_buckets * sizeof(long long));
 					if (!new_vals) {
 						free(new_flags);
 						return -1;
@@ -208,8 +203,8 @@ static inline __attribute__ ((__unused__)) int kh_resize_caca(kh_caca_t *h,
 	if (j) {
 		for (j = 0; j != h->n_buckets; ++j) {
 			if (((h->flags[j >> 4] >> ((j & 0xfU) << 1)) & 3) == 0) {
-				khint32_t key = h->keys[j];
-				int val;
+				khint64_t key = h->keys[j];
+				long long val;
 				khint_t new_mask;
 				new_mask = new_n_buckets - 1;
 				if (1)
@@ -217,7 +212,7 @@ static inline __attribute__ ((__unused__)) int kh_resize_caca(kh_caca_t *h,
 				(h->flags[j >> 4] |= 1ul << ((j & 0xfU) << 1));
 				while (1) {
 					khint_t k, i, step = 0;
-					k = (khint32_t) (key);
+					k = (khint32_t) ((key) >> 33 ^ (key) ^ (key) << 11);
 					i = k & new_mask;
 					while (!((new_flags[i >> 4] >> ((i & 0xfU) << 1)) & 2))
 						i = (i + (++step)) & new_mask;
@@ -226,12 +221,12 @@ static inline __attribute__ ((__unused__)) int kh_resize_caca(kh_caca_t *h,
 							&& ((h->flags[i >> 4] >> ((i & 0xfU) << 1)) & 3)
 									== 0) {
 						{
-							khint32_t tmp = h->keys[i];
+							khint64_t tmp = h->keys[i];
 							h->keys[i] = key;
 							key = tmp;
 						}
 						if (1) {
-							int tmp = h->vals[i];
+							long long tmp = h->vals[i];
 							h->vals[i] = val;
 							val = tmp;
 						}
@@ -246,11 +241,11 @@ static inline __attribute__ ((__unused__)) int kh_resize_caca(kh_caca_t *h,
 			}
 		}
 		if (h->n_buckets > new_n_buckets) {
-			h->keys = (khint32_t*) realloc((void *) h->keys,
-					new_n_buckets * sizeof(khint32_t));
+			h->keys = (khint64_t*) realloc((void *) h->keys,
+					new_n_buckets * sizeof(khint64_t));
 			if (1)
-				h->vals = (int*) realloc((void *) h->vals,
-						new_n_buckets * sizeof(int));
+				h->vals = (long long*) realloc((void *) h->vals,
+						new_n_buckets * sizeof(long long));
 		}
 		free(h->flags);
 		h->flags = new_flags;
@@ -273,7 +268,7 @@ static inline __attribute__ ((__unused__)) int kh_resize_caca(kh_caca_t *h,
  @return       Iterator to the inserted element [khint_t]
  */
 static inline __attribute__ ((__unused__)) khint_t kh_put_caca(kh_caca_t *h,
-		khint32_t key, int *ret) {
+		khint64_t key, int *ret) {
 	khint_t x;
 	if (h->n_occupied >= h->upper_bound) {
 		if (kh_resize_caca(h, h->n_buckets + 1) < 0) {
@@ -283,10 +278,10 @@ static inline __attribute__ ((__unused__)) khint_t kh_put_caca(kh_caca_t *h,
 	}
 	khint_t k, i, site, last, mask = h->n_buckets - 1, step = 0;
 	x = site = h->n_buckets;
-	k = (khint32_t) (key);
+	k = (khint32_t) ((key) >> 33 ^ (key) ^ (key) << 11);
 	i = k & mask;
 	khint32_t *flags = h->flags;
-	khint32_t *keys = h->keys;
+	khint64_t *keys = h->keys;
 	khint32_t banderilla_loca = (flags[i >> 4] >> ((i & 0xfU) << 1));
 	if ((banderilla_loca & 2))
 		x = i;
@@ -340,7 +335,7 @@ char *kh_shit_dumpear(kh_caca_t *h, char *buf) {
 	for (int k = kh_begin(h); k != kh_end(h); ++k) {
 		if (kh_exist(h, k)) {
 			char *buf_tmp = CACA_X_BUF_STATICO_DUMP_ARBOL;
-			sprintf(buf_tmp, "%u -> %u\n", kh_key(h,k), (kh_val(h,k)));
+			sprintf(buf_tmp, "%u -> %u\n", (natural)kh_key(h,k), (natural)(kh_val(h,k)));
 			strcat(buf, buf_tmp);
 		}
 	}
@@ -657,7 +652,7 @@ static inline void caca_x_actualizar_datos_preprocesados(
 		int ret = 0;
 
 		entero_largo *suma = &datos_prepro[idx_bloque_actual].suma;
-		kh_caca_t *tablon = datos_prepro[idx_bloque_actual].tablon;
+		kh_caca_t *tablon = NULL;
 		caca_log_debug("en nodo %u el tablon %p\n", idx_bloque_actual, tablon);
 		if (tablon) {
 
