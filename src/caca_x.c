@@ -144,22 +144,26 @@ static inline __attribute__ ((__unused__)) void kh_clear_caca(kh_caca_t *h) {
 }
 static inline __attribute__ ((__unused__)) khint_t kh_get_caca(
 		const kh_caca_t *h, khint32_t key) {
-	if (h->n_buckets) {
 		khint_t k, i, last, mask, step = 0;
 		mask = h->n_buckets - 1;
 		k = (khint32_t) (key);
 		i = k & mask;
 		last = i;
+		/*
 		while (!((h->flags[i >> 4] >> ((i & 0xfU) << 1)) & 2)
 				&& (((h->flags[i >> 4] >> ((i & 0xfU) << 1)) & 1)
-						|| !((h->keys[i]) == (key)))) {
+				*/
+khint32_t bandera_caca;
+khint32_t *flags=h->flags;
+khint32_t *keys=h->keys;
+		while (!( (bandera_caca= (flags[i >> 4] >> ((i & 0xfU) << 1))) & 2)
+				&& ((bandera_caca & 1)
+						|| !((keys[i]) == (key)))) {
 			i = (i + (++step)) & mask;
 			if (i == last)
 				return h->n_buckets;
 		}
-		return ((h->flags[i >> 4] >> ((i & 0xfU) << 1)) & 3) ? h->n_buckets : i;
-	} else
-		return 0;
+		return ((flags[i >> 4] >> ((i & 0xfU) << 1)) & 3) ? h->n_buckets : i;
 }
 static inline __attribute__ ((__unused__)) int kh_resize_caca(kh_caca_t *h,
 		khint_t new_n_buckets) {
@@ -276,19 +280,22 @@ static inline __attribute__ ((__unused__)) int kh_resize_caca(kh_caca_t *h,
 static inline __attribute__ ((__unused__)) khint_t kh_put_caca(kh_caca_t *h,
 		khint32_t key, int *ret) {
 	khint_t x;
-	{
+
 		khint_t k, i, site, last, mask = h->n_buckets - 1, step = 0;
 		x = site = h->n_buckets;
 		k = (khint32_t) (key);
 		i = k & mask;
-		if (((h->flags[i >> 4] >> ((i & 0xfU) << 1)) & 2))
+		khint32_t *flags=h->flags;
+		khint32_t *keys=h->keys;
+		khint32_t banderilla_loca= (flags[i >> 4] >> ((i & 0xfU) << 1));
+		if (( banderilla_loca& 2))
 			x = i;
 		else {
 			last = i;
-			while (!((h->flags[i >> 4] >> ((i & 0xfU) << 1)) & 2)
-					&& (((h->flags[i >> 4] >> ((i & 0xfU) << 1)) & 1)
-							|| !((h->keys[i]) == (key)))) {
-				if (((h->flags[i >> 4] >> ((i & 0xfU) << 1)) & 1))
+			while (!((banderilla_loca =flags[i >> 4] >> ((i & 0xfU) << 1)) & 2)
+					&& ((banderilla_loca & 1)
+							|| !((keys[i]) == (key)))) {
+				if ((banderilla_loca & 1))
 					site = i;
 				i = (i + (++step)) & mask;
 				if (i == last) {
@@ -297,23 +304,24 @@ static inline __attribute__ ((__unused__)) khint_t kh_put_caca(kh_caca_t *h,
 				}
 			}
 			if (x == h->n_buckets) {
-				if (((h->flags[i >> 4] >> ((i & 0xfU) << 1)) & 2)
+				if ((banderilla_loca & 2)
 						&& site != h->n_buckets)
 					x = site;
 				else
 					x = i;
 			}
 		}
-	}
-	if (((h->flags[x >> 4] >> ((x & 0xfU) << 1)) & 2)) {
-		h->keys[x] = key;
-		(h->flags[x >> 4] &= ~(3ul << ((x & 0xfU) << 1)));
+
+banderilla_loca= (flags[x >> 4] >> ((x & 0xfU) << 1));
+	if (( banderilla_loca& 2)) {
+		keys[x] = key;
+		(flags[x >> 4] &= ~(3ul << ((x & 0xfU) << 1)));
 		++h->size;
 		++h->n_occupied;
 		*ret = 1;
-	} else if (((h->flags[x >> 4] >> ((x & 0xfU) << 1)) & 1)) {
-		h->keys[x] = key;
-		(h->flags[x >> 4] &= ~(3ul << ((x & 0xfU) << 1)));
+	} else if ((banderilla_loca & 1)) {
+		keys[x] = key;
+		(flags[x >> 4] &= ~(3ul << ((x & 0xfU) << 1)));
 		++h->size;
 		*ret = 2;
 	} else
