@@ -33,9 +33,9 @@
 #define CACA_X_BUF_STATICO_DUMP_ARBOL (char[1000] ) { '\0' }
 
 /*
-#define caca_log_debug printf
+ #define caca_log_debug printf
  */
- #define caca_log_debug(formato, args...) 0
+#define caca_log_debug(formato, args...) 0
 #define assert_timeout(condition) assert(condition);
 /*
  #define assert_timeout(condition) 0
@@ -112,6 +112,7 @@ static inline __attribute__ ((__unused__)) kh_caca_t *kh_init_caca(
 	natural tam_inicial_redondeado = 0;
 	natural max_profundidad = 0;
 	kh_caca_t *mierda = calloc(1, sizeof(kh_caca_t));
+	assert_timeout(mierda);
 	while ((tam_inicial >> max_profundidad)) {
 		max_profundidad++;
 	}
@@ -274,7 +275,12 @@ static inline __attribute__ ((__unused__)) int kh_resize_caca(kh_caca_t *h,
 static inline __attribute__ ((__unused__)) khint_t kh_put_caca(kh_caca_t *h,
 		khint32_t key, int *ret) {
 	khint_t x;
-
+	if (h->n_occupied >= h->upper_bound) {
+		if (kh_resize_caca(h, h->n_buckets + 1) < 0) {
+			*ret = -1;
+			return h->n_buckets;
+		}
+	}
 	khint_t k, i, site, last, mask = h->n_buckets - 1, step = 0;
 	x = site = h->n_buckets;
 	k = (khint32_t) (key);
@@ -417,7 +423,6 @@ static inline char *listilla_a_cadena(lista_pendeja *lista, char *buf) {
 #endif
 
 typedef struct caca_preprocesada {
-	kh_caca_t *tablon;
 	entero_largo suma;
 } caca_preprocesada;
 
@@ -429,11 +434,11 @@ tipo_dato nuevo_valor = 0;
 tipo_dato viejo_pendejo = 0;
 tipo_dato *numeros = NULL;
 caca_preprocesada *datos_prepro = NULL;
-kh_caca_t *posicion_a_idx_datos_prepro = NULL;
 lista_pendeja idx_bloques_by_posiciones[MAX_NUMEROS];
 natural tam_bloque = 0;
 natural num_bloques = 0;
 bitch_vector *mapa_unicos = NULL;
+kh_caca_t *mapa_ocurrencias_en_subarreglos = NULL;
 
 static inline int lee_matrix_long_stdin(tipo_dato *matrix, int *num_filas,
 		int *num_columnas, int num_max_filas, int num_max_columnas) {
@@ -557,6 +562,10 @@ static inline void caca_comun_limpia_bit(bitch_vector *bits,
 
 static inline void caca_x_crea_datos_preprocesados() {
 	natural idx_dato_prepro = 0;
+	natural num_nums_anadidos = 0;
+	tipo_dato *nums_anadidos = NULL;
+
+	nums_anadidos = calloc(MAX_NUMEROS, sizeof(tipo_dato));
 
 	tam_bloque = ceil(pow(num_numeros, 2.0 / 3.0));
 	num_bloques = (num_numeros / tam_bloque);
@@ -566,14 +575,14 @@ static inline void caca_x_crea_datos_preprocesados() {
 
 	caca_log_debug("el tam bloq %u num de bloqs %u\n", tam_bloque, num_bloques);
 
-	datos_prepro = calloc(num_bloques * num_bloques, sizeof(caca_preprocesada));
+	mapa_ocurrencias_en_subarreglos = kh_init_caca(MAX_NUMEROS);
 
 	for (int i = 0; i < num_bloques; i++) {
 		for (int j = i; j < num_bloques; j++) {
 			entero_largo suma_act = 0;
 			idx_dato_prepro = i * num_bloques + j;
 			entero_largo *suma = &datos_prepro[idx_dato_prepro].suma;
-			kh_caca_t *tablon = kh_init_caca(tam_bloque << 5);
+			num_nums_anadidos = 0;
 
 			limite_izq = i * tam_bloque;
 			limite_der = (j + 1) * tam_bloque - 1;
@@ -582,36 +591,51 @@ static inline void caca_x_crea_datos_preprocesados() {
 			}
 
 			caca_log_debug(
-					"creando caca prepro idx %u(%u,%u) limite izq %u limite der %u\n",
+					"creando listas de subarrays por posicon idx %u(%u,%u) limite izq %u limite der %u\n",
 					idx_dato_prepro, i, j, limite_izq, limite_der);
-//			*suma = caca_x_suma_segmento(tablon);
 			for (int k = limite_izq; k <= limite_der; k++) {
-				int ret;
-				khiter_t iter;
 				lista_pendeja *lista_pos = idx_bloques_by_posiciones + k;
 				tipo_dato num_actual = numeros[k];
-				iter = kh_put_caca(tablon, num_actual, &ret);
-				assert_timeout(ret != -1);
-				if (ret) {
-					kh_value(tablon,iter)=1;
-					suma_act+=num_actual;
-				}
-				else {
-					kh_value(tablon,iter)+=1;
+				if (!caca_comun_checa_bit(mapa_unicos,
+						(unsigned long) (num_actual
+								+ (unsigned long) ((unsigned long) INT_MAX + 1)))) {
+					suma_act += num_actual;
+					caca_comun_asigna_bit(mapa_unicos,
+							(unsigned long) (num_actual
+									+ (unsigned long) ((unsigned long) INT_MAX
+											+ 1)));
+					nums_anadidos[num_nums_anadidos++] = num_actual;
 				}
 
 				listilla_insert(lista_pos, idx_dato_prepro);
 				caca_log_debug("aora la lista de bloques de pops %u es %s\n", k,
-						listilla_a_cadena(lista_pos,
-								CACA_X_BUF_STATICO_DUMP_ARBOL));
+						listilla_a_cadena(lista_pos, CACA_X_BUF_STATICO_DUMP_ARBOL));
+			}
+			for (natural k = 0; k < num_nums_anadidos; k++) {
+				tipo_dato num_actual = numeros[k];
+				assert_timeout(
+						caca_comun_checa_bit(mapa_unicos, (unsigned long) (num_actual + (unsigned long) ((unsigned long) INT_MAX + 1))));
+				caca_comun_limpia_bit(mapa_unicos,
+						(unsigned long) (num_actual
+								+ (unsigned long) ((unsigned long) INT_MAX + 1)));
 			}
 			*suma = suma_act;
-			caca_log_debug("la suma %lld, el mapa %s\n", *suma,
-					kh_shit_dumpear(tablon, CACA_X_BUF_STATICO_DUMP_ARBOL));
+			caca_log_debug("la suma %lld %s\n", *suma);
 
-			datos_prepro[idx_dato_prepro].tablon = tablon;
 		}
 	}
+
+	for (natural i = 0; i < num_numeros; i++) {
+		int ret;
+		khiter_t iter;
+		tipo_dato num_actual = numeros[i];
+		lista_pendeja *lista_pos = idx_bloques_by_posiciones + i;
+
+		iter = kh_put_caca(mapa_ocurrencias_en_subarreglos, num_actual, &ret);
+
+	}
+
+	free(nums_anadidos);
 }
 
 static inline void caca_x_actualizar_datos_preprocesados(
@@ -623,8 +647,7 @@ static inline void caca_x_actualizar_datos_preprocesados(
 
 	caca_log_debug("la lista de bloques para idx %u es %s\n",
 			idx_pos_actualizar,
-			listilla_a_cadena(lista_idx_bloques,
-					CACA_X_BUF_STATICO_DUMP_ARBOL));
+			listilla_a_cadena(lista_idx_bloques, CACA_X_BUF_STATICO_DUMP_ARBOL));
 	nodo_act = lista_idx_bloques->cabeza;
 
 	while (nodo_act) {
