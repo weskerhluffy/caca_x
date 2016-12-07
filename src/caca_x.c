@@ -335,7 +335,8 @@ char *kh_shit_dumpear(kh_caca_t *h, char *buf) {
 	for (int k = kh_begin(h); k != kh_end(h); ++k) {
 		if (kh_exist(h, k)) {
 			char *buf_tmp = CACA_X_BUF_STATICO_DUMP_ARBOL;
-			sprintf(buf_tmp, "%u -> %u\n", (natural)kh_key(h,k), (natural)(kh_val(h,k)));
+			sprintf(buf_tmp, "%u -> %u\n", (natural)kh_key(h,k),
+					(natural)(kh_val(h,k)));
 			strcat(buf, buf_tmp);
 		}
 	}
@@ -561,6 +562,7 @@ static inline void caca_x_crea_datos_preprocesados() {
 	tipo_dato *nums_anadidos = NULL;
 
 	nums_anadidos = calloc(MAX_NUMEROS, sizeof(tipo_dato));
+	assert_timeout(nums_anadidos);
 
 	tam_bloque = ceil(pow(num_numeros, 2.0 / 3.0));
 	num_bloques = (num_numeros / tam_bloque);
@@ -569,6 +571,8 @@ static inline void caca_x_crea_datos_preprocesados() {
 	}
 
 	caca_log_debug("el tam bloq %u num de bloqs %u\n", tam_bloque, num_bloques);
+
+	datos_prepro = calloc(num_bloques * num_bloques, sizeof(datos_prepro));
 
 	mapa_ocurrencias_en_subarreglos = kh_init_caca(MAX_NUMEROS);
 
@@ -606,8 +610,8 @@ static inline void caca_x_crea_datos_preprocesados() {
 				caca_log_debug("aora la lista de bloques de pops %u es %s\n", k,
 						listilla_a_cadena(lista_pos, CACA_X_BUF_STATICO_DUMP_ARBOL));
 			}
-			for (natural k = 0; k < num_nums_anadidos; k++) {
-				tipo_dato num_actual = numeros[k];
+			for (int k = 0; k < num_nums_anadidos; k++) {
+				tipo_dato num_actual = nums_anadidos[k];
 				assert_timeout(
 						caca_comun_checa_bit(mapa_unicos, (unsigned long) (num_actual + (unsigned long) ((unsigned long) INT_MAX + 1))));
 				caca_comun_limpia_bit(mapa_unicos,
@@ -625,9 +629,34 @@ static inline void caca_x_crea_datos_preprocesados() {
 		khiter_t iter;
 		tipo_dato num_actual = numeros[i];
 		lista_pendeja *lista_pos = idx_bloques_by_posiciones + i;
+		nodo_lista *elem_act;
+		kh_caca_t *mapa_ocurrencias;
 
 		iter = kh_put_caca(mapa_ocurrencias_en_subarreglos, num_actual, &ret);
+		assert_timeout(ret != -1);
+		if (ret) {
+			kh_value(mapa_ocurrencias_en_subarreglos,iter)=(entero_largo)kh_init_caca(num_bloques<<2);
+		}
+		mapa_ocurrencias =
+				(void *) kh_value(mapa_ocurrencias_en_subarreglos,iter);
 
+		elem_act = lista_pos->cabeza;
+
+		while (elem_act) {
+			natural idx_bloque = elem_act->data;
+
+			iter = kh_put_caca(mapa_ocurrencias, idx_bloque, &ret);
+			assert_timeout(ret != -1);
+
+			if (ret) {
+				kh_val(mapa_ocurrencias,iter)=1;
+			}
+			else {
+				kh_val(mapa_ocurrencias,iter)+=1;
+			}
+
+			elem_act = elem_act->next;
+		}
 	}
 
 	free(nums_anadidos);
@@ -707,6 +736,10 @@ static inline void caca_x_main() {
 	matriz_nums = calloc(CACA_X_MAX_NUMEROS_REDONDEADO * 3, sizeof(int));
 	assert_timeout(matriz_nums);
 
+	mapa_unicos = calloc(CACA_X_MAX_VALORES_INT / (sizeof(bitch_vector) * 8),
+			sizeof(bitch_vector));
+	assert_timeout(mapa_unicos);
+
 	num_filas = 3;
 	lee_matrix_long_stdin(matriz_nums, &num_filas, NULL, 3,
 			CACA_X_MAX_NUMEROS_REDONDEADO);
@@ -723,10 +756,6 @@ static inline void caca_x_main() {
 	printf("armando caca \n");
 	caca_x_crea_datos_preprocesados();
 	printf("ya caca \n");
-
-	mapa_unicos = calloc(CACA_X_MAX_VALORES_INT / (sizeof(bitch_vector) * 8),
-			sizeof(bitch_vector));
-	assert_timeout(mapa_unicos);
 
 	while (cont_queries < num_queries) {
 		entero_largo sum = 0;
@@ -753,7 +782,7 @@ static inline void caca_x_main() {
 
 			idx_actualizado = idx_query_ini - 1;
 			nuevo_valor = idx_query_fin;
-			caca_x_actualizar_datos_preprocesados(idx_actualizado, nuevo_valor);
+//			caca_x_actualizar_datos_preprocesados(idx_actualizado, nuevo_valor);
 
 			break;
 		default:
