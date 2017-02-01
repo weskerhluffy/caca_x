@@ -663,7 +663,7 @@ static inline void caca_comun_limpia_bit(bitch_vector *bits,
 }
 
 static inline void caca_x_inicializa_datos_preprocesados() {
-	bool checa_bitch_res;
+	entero_largo checa_bitch_res;
 	natural idx_dato_prepro = 0;
 
 	nums_anadidos = calloc(MAX_NUMEROS, sizeof(tipo_dato));
@@ -1166,102 +1166,10 @@ static inline void caca_x_main() {
 	free(matriz_nums);
 }
 
-static inline void mult128(uint64_t * prod_hi, uint64_t* prod_lo, uint64_t x,
-		uint64_t y) {
-	__asm__ ( "mulq %2"			// rdx:rax = Operand 2 * rax
-			: "=d" (*prod_hi),// 64 high bits returned in rdx
-			"=a" (*prod_lo)// 64 low bits returned in rax
-			: "%rm" (x),// Input x can be in register or memory, operands can be swapped
-			"a" (y)// Input y must be in rax
-	);
-}
-
-static inline void divis(uint64_t * modulo, uint64_t* division, uint64_t x1,
-		uint64_t x2, uint64_t y) {
-	__asm__ ( "divq %2"			// rdx:rax = Operand 2 * rax
-			: "=d" (*modulo),// 64 high bits returned in rdx
-			"=a" (*division)// 64 low bits returned in rax
-			: "%rm" (y),// Input x can be in register or memory, operands can be swapped
-			"d" (x1),
-			"a"(x2)
-	);
-}
-
-#define divis_mac(modulo,division,x1,x2,y) \
-__asm__ ( "divq %2"\
-		: "=d" (modulo),\
-		"=a" (division)\
-		: "%rm" (y),\
-		"d" (x1),\
-		"a"(x2) );
-
-static inline void andeando(bitch_vector *mierda, entero_largo idx,
-		natural bitch_offset) {
-	entero_largo love_cagada = 0;
-	printf("ass shit %lld\n", love_cagada);
-	__asm__ ( "mov $1,%%r9\n"
-			"shlq %%cl,%%r9\n"
-			"and (%1,%2,8),%%r9\n"
-			"mov %%r9,%0\n"
-			: "=r" (love_cagada)
-			: "r" (mierda),
-			"r" (idx),"c"(bitch_offset)
-			:"r9"
-	);
-	printf("ass shit %lld\n", love_cagada);
-}
-
-static inline entero_largo checa_bitch(bitch_vector *vector,
-		entero_largo bitch_pos) {
-	entero_largo resu;
-	__asm__ (
-			"xor %%rdx,%%rdx\n"
-			"movq $8,%%r8\n"
-			"divq %%r8\n"
-			"mov $1,%[resu]\n"
-			"mov %%rdx,%%rcx\n"
-			"shlq %%cl,%[resu]\n"
-			"and (%[vector],%[bitch_pos],1),%[resu]\n"
-			: [resu] "=b" (resu)
-			: [bitch_pos] "a" (bitch_pos), [vector] "%r" (vector)
-			:"rax","rdx","rcx","r8"
-	);
-	return resu;
-}
-
-#define checa_bitch_mac(vector, bitch_pos, resu) \
-	__asm__ (\
-			"xor %%rdx,%%rdx\n"\
-			"movq $8,%%r8\n"\
-			"divq %%r8\n"\
-			"mov $1,%[resul]\n"\
-			"mov %%rdx,%%rcx\n"\
-			"shlq %%cl,%[resul]\n"\
-			"and (%[vectors],%[bitch_posi],1),%[resul]\n"\
-			: [resul] "=b" (resu)\
-			: [bitch_posi] "a" (bitch_pos), [vectors] "%r" (vector)\
-            :"rax","rdx","rcx","r8")
-
 int main(void) {
 //	puts("he corrido con algo de suerte");
 //	sleep(10);
-//	caca_x_main();
-	entero_largo caca = 0;
-	entero_largo caca1 = 0;
-	entero_largo ass = 100;
-
-	bitch_vector mierda[4] = { 1, 2, 3, 4 };
-//	mult128((uint64_t*) &caca, (uint64_t *) &caca1, MAX_VALOR, MAX_VALOR);
-//	divis_mac(caca, caca1, 0, 214, ass);
-//	andeando(mierda, 1, 0);
-	for (int i = 0; i < 8 * 8 * 4; i++) {
-//		caca = checa_bitch(mierda, i);
-		entero_largo j = i;
-		caca_comun_checa_bit_mac(mierda, j, caca);
-		if (caca || caca1) {
-			printf("aum %d,%d en %d\n", !!caca, !!caca1, i);
-		}
-	}
+	caca_x_main();
 
 	return EXIT_SUCCESS;
 }
