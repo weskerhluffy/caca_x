@@ -663,6 +663,7 @@ static inline void caca_comun_limpia_bit(bitch_vector *bits,
 }
 
 static inline void caca_x_inicializa_datos_preprocesados() {
+	bool checa_bitch_res;
 	natural idx_dato_prepro = 0;
 
 	nums_anadidos = calloc(MAX_NUMEROS, sizeof(tipo_dato));
@@ -712,9 +713,10 @@ static inline void caca_x_inicializa_datos_preprocesados() {
 				caca_log_debug("aora la lista de bloques de pops %u es %s\n", k,
 						listilla_a_cadena(lista_pos, CACA_X_BUF_STATICO_DUMP_ARBOL));
 
-				if (!caca_comun_checa_bit(mapa_unicos,
-						(unsigned long) (num_actual
-								+ (unsigned long) ((unsigned long) INT_MAX + 1)))) {
+				caca_comun_checa_bit_mac(mapa_unicos,
+						(unsigned long) (num_actual + (unsigned long) ((unsigned long) INT_MAX + 1)),
+						checa_bitch_res);
+				if (!checa_bitch_res) {
 					caca_comun_asigna_bit(mapa_unicos,
 							(unsigned long) (num_actual
 									+ (unsigned long) ((unsigned long) INT_MAX
@@ -730,8 +732,11 @@ static inline void caca_x_inicializa_datos_preprocesados() {
 	for (int k = 0; k < num_nums_anadidos; k++) {
 		tipo_dato num_actual = nums_anadidos[k];
 		bool nuevo_entry;
-		assert_timeout(
-				caca_comun_checa_bit(mapa_unicos, (unsigned long) (num_actual + (unsigned long) ((unsigned long) INT_MAX + 1))));
+
+		caca_comun_checa_bit_mac(mapa_unicos,
+				(unsigned long) (num_actual + (unsigned long) ((unsigned long) INT_MAX + 1)),
+				checa_bitch_res);
+		assert_timeout(checa_bitch_res);
 
 		hash_map_robin_hood_back_shift_pon(mapa_ocurrencias_en_subarreglos,
 				num_actual,
@@ -764,6 +769,7 @@ static inline natural caca_x_obten_idx_bloque_prepro(natural idx_pos_ini,
 }
 
 static inline caca_preprocesada *caca_x_genera_bloque_prepro(natural idx_bloque) {
+	bool checa_bitch_res;
 	caca_preprocesada *bloque_prepro = datos_prepro + idx_bloque;
 	natural idx_ini = bloque_prepro->idx_inicio;
 	natural idx_fin = bloque_prepro->idx_fin;
@@ -805,9 +811,10 @@ static inline caca_preprocesada *caca_x_genera_bloque_prepro(natural idx_bloque)
 		hash_map_robin_hood_back_shift_indice_pon_valor(mapa_num_bloque, iter,
 				conteo_num_en_bloque);
 
-		if (!caca_comun_checa_bit(mapa_unicos,
-				(unsigned long) (num_actual
-						+ (unsigned long) ((unsigned long) INT_MAX + 1)))) {
+		caca_comun_checa_bit_mac(mapa_unicos,
+				(unsigned long) (num_actual + (unsigned long) ((unsigned long) INT_MAX + 1)),
+				checa_bitch_res);
+		if (!checa_bitch_res) {
 			caca_comun_asigna_bit(mapa_unicos,
 					(unsigned long) (num_actual
 							+ (unsigned long) ((unsigned long) INT_MAX + 1)));
@@ -819,8 +826,10 @@ static inline caca_preprocesada *caca_x_genera_bloque_prepro(natural idx_bloque)
 
 	for (int k = 0; k < num_nums_anadidos; k++) {
 		tipo_dato num_actual = nums_anadidos[k];
-		assert_timeout(
-				caca_comun_checa_bit(mapa_unicos, (unsigned long) (num_actual + (unsigned long) ((unsigned long) INT_MAX + 1))));
+		caca_comun_checa_bit_mac(mapa_unicos,
+				(unsigned long) (num_actual + (unsigned long) ((unsigned long) INT_MAX + 1)),
+				checa_bitch_res);
+		assert_timeout(checa_bitch_res);
 
 		caca_comun_limpia_bit(mapa_unicos,
 				(unsigned long) (num_actual
@@ -852,6 +861,7 @@ static inline caca_preprocesada *caca_x_obten_bloque_prepro(natural idx_bloque) 
 
 static inline entero_largo caca_x_calcula_suma_unicos(natural idx_ini,
 		natural idx_fin) {
+	bool checa_bitch_res;
 	entero_largo suma = 0;
 	natural idx_bloque = 0;
 
@@ -871,10 +881,10 @@ static inline entero_largo caca_x_calcula_suma_unicos(natural idx_ini,
 				idx_bloque_ini);
 		for (natural i = idx_ini; i < idx_bloque_ini; i++) {
 			tipo_dato num_actual = numeros[i];
-
-			if (!caca_comun_checa_bit(mapa_unicos,
-					(unsigned long) (num_actual
-							+ (unsigned long) ((unsigned long) INT_MAX + 1)))) {
+			caca_comun_checa_bit_mac(mapa_unicos,
+					(unsigned long) (num_actual + (unsigned long) ((unsigned long) INT_MAX + 1)),
+					checa_bitch_res);
+			if (!checa_bitch_res) {
 				natural ocurrencias;
 				hm_iter iter;
 				hm_rr_bs_tabla *mapa_ocurrencias_por_bloque;
@@ -914,9 +924,11 @@ static inline entero_largo caca_x_calcula_suma_unicos(natural idx_ini,
 		for (natural i = idx_bloque_fin + 1; i <= idx_fin; i++) {
 			tipo_dato num_actual = numeros[i];
 
-			if (!caca_comun_checa_bit(mapa_unicos,
-					(unsigned long) (num_actual
-							+ (unsigned long) ((unsigned long) INT_MAX + 1)))) {
+			caca_comun_checa_bit_mac(mapa_unicos,
+					(unsigned long) (num_actual + (unsigned long) ((unsigned long) INT_MAX + 1)),
+					checa_bitch_res);
+
+			if (!checa_bitch_res) {
 				natural ocurrencias;
 				hm_iter iter;
 				hm_rr_bs_tabla *mapa_ocurrencias_por_bloque;
@@ -960,9 +972,10 @@ static inline entero_largo caca_x_calcula_suma_unicos(natural idx_ini,
 		for (natural i = idx_ini; i <= idx_fin; i++) {
 			tipo_dato num_actual = numeros[i];
 
-			if (!caca_comun_checa_bit(mapa_unicos,
-					(unsigned long) (num_actual
-							+ (unsigned long) ((unsigned long) INT_MAX + 1)))) {
+			caca_comun_checa_bit_mac(mapa_unicos,
+					(unsigned long) (num_actual + (unsigned long) ((unsigned long) INT_MAX + 1)),
+					checa_bitch_res);
+			if (!checa_bitch_res) {
 
 				caca_log_debug("el num %d no esta en el mapita\n", num_actual);
 
@@ -978,8 +991,10 @@ static inline entero_largo caca_x_calcula_suma_unicos(natural idx_ini,
 
 	for (int k = 0; k < num_nums_anadidos; k++) {
 		tipo_dato num_actual = nums_anadidos[k];
-		assert_timeout(
-				caca_comun_checa_bit(mapa_unicos, (unsigned long) (num_actual + (unsigned long) ((unsigned long) INT_MAX + 1))));
+		caca_comun_checa_bit_mac(mapa_unicos,
+				(unsigned long) (num_actual + (unsigned long) ((unsigned long) INT_MAX + 1)),
+				checa_bitch_res);
+		assert_timeout(checa_bitch_res);
 
 		caca_comun_limpia_bit(mapa_unicos,
 				(unsigned long) (num_actual
@@ -1239,11 +1254,10 @@ int main(void) {
 //	mult128((uint64_t*) &caca, (uint64_t *) &caca1, MAX_VALOR, MAX_VALOR);
 //	divis_mac(caca, caca1, 0, 214, ass);
 //	andeando(mierda, 1, 0);
-	for (int i = 0; i < 64000000; i++) {
+	for (int i = 0; i < 8 * 8 * 4; i++) {
 //		caca = checa_bitch(mierda, i);
-		entero_largo j = i % 32;
-		checa_bitch_mac(mierda, j, caca);
-		caca1 = caca_comun_checa_bit(mierda, j);
+		entero_largo j = i;
+		caca_comun_checa_bit_mac(mierda, j, caca);
 		if (caca || caca1) {
 			printf("aum %d,%d en %d\n", !!caca, !!caca1, i);
 		}
