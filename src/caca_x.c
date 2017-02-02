@@ -17,6 +17,7 @@
 #include <stddef.h>
 #include <unistd.h>
 #include <math.h>
+#include <stdint.h>
 
 #define MAX_NUMEROS 50000
 #define MAX_VALOR INT_MAX
@@ -28,7 +29,8 @@
 #define CACA_X_MAX_NUMEROS_REDONDEADO (1<<(CACA_X_MAX_PROFUNDIDAD-2))
 #define CACA_X_MAX_NODOS (1 << CACA_X_MAX_PROFUNDIDAD)
 #define CACA_X_VALOR_INVALIDO -1LL
-#define CACA_X_MAX_VALORES_INT ((unsigned int)((unsigned int)INT_MAX-(INT_MIN)))
+#define CACA_X_AJUSTE_ENTERO 2147483648LL
+#define CACA_X_MAX_VALORES_INT UINT_MAX
 
 #define CACA_X_BUF_STATICO_DUMP_ARBOL (char[1000] ) { '\0' }
 
@@ -443,48 +445,25 @@ typedef struct node {
 typedef struct lista_pendeja {
 	nodo_lista *cabeza;
 	nodo_lista *cola;
+	nodo_lista cabeza_mem;
 } lista_pendeja;
 
-void listilla_append(lista_pendeja *lista, natural num) {
-	nodo_lista *temp, *right;
-	temp = (nodo_lista *) malloc(sizeof(nodo_lista));
-	temp->data = num;
-	right = (nodo_lista *) lista->cola;
-	assert_timeout(!right->next);
-	right->next = temp;
-	right = temp;
-	right->next = NULL;
-	lista->cola = right;
-}
-
-void listilla_add(lista_pendeja *lista, natural num) {
-	nodo_lista *temp;
-	nodo_lista *head = lista->cabeza;
-	nodo_lista *cola = NULL;
-	temp = (nodo_lista *) malloc(sizeof(nodo_lista));
-	temp->data = num;
-	if (head == NULL ) {
-		head = temp;
-		head->next = NULL;
-		cola = head;
-	} else {
-		temp->next = head;
-		head = temp;
-		cola = lista->cola;
-	}
-	lista->cabeza = head;
-	lista->cola = cola;
-}
+nodo_lista *nodos_mem = NULL;
+natural nodos_mem_utilizados = 0;
 
 void listilla_insert(lista_pendeja *lista, natural num) {
 	nodo_lista *temp;
-	nodo_lista *head = lista->cabeza;
-	temp = head;
-	if (temp == NULL ) {
-		listilla_add(lista, num);
-	} else {
-		listilla_append(lista, num);
-	}
+	temp = nodos_mem + nodos_mem_utilizados++;
+	temp->data = num;
+	temp->next = NULL;
+	/*
+	 if (lista->cabeza == NULL ) {
+	 lista->cola = lista->cabeza = temp;
+	 } else
+	 */
+	assert_timeout(!lista->cola->next);
+	lista->cola->next = temp;
+	lista->cola = temp;
 }
 
 static inline char *listilla_a_cadena(lista_pendeja *lista, char *buf) {
@@ -517,7 +496,7 @@ tipo_dato nuevo_valor = 0;
 tipo_dato viejo_pendejo = 0;
 tipo_dato *numeros = NULL;
 caca_preprocesada *datos_prepro = NULL;
-lista_pendeja idx_bloques_by_posiciones[MAX_NUMEROS];
+lista_pendeja idx_bloques_by_posiciones[MAX_NUMEROS] = { 0 };
 natural tam_bloque = 0;
 natural num_bloques = 0;
 bitch_vector *mapa_unicos = NULL;
@@ -609,16 +588,17 @@ int caca_comun_compara_enteros(const void *a, const void *b) {
 }
 
 #define caca_comun_checa_bit_mac(bits, posicion, resultado) \
-	__asm__ (\
-			"xor %%rdx,%%rdx\n"\
-			"movq $8,%%r8\n"\
-			"divq %%r8\n"\
-			"mov $1,%[resul]\n"\
-			"mov %%rdx,%%rcx\n"\
-			"shlq %%cl,%[resul]\n"\
-			"and (%[vectors],%[bitch_posi],1),%[resul]\n"\
-			: [resul] "=b" (resultado)\
-			: [bitch_posi] "a" (posicion), [vectors] "%r" (bits)\
+        __asm__ (\
+                        "xor %%rdx,%%rdx\n"\
+                        "movq %[bitch_posi],%%rax\n"\
+                        "movq $8,%%r8\n"\
+                        "divq %%r8\n"\
+                        "mov $1,%[resul]\n"\
+                        "mov %%rdx,%%rcx\n"\
+                        "shlq %%cl,%[resul]\n"\
+                        "and (%[vectors],%%rax,1),%[resul]\n"\
+                        : [resul] "=b" (resultado)\
+                        : [bitch_posi] "r" (posicion), [vectors] "r" (bits)\
             :"rax","rdx","rcx","r8")
 
 /*
@@ -680,6 +660,16 @@ static inline void caca_x_inicializa_datos_preprocesados() {
 	datos_prepro = calloc(num_bloques * num_bloques, sizeof(datos_prepro));
 	assert_timeout(datos_prepro);
 
+	/** debiera ser 12401660 segun el conteo */
+//	nodos_mem = calloc(13000000, sizeof(nodos_mem));
+//	assert_timeout(nodos_mem);
+
+	for (int i = 0; i < MAX_NUMEROS; i++) {
+		lista_pendeja *lista_pos = idx_bloques_by_posiciones + i;
+		lista_pos->cola = lista_pos->cabeza = &lista_pos->cabeza_mem;
+		lista_pos->cabeza->data = CACA_X_VALOR_INVALIDO;
+	}
+
 	hash_map_robin_hood_back_shift_init(mapa_ocurrencias_en_subarreglos,
 			num_numeros << 1);
 
@@ -706,23 +696,28 @@ static inline void caca_x_inicializa_datos_preprocesados() {
 			caca_log_debug(
 					"creando listas de subarrays por posicon idx %u(%u,%u) limite izq %u limite der %u\n",
 					idx_dato_prepro, i, j, limite_izq, limite_der);
+
 			for (int k = limite_izq; k <= limite_der; k++) {
 				tipo_dato num_actual = numeros[k];
 				lista_pendeja *lista_pos = idx_bloques_by_posiciones + k;
+				__asm__("nop\n"
+						"nop\n");
+				/*
+
 				listilla_insert(lista_pos, idx_dato_prepro);
 				caca_log_debug("aora la lista de bloques de pops %u es %s\n", k,
 						listilla_a_cadena(lista_pos, CACA_X_BUF_STATICO_DUMP_ARBOL));
 
-				caca_comun_checa_bit_mac(mapa_unicos,
-						(unsigned long) (num_actual + (unsigned long) ((unsigned long) INT_MAX + 1)),
-						checa_bitch_res);
-				if (!checa_bitch_res) {
-					caca_comun_asigna_bit(mapa_unicos,
-							(unsigned long) (num_actual
-									+ (unsigned long) ((unsigned long) INT_MAX
-											+ 1)));
-					nums_anadidos[num_nums_anadidos++] = num_actual;
-				}
+				 caca_comun_checa_bit_mac(mapa_unicos,
+				 CACA_X_AJUSTE_ENTERO+num_actual, checa_bitch_res);
+				 if (!checa_bitch_res) {
+				 caca_comun_asigna_bit(mapa_unicos,
+				 (unsigned long) (num_actual
+				 + (unsigned long) ((unsigned long) INT_MAX
+				 + 1)));
+				 nums_anadidos[num_nums_anadidos++] = num_actual;
+				 }
+				 */
 
 			}
 
