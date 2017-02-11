@@ -37,9 +37,9 @@
 #define CACA_X_BUF_STATICO_DUMP_ARBOL (char[1000] ) { '\0' }
 
 /*
- #define caca_log_debug printf
+#define caca_log_debug printf
  */
-#define caca_log_debug(formato, args...) 0
+ #define caca_log_debug(formato, args...) 0
 #define assert_timeout(condition) assert(condition);
 /*
  #define assert_timeout(condition) 0
@@ -87,6 +87,20 @@ int hash_map_robin_hood_back_shift_init(hm_rr_bs_tabla *ht, int num_cubetas) {
 	ht->buckets_ = (hm_cubeta *) calloc(ht->num_buckets_, sizeof(hm_cubeta));
 	ht->num_buckets_used_ = 0;
 	ht->probing_max_ = num_cubetas;
+	return 0;
+}
+
+int hash_map_robin_hood_back_shift_fini(hm_rr_bs_tabla *ht) {
+	if (ht->buckets_ != NULL ) {
+		for (uint32_t i = 0; i < ht->num_buckets_; i++) {
+			if (ht->buckets_[i].entry != NULL ) {
+				free(ht->buckets_[i].entry);
+				ht->buckets_[i].entry = NULL;
+			}
+		}
+		free(ht->buckets_);
+	}
+
 	return 0;
 }
 
@@ -310,6 +324,8 @@ int hash_map_robin_hood_back_shift_borra(hm_rr_bs_tabla *ht,
 			}
 
 		}
+
+		ht->num_buckets_used_--;
 		return 0;
 	}
 
@@ -331,7 +347,7 @@ static inline bool hash_map_robin_hood_back_shift_indice_existe(
 	return !!ht->buckets_[indice].entry;
 }
 
-static inline bool hash_map_robin_hood_back_shift_indice_obten_llave(
+static inline entero_largo hash_map_robin_hood_back_shift_indice_obten_llave(
 		hm_rr_bs_tabla *ht, hm_iter indice) {
 	assert_timeout(indice <= ht->probing_max_ && indice >= ht->probing_min_);
 	hm_entry *entrada = ht->buckets_[indice].entry;
@@ -422,16 +438,23 @@ int hash_map_robin_hood_back_shift_indice_borra(hm_rr_bs_tabla *ht,
 		}
 
 	}
+
+	ht->num_buckets_used_--;
 	return 0;
 
 }
 
-static inline bool hash_map_robin_hood_back_shift_indice_obten_valor(
+static inline entero_largo hash_map_robin_hood_back_shift_indice_obten_valor(
 		hm_rr_bs_tabla *ht, hm_iter indice) {
 	assert_timeout(indice <= ht->probing_max_ && indice >= ht->probing_min_);
 	hm_entry *entrada = ht->buckets_[indice].entry;
 	assert_timeout(entrada);
 	return entrada->valor;
+}
+
+static inline bool hash_map_robin_hood_back_shift_esta_vacio(hm_rr_bs_tabla *ht) {
+	assert_timeout(ht->num_buckets_used_ <= ht->num_buckets_);
+	return !ht->num_buckets_used_;
 }
 
 #endif
@@ -602,12 +625,12 @@ int caca_comun_compara_enteros(const void *a, const void *b) {
         __asm__ (\
                         "xor %%rdx,%%rdx\n"\
                         "movq %[bitch_posi],%%rax\n"\
-                        "movq $8,%%r8\n"\
+                        "movq $64,%%r8\n"\
                         "divq %%r8\n"\
                         "mov $1,%[resul]\n"\
                         "mov %%rdx,%%rcx\n"\
                         "shlq %%cl,%[resul]\n"\
-                        "and (%[vectors],%%rax,1),%[resul]\n"\
+                        "and (%[vectors],%%rax,8),%[resul]\n"\
                         : [resul] "=b" (resultado)\
                         : [bitch_posi] "r" (posicion), [vectors] "r" (bits)\
             :"rax","rdx","rcx","r8")
@@ -653,6 +676,13 @@ static inline void caca_comun_mapa_bitch_limpia(bitch_vector *bits,
 
 }
 
+static inline hm_rr_bs_tabla *caca_x_allocar_mapa(natural num_elems) {
+	hm_rr_bs_tabla *mapita = (mapas_num_bloque_mem
+			+ (mapas_num_bloque_mem_usados++));
+	hash_map_robin_hood_back_shift_init(mapita, num_elems);
+	return mapita;
+}
+
 static inline void caca_x_inicializa_datos_preprocesados() {
 	entero_largo checa_bitch_res;
 	natural idx_dato_prepro = 0;
@@ -681,6 +711,7 @@ static inline void caca_x_inicializa_datos_preprocesados() {
 		tipo_dato num_actual = numeros[i];
 
 		caca_log_debug("checando num %d\n", num_actual);
+
 		caca_comun_mapa_bitch_checa(mapa_unicos,
 				caca_comun_mapa_bitch_ajusta_numero(num_actual),
 				checa_bitch_res);
@@ -704,8 +735,8 @@ static inline void caca_x_inicializa_datos_preprocesados() {
 
 		hash_map_robin_hood_back_shift_pon(mapa_ocurrencias_en_subarreglos,
 				num_actual,
-				(entero_largo) (mapas_num_bloque_mem
-						+ (mapas_num_bloque_mem_usados++)), &nuevo_entry);
+				(entero_largo) caca_x_allocar_mapa(num_bloques * num_bloques),
+				&nuevo_entry);
 		assert_timeout(nuevo_entry);
 		caca_comun_mapa_bitch_limpia(mapa_unicos,
 				caca_comun_mapa_bitch_ajusta_numero(num_actual));
@@ -750,7 +781,8 @@ static inline void caca_x_inicializa_datos_preprocesados() {
 				caca_log_debug(
 						"aora la lista de bloques afectados por bloq %u es %s\n",
 						k,
-						listilla_a_cadena(lista_pos, CACA_X_BUF_STATICO_DUMP_ARBOL));
+						listilla_a_cadena(lista_pos,
+								CACA_X_BUF_STATICO_DUMP_ARBOL));
 
 			}
 
@@ -763,26 +795,34 @@ static inline void caca_x_inicializa_datos_preprocesados() {
 				idx_rango_bloques_afectados_por_idx_bloque + idx_bloque;
 		caca_log_debug(
 				"la lista de bloques afectados por idx arreglo %u es %s\n", i,
-				listilla_a_cadena(idx_rango_bloques_por_idx_arreglo[i], CACA_X_BUF_STATICO_DUMP_ARBOL));
+				listilla_a_cadena(idx_rango_bloques_por_idx_arreglo[i],
+						CACA_X_BUF_STATICO_DUMP_ARBOL));
 
 		idx_rango_bloques_por_idx_arreglo_realmente_incializados[i].cabeza =
 				idx_rango_bloques_por_idx_arreglo_realmente_incializados[i].cola =
 						&idx_rango_bloques_por_idx_arreglo_realmente_incializados[i].cabeza_mem;
+		idx_rango_bloques_por_idx_arreglo_realmente_incializados[i].cabeza->data =
+				CACA_X_VALOR_INVALIDO;
 	}
 
 }
 
 static inline natural caca_x_obten_idx_bloque_prepro(natural idx_pos_ini,
 		natural idx_pos_fin) {
-	natural idx_bloque_inicio = idx_pos_ini / tam_bloque;
-	natural idx_bloque_final = idx_pos_fin / tam_bloque;
+	int idx_bloque_inicio = idx_pos_ini / tam_bloque;
+	int idx_bloque_final = idx_pos_fin / tam_bloque;
 	natural idx_bloque = CACA_X_VALOR_INVALIDO;
+	caca_log_debug(
+			"para el bloq %u-%u de rango %u-%u obteniendo el bloque prepro\n",
+			idx_bloque_inicio, idx_bloque_final, idx_pos_ini, idx_pos_fin);
 	if (idx_pos_ini % tam_bloque) {
 		idx_bloque_inicio++;
 	}
 	if ((idx_pos_fin + 1) % tam_bloque) {
 		idx_bloque_final--;
 	}
+	caca_log_debug("el bloq inicial calculado %u, el final %u\n",
+			idx_bloque_inicio, idx_bloque_final);
 	if (idx_bloque_inicio <= idx_bloque_final) {
 		idx_bloque = idx_bloque_inicio * num_bloques + idx_bloque_final;
 	}
@@ -790,7 +830,7 @@ static inline natural caca_x_obten_idx_bloque_prepro(natural idx_pos_ini,
 }
 
 static inline caca_preprocesada *caca_x_genera_bloque_prepro(natural idx_bloque) {
-	bool checa_bitch_res;
+	entero_largo checa_bitch_res;
 	caca_preprocesada *bloque_prepro = datos_prepro + idx_bloque;
 	natural idx_ini = bloque_prepro->idx_inicio;
 	natural idx_fin = bloque_prepro->idx_fin;
@@ -803,6 +843,7 @@ static inline caca_preprocesada *caca_x_genera_bloque_prepro(natural idx_bloque)
 	assert_timeout(bloque_prepro->suma==CACA_X_VALOR_INVALIDO);
 	assert_timeout(idx_ini <= idx_fin);
 
+	num_nums_anadidos = 0;
 	for (natural i = idx_ini; i <= idx_fin; i++) {
 		bool nuevo_entry;
 		natural conteo_num_en_bloque;
@@ -815,8 +856,15 @@ static inline caca_preprocesada *caca_x_genera_bloque_prepro(natural idx_bloque)
 				mapa_ocurrencias_en_subarreglos, num_actual,
 				(entero_largo *) &mapa_num_bloque);
 
-		assert_timeout(
-				iter!=HASH_MAP_VALOR_INVALIDO && (entero_largo)mapa_num_bloque!=HASH_MAP_VALOR_INVALIDO);
+		if (iter == HASH_MAP_VALOR_INVALIDO ) {
+			caca_log_debug("anadiendo %u al mapa gral x q no estaba\n",
+					num_actual);
+			mapa_num_bloque = caca_x_allocar_mapa(num_bloques * num_bloques);
+			iter = hash_map_robin_hood_back_shift_pon(
+					mapa_ocurrencias_en_subarreglos, num_actual,
+					(entero_largo) mapa_num_bloque, &nuevo_entry);
+			assert_timeout(iter!=HASH_MAP_VALOR_INVALIDO && nuevo_entry);
+		}
 
 		iter = hash_map_robin_hood_back_shift_pon(mapa_num_bloque, idx_bloque,
 				1, &nuevo_entry);
@@ -865,11 +913,13 @@ static inline caca_preprocesada *caca_x_genera_bloque_prepro(natural idx_bloque)
 
 	bloque_prepro->idx_rango_bloque = idx_bloque;
 
+	num_nums_anadidos = 0;
 	return datos_prepro;
 }
 
 static inline void caca_x_actualizar_datos_preprocesados(
 		natural idx_pos_actualizar, tipo_dato nuevo_valor) {
+	bool nuevo_entry;
 	hm_iter iter = 0;
 	tipo_dato viejo_pendejo = numeros[idx_pos_actualizar];
 	lista_pendeja *lista_idx_bloques =
@@ -881,7 +931,8 @@ static inline void caca_x_actualizar_datos_preprocesados(
 
 	caca_log_debug("la lista de bloques para idx %u es %s\n",
 			idx_pos_actualizar,
-			listilla_a_cadena(lista_idx_bloques, CACA_X_BUF_STATICO_DUMP_ARBOL));
+			listilla_a_cadena(lista_idx_bloques,
+					CACA_X_BUF_STATICO_DUMP_ARBOL));
 
 	iter = hash_map_robin_hood_back_shift_obten(mapa_ocurrencias_en_subarreglos,
 			viejo_pendejo, (entero_largo *) &tablon_viejo_pendejo);
@@ -890,22 +941,28 @@ static inline void caca_x_actualizar_datos_preprocesados(
 
 	iter = hash_map_robin_hood_back_shift_obten(mapa_ocurrencias_en_subarreglos,
 			nuevo_valor, (entero_largo *) &tablon_nuevo_valor);
-	assert_timeout(
-			iter != HASH_MAP_VALOR_INVALIDO && (entero_largo)tablon_nuevo_valor!=HASH_MAP_VALOR_INVALIDO);
+	if (iter == HASH_MAP_VALOR_INVALIDO ) {
+		tablon_nuevo_valor = caca_x_allocar_mapa(num_bloques * num_bloques);
+
+		iter = hash_map_robin_hood_back_shift_pon(
+				mapa_ocurrencias_en_subarreglos, nuevo_valor,
+				(entero_largo) tablon_nuevo_valor, &nuevo_entry);
+
+		assert_timeout(iter != HASH_MAP_VALOR_INVALIDO && nuevo_entry);
+	}
 
 	nodo_act = lista_idx_bloques->cabeza->next;
 
 	while (nodo_act) {
 		natural idx_bloque_actual = nodo_act->data;
-		natural ocurrencias = 0;
-		bool nuevo_entry;
+		entero_largo ocurrencias = 0;
 
 		entero_largo *suma = &datos_prepro[idx_bloque_actual].suma;
-		caca_log_debug("en nodo %u el tablon %p\n", idx_bloque_actual, tablon);
+		caca_log_debug("en nodo %u el tablon %p\n", idx_bloque_actual,
+				tablon_viejo_pendejo);
 
-		caca_log_debug("el bloke %u tiene suma %lld i tablon %s\n",
-				idx_bloque_actual, *suma,
-				kh_shit_dumpear(tablon, CACA_X_BUF_STATICO_DUMP_ARBOL));
+		caca_log_debug("el bloke %u tiene suma %lld i tablon %p\n",
+				idx_bloque_actual, *suma, tablon_viejo_pendejo);
 
 		iter = hash_map_robin_hood_back_shift_obten(tablon_viejo_pendejo,
 				idx_bloque_actual, (entero_largo *) &ocurrencias);
@@ -914,7 +971,7 @@ static inline void caca_x_actualizar_datos_preprocesados(
 				iter != HASH_MAP_VALOR_INVALIDO && ocurrencias!=HASH_MAP_VALOR_INVALIDO);
 
 		caca_log_debug("las ocurrencias de %u son %u\n", viejo_pendejo,
-				ocurrencias);
+				(natural) ocurrencias);
 
 		ocurrencias--;
 		if (!ocurrencias) {
@@ -923,6 +980,19 @@ static inline void caca_x_actualizar_datos_preprocesados(
 			(*suma) -= viejo_pendejo;
 			hash_map_robin_hood_back_shift_indice_borra(tablon_viejo_pendejo,
 					iter);
+
+			caca_log_debug("borrando rango bloques %u de num %u\n",
+					idx_bloque_actual, viejo_pendejo);
+
+			if (hash_map_robin_hood_back_shift_esta_vacio(
+					tablon_viejo_pendejo)) {
+				hash_map_robin_hood_back_shift_borra(
+						mapa_ocurrencias_en_subarreglos, viejo_pendejo);
+				hash_map_robin_hood_back_shift_fini(tablon_viejo_pendejo);
+
+				caca_log_debug("num %u borrado de mapa gral\n",
+						idx_bloque_actual);
+			}
 		} else {
 			hash_map_robin_hood_back_shift_indice_pon_valor(
 					tablon_viejo_pendejo, iter, ocurrencias);
@@ -946,7 +1016,8 @@ static inline void caca_x_actualizar_datos_preprocesados(
 			caca_log_debug(
 					"en valor nuevo %u ya estaba, aora ai %u ocurrencias\n",
 					nuevo_valor,
-					hash_map_robin_hood_back_shift_indice_obten_valor(tablon_nuevo_valor,iter));
+					(natural) hash_map_robin_hood_back_shift_indice_obten_valor(
+							tablon_nuevo_valor, iter));
 		}
 
 		nodo_act = nodo_act->next;
@@ -972,7 +1043,7 @@ static inline caca_preprocesada *caca_x_obten_bloque_prepro(natural idx_bloque) 
 
 static inline entero_largo caca_x_calcula_suma_unicos(natural idx_ini,
 		natural idx_fin) {
-	bool checa_bitch_res;
+	entero_largo checa_bitch_res;
 	entero_largo suma = 0;
 	natural idx_bloque = 0;
 	caca_preprocesada *bloque_prepro = NULL;
@@ -990,19 +1061,20 @@ static inline entero_largo caca_x_calcula_suma_unicos(natural idx_ini,
 		natural idx_bloque_ini = bloque_prepro->idx_inicio;
 		natural idx_bloque_fin = bloque_prepro->idx_fin;
 
-		caca_log_debug("calculando suma unicos de %u-%u\n", idx_ini,
-				idx_bloque_ini);
+		caca_log_debug("calculando suma unicos previa a bloque de %u-%u\n",
+				idx_ini, idx_bloque_ini);
 		for (natural i = idx_ini; i < idx_bloque_ini; i++) {
 			tipo_dato num_actual = numeros[i];
 			caca_comun_mapa_bitch_checa(mapa_unicos,
 					caca_comun_mapa_bitch_ajusta_numero(num_actual),
 					checa_bitch_res);
 			if (!checa_bitch_res) {
-				natural ocurrencias;
+				entero_largo ocurrencias;
 				hm_iter iter;
 				hm_rr_bs_tabla *mapa_ocurrencias_por_bloque;
 
-				caca_log_debug("el num %d no esta en el mapita\n", num_actual);
+				caca_log_debug("el num %d en idx %u no esta en el mapita\n",
+						num_actual, i);
 
 				caca_comun_mapa_bitch_asigna(mapa_unicos,
 						caca_comun_mapa_bitch_ajusta_numero(num_actual));
@@ -1021,8 +1093,8 @@ static inline entero_largo caca_x_calcula_suma_unicos(natural idx_ini,
 
 				caca_log_debug(
 						"el num %d tiene %u ocurrencias en bloque %u (%u-%u)\n",
-						num_actual, ocurrencias, idx_bloque, idx_bloque_ini,
-						idx_bloque_fin);
+						num_actual, (natural) ocurrencias, idx_bloque,
+						idx_bloque_ini, idx_bloque_fin);
 
 				if (iter == HASH_MAP_VALOR_INVALIDO ) {
 					assert_timeout(ocurrencias==HASH_MAP_VALOR_INVALIDO);
@@ -1032,8 +1104,8 @@ static inline entero_largo caca_x_calcula_suma_unicos(natural idx_ini,
 
 		}
 
-		caca_log_debug("calculando suma unicos de %u-%u\n", idx_bloque_fin + 1,
-				idx_fin);
+		caca_log_debug("calculando suma unicos posterior a bloque de %u-%u\n",
+				idx_bloque_fin + 1, idx_fin);
 		for (natural i = idx_bloque_fin + 1; i <= idx_fin; i++) {
 			tipo_dato num_actual = numeros[i];
 
@@ -1042,11 +1114,12 @@ static inline entero_largo caca_x_calcula_suma_unicos(natural idx_ini,
 					checa_bitch_res);
 
 			if (!checa_bitch_res) {
-				natural ocurrencias;
+				entero_largo ocurrencias;
 				hm_iter iter;
 				hm_rr_bs_tabla *mapa_ocurrencias_por_bloque;
 
-				caca_log_debug("el num %d no esta en el mapita\n", num_actual);
+				caca_log_debug("el num %d de idx %u no esta en el mapita\n",
+						num_actual, i);
 
 				caca_comun_mapa_bitch_asigna(mapa_unicos,
 						caca_comun_mapa_bitch_ajusta_numero(num_actual));
@@ -1064,9 +1137,9 @@ static inline entero_largo caca_x_calcula_suma_unicos(natural idx_ini,
 						(entero_largo *) &ocurrencias);
 
 				caca_log_debug(
-						"el num %d tiene %u ocurrencias en bloque %u (%u-%u)\n",
-						num_actual, ocurrencias, idx_bloque, idx_bloque_ini,
-						idx_bloque_fin);
+						"el num %u tiene %u ocurrencias en bloque %u (%u-%u)\n",
+						num_actual, (natural) ocurrencias, idx_bloque,
+						idx_bloque_ini, idx_bloque_fin);
 
 				if (iter == HASH_MAP_VALOR_INVALIDO ) {
 					assert_timeout(ocurrencias==HASH_MAP_VALOR_INVALIDO);
@@ -1130,7 +1203,8 @@ static inline void caca_x_main() {
 	matriz_nums = calloc(CACA_X_MAX_NUMEROS_REDONDEADO * 3, sizeof(int));
 	assert_timeout(matriz_nums);
 
-	mapa_unicos = calloc(CACA_X_MAX_VALORES_INT / (sizeof(bitch_vector) * 8),
+	mapa_unicos = calloc(
+			(CACA_X_MAX_VALORES_INT / (sizeof(bitch_vector) * 8)) + 1,
 			sizeof(bitch_vector));
 	assert_timeout(mapa_unicos);
 
@@ -1165,18 +1239,16 @@ static inline void caca_x_main() {
 
 		switch (tipo_query) {
 		case 'Q':
-			/*
-			 limite_izq = idx_query_ini - 1;
-			 limite_der = idx_query_fin - 1;
-			 sum = caca_x_suma_segmento();
-			 printf("%lld\n", sum);
-			 */
+			limite_izq = idx_query_ini - 1;
+			limite_der = idx_query_fin - 1;
+			sum = caca_x_calcula_suma_unicos(limite_izq, limite_der);
+			printf("%lld\n", sum);
 			break;
 		case 'U':
 
 			idx_actualizado = idx_query_ini - 1;
 			nuevo_valor = idx_query_fin;
-//			caca_x_actualizar_datos_preprocesados(idx_actualizado, nuevo_valor);
+			caca_x_actualizar_datos_preprocesados(idx_actualizado, nuevo_valor);
 
 			break;
 		default:
