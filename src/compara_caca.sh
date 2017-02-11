@@ -18,8 +18,8 @@ do
 	echo "la caca en piton $caca_log_piton"
 	date
 	./caca_x < $caca > $caca_log_c
-	date
 	return_codi=$?
+	date
 	if [ $return_codi -ne 0 ] 
 	then
 		echo "verga, fallo en $caca"
@@ -32,4 +32,9 @@ do
 	diferencia_ojala=$(diff $caca_log_c $caca_log_piton)
 	echo "la diferencia es"
 	echo "$diferencia_ojala CACA"
+	if [[ ! -z "$diferencia_ojala" ]]
+	then
+		echo "verga, diff en $caca"
+		exit 1
+	fi
 done

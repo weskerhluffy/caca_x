@@ -1221,9 +1221,7 @@ static inline void caca_x_main() {
 			caca_arreglo_a_cadena(numeros, num_numeros, buf));
 	caca_log_debug("en estas paginas %d\n", num_queries);
 
-	printf("armando caca \n");
 	caca_x_inicializa_datos_preprocesados();
-	printf("ya caca \n");
 
 	while (cont_queries < num_queries) {
 		entero_largo sum = 0;
@@ -1273,6 +1271,5 @@ int main(void) {
 //	puts("he corrido con algo de suerte");
 //	sleep(10);
 	caca_x_main();
-
 	return EXIT_SUCCESS;
 }
