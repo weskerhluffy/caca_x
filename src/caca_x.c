@@ -1043,6 +1043,7 @@ static inline caca_preprocesada *caca_x_obten_bloque_prepro(natural idx_bloque) 
 
 static inline entero_largo caca_x_calcula_suma_unicos(natural idx_ini,
 		natural idx_fin) {
+	bool nuevo_entry;
 	entero_largo checa_bitch_res;
 	entero_largo suma = 0;
 	natural idx_bloque = 0;
@@ -1083,6 +1084,20 @@ static inline entero_largo caca_x_calcula_suma_unicos(natural idx_ini,
 				iter = hash_map_robin_hood_back_shift_obten(
 						mapa_ocurrencias_en_subarreglos, num_actual,
 						(entero_largo *) &mapa_ocurrencias_por_bloque);
+
+				if (iter == HASH_MAP_VALOR_INVALIDO ) {
+					caca_log_debug("%d no estaba en el mapa gral\n",
+							num_actual);
+					mapa_ocurrencias_por_bloque = caca_x_allocar_mapa(
+							num_bloques * num_bloques);
+
+					iter = hash_map_robin_hood_back_shift_pon(
+							mapa_ocurrencias_en_subarreglos, num_actual,
+							(entero_largo) mapa_ocurrencias_por_bloque,
+							&nuevo_entry);
+
+					assert_timeout(iter!=HASH_MAP_VALOR_INVALIDO && nuevo_entry);
+				}
 
 				assert_timeout(
 						iter!=HASH_MAP_VALOR_INVALIDO && (entero_largo)mapa_ocurrencias_por_bloque!=HASH_MAP_VALOR_INVALIDO);
@@ -1129,8 +1144,19 @@ static inline entero_largo caca_x_calcula_suma_unicos(natural idx_ini,
 						mapa_ocurrencias_en_subarreglos, num_actual,
 						(entero_largo *) &mapa_ocurrencias_por_bloque);
 
-				assert_timeout(
-						iter!=HASH_MAP_VALOR_INVALIDO && (entero_largo)mapa_ocurrencias_por_bloque!=HASH_MAP_VALOR_INVALIDO);
+				if (iter == HASH_MAP_VALOR_INVALIDO ) {
+					caca_log_debug("%d no estaba en el mapa gral\n",
+							num_actual);
+					mapa_ocurrencias_por_bloque = caca_x_allocar_mapa(
+							num_bloques * num_bloques);
+
+					iter = hash_map_robin_hood_back_shift_pon(
+							 mapa_ocurrencias_en_subarreglos,
+							num_actual, (entero_largo)mapa_ocurrencias_por_bloque,
+							&nuevo_entry);
+
+					assert_timeout(iter!=HASH_MAP_VALOR_INVALIDO && nuevo_entry);
+				}
 
 				iter = hash_map_robin_hood_back_shift_obten(
 						mapa_ocurrencias_por_bloque, idx_bloque,
