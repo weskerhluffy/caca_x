@@ -37,9 +37,9 @@
 #define CACA_X_BUF_STATICO_DUMP_ARBOL (char[1000] ) { '\0' }
 
 /*
-#define caca_log_debug printf
+ #define caca_log_debug printf
  */
- #define caca_log_debug(formato, args...) 0
+#define caca_log_debug(formato, args...) 0
 #define assert_timeout(condition) assert(condition);
 /*
  #define assert_timeout(condition) 0
@@ -141,9 +141,13 @@ hm_iter hash_map_robin_hood_back_shift_obten(hm_rr_bs_tabla *ht,
 		index_current = (index_init + i) % num_cubetas;
 		hm_entry *entrada = ht->buckets_[index_current].entry;
 
+		if (entrada == NULL ) {
+			break;
+		}
+
 		hash_map_robin_hood_back_shift_llena_distancia_a_indice_inicio(ht,
 				index_current, &probe_distance);
-		if (entrada == NULL || i > probe_distance) {
+		if (i > probe_distance) {
 			break;
 		}
 
@@ -781,8 +785,7 @@ static inline void caca_x_inicializa_datos_preprocesados() {
 				caca_log_debug(
 						"aora la lista de bloques afectados por bloq %u es %s\n",
 						k,
-						listilla_a_cadena(lista_pos,
-								CACA_X_BUF_STATICO_DUMP_ARBOL));
+						listilla_a_cadena(lista_pos, CACA_X_BUF_STATICO_DUMP_ARBOL));
 
 			}
 
@@ -795,8 +798,7 @@ static inline void caca_x_inicializa_datos_preprocesados() {
 				idx_rango_bloques_afectados_por_idx_bloque + idx_bloque;
 		caca_log_debug(
 				"la lista de bloques afectados por idx arreglo %u es %s\n", i,
-				listilla_a_cadena(idx_rango_bloques_por_idx_arreglo[i],
-						CACA_X_BUF_STATICO_DUMP_ARBOL));
+				listilla_a_cadena(idx_rango_bloques_por_idx_arreglo[i], CACA_X_BUF_STATICO_DUMP_ARBOL));
 
 		idx_rango_bloques_por_idx_arreglo_realmente_incializados[i].cabeza =
 				idx_rango_bloques_por_idx_arreglo_realmente_incializados[i].cola =
@@ -885,6 +887,7 @@ static inline caca_preprocesada *caca_x_genera_bloque_prepro(natural idx_bloque)
 				caca_comun_mapa_bitch_ajusta_numero(num_actual),
 				checa_bitch_res);
 		if (!checa_bitch_res) {
+			caca_log_debug("considerando %u para suma unicos\n", num_actual);
 			caca_comun_mapa_bitch_asigna(mapa_unicos,
 					caca_comun_mapa_bitch_ajusta_numero(num_actual));
 			nums_anadidos[num_nums_anadidos++] = num_actual;
@@ -897,6 +900,7 @@ static inline caca_preprocesada *caca_x_genera_bloque_prepro(natural idx_bloque)
 
 	for (int k = 0; k < num_nums_anadidos; k++) {
 		tipo_dato num_actual = nums_anadidos[k];
+		caca_log_debug("asegurando que %u este\n", num_actual);
 		caca_comun_mapa_bitch_checa(mapa_unicos,
 				caca_comun_mapa_bitch_ajusta_numero(num_actual),
 				checa_bitch_res);
@@ -931,8 +935,7 @@ static inline void caca_x_actualizar_datos_preprocesados(
 
 	caca_log_debug("la lista de bloques para idx %u es %s\n",
 			idx_pos_actualizar,
-			listilla_a_cadena(lista_idx_bloques,
-					CACA_X_BUF_STATICO_DUMP_ARBOL));
+			listilla_a_cadena(lista_idx_bloques, CACA_X_BUF_STATICO_DUMP_ARBOL));
 
 	iter = hash_map_robin_hood_back_shift_obten(mapa_ocurrencias_en_subarreglos,
 			viejo_pendejo, (entero_largo *) &tablon_viejo_pendejo);
@@ -1016,8 +1019,7 @@ static inline void caca_x_actualizar_datos_preprocesados(
 			caca_log_debug(
 					"en valor nuevo %u ya estaba, aora ai %u ocurrencias\n",
 					nuevo_valor,
-					(natural) hash_map_robin_hood_back_shift_indice_obten_valor(
-							tablon_nuevo_valor, iter));
+					(natural) hash_map_robin_hood_back_shift_indice_obten_valor( tablon_nuevo_valor, iter));
 		}
 
 		nodo_act = nodo_act->next;
@@ -1151,8 +1153,8 @@ static inline entero_largo caca_x_calcula_suma_unicos(natural idx_ini,
 							num_bloques * num_bloques);
 
 					iter = hash_map_robin_hood_back_shift_pon(
-							 mapa_ocurrencias_en_subarreglos,
-							num_actual, (entero_largo)mapa_ocurrencias_por_bloque,
+							mapa_ocurrencias_en_subarreglos, num_actual,
+							(entero_largo) mapa_ocurrencias_por_bloque,
 							&nuevo_entry);
 
 					assert_timeout(iter!=HASH_MAP_VALOR_INVALIDO && nuevo_entry);
@@ -1289,7 +1291,7 @@ static inline void caca_x_main() {
 	 sleep(10);
 	 }
 	 */
-	free(mapa_unicos);
+//	free(mapa_unicos);
 	free(matriz_nums);
 }
 
