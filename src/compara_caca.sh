@@ -4,6 +4,9 @@ ulimit -c unlimited
 ulimit -c
 rm -fv /cores/*
 rm -fv core*
+#mv -fv ya_echos/* .
+rm -rfv ya_echos
+mkdir ya_echos
 for caca in $(ls *txt)
 do
 	caca_truncada=""
@@ -35,6 +38,7 @@ do
 	if [[ ! -z "$diferencia_ojala" ]]
 	then
 		echo "verga, diff en $caca"
-		exit 1
+#		exit 1
 	fi
+	mv $caca ya_echos/
 done
