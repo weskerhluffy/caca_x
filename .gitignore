@@ -125,3 +125,11 @@ src/aaa
 *.o
 
 *.s
+
+src/caca7.c.log
+
+src/caca7.piton.log
+
+src/caca7a.c.log
+
+src/caca7a.piton.log
