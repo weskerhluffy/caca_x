@@ -36,10 +36,10 @@
 
 #define CACA_X_BUF_STATICO_DUMP_ARBOL (char[1000] ) { '\0' }
 
+#define caca_log_debug printf
 /*
- #define caca_log_debug printf
+ #define caca_log_debug(formato, args...) 0
  */
-#define caca_log_debug(formato, args...) 0
 #define assert_timeout(condition) assert(condition);
 /*
  #define assert_timeout(condition) 0
@@ -49,16 +49,16 @@
 typedef int tipo_dato;
 typedef unsigned int natural;
 typedef long long entero_largo;
-typedef unsigned long long bitch_vector;
+typedef unsigned long long entero_largo_sin_signo;
 
 typedef enum BOOLEANOS {
 	falso = 0, verdadero
 } bool;
 
-#define max(x,y) ((x) < (y) ? (y) : (x))
-#define min(x,y) ((x) < (y) ? (x) : (y))
+#define caca_comun_max(x,y) ((x) < (y) ? (y) : (x))
+#define caca_comun_min(x,y) ((x) < (y) ? (x) : (y))
 
-#if 1
+#if 0
 
 typedef natural hm_iter;
 
@@ -67,12 +67,12 @@ typedef natural hm_iter;
 typedef struct hash_map_entry {
 	entero_largo llave;
 	entero_largo valor;
-} hm_entry;
+}hm_entry;
 
 typedef struct hash_map_cubeta {
 	uint64_t hash;
 	hm_entry *entry;
-} hm_cubeta;
+}hm_cubeta;
 
 typedef struct hash_map_robin_hood_back_shift {
 	hm_cubeta *buckets_;
@@ -80,7 +80,7 @@ typedef struct hash_map_robin_hood_back_shift {
 	uint64_t num_buckets_used_;
 	uint64_t probing_min_;
 	uint64_t probing_max_;
-} hm_rr_bs_tabla;
+}hm_rr_bs_tabla;
 
 int hash_map_robin_hood_back_shift_init(hm_rr_bs_tabla *ht, int num_cubetas) {
 	ht->num_buckets_ = num_cubetas;
@@ -111,7 +111,7 @@ static inline int hash_map_robin_hood_back_shift_llena_distancia_a_indice_inicio
 	*distance = 0;
 
 	if (cubeta.entry == NULL )
-		return -1;
+	return -1;
 
 	uint64_t num_cubetas = ht->num_buckets_;
 
@@ -159,9 +159,9 @@ hm_iter hash_map_robin_hood_back_shift_obten(hm_rr_bs_tabla *ht,
 	}
 
 	if (found)
-		return index_current;
+	return index_current;
 
-	return HASH_MAP_VALOR_INVALIDO ;
+	return HASH_MAP_VALOR_INVALIDO;
 }
 
 hm_iter hash_map_robin_hood_back_shift_pon(hm_rr_bs_tabla *ht, entero_largo key,
@@ -176,7 +176,7 @@ hm_iter hash_map_robin_hood_back_shift_pon(hm_rr_bs_tabla *ht, entero_largo key,
 
 	if (ht->num_buckets_used_ == num_cubetas) {
 		*nuevo_entry = falso;
-		return HASH_MAP_VALOR_INVALIDO ;
+		return HASH_MAP_VALOR_INVALIDO;
 	}
 	ht->num_buckets_used_ += 1;
 
@@ -282,7 +282,7 @@ int hash_map_robin_hood_back_shift_borra(hm_rr_bs_tabla *ht,
 			}
 			uint64_t distance;
 			if (hash_map_robin_hood_back_shift_llena_distancia_a_indice_inicio(
-					ht, index_swap, &distance) != 0) {
+							ht, index_swap, &distance) != 0) {
 				fprintf(stderr, "Error in FillDistanceToInitIndex()");
 			}
 			if (!distance) {
@@ -398,7 +398,7 @@ int hash_map_robin_hood_back_shift_indice_borra(hm_rr_bs_tabla *ht,
 		}
 		uint64_t distance;
 		if (hash_map_robin_hood_back_shift_llena_distancia_a_indice_inicio(ht,
-				index_swap, &distance) != 0) {
+						index_swap, &distance) != 0) {
 			fprintf(stderr, "Error in FillDistanceToInitIndex()");
 		}
 		if (!distance) {
@@ -463,20 +463,20 @@ static inline bool hash_map_robin_hood_back_shift_esta_vacio(hm_rr_bs_tabla *ht)
 
 #endif
 
-#if 1
+#if 0
 
 //http://www.cprogramming.com/snippets/source-code/singly-linked-list-insert-remove-add-count
 
 typedef struct node {
 	natural data;
 	struct node *next;
-} nodo_lista;
+}nodo_lista;
 
 typedef struct lista_pendeja {
 	nodo_lista *cabeza;
 	nodo_lista *cola;
 	nodo_lista cabeza_mem;
-} lista_pendeja;
+}lista_pendeja;
 
 nodo_lista *nodos_mem = NULL;
 natural nodos_mem_utilizados = 0;
@@ -511,35 +511,6 @@ static inline char *listilla_a_cadena(lista_pendeja *lista, char *buf) {
 }
 
 #endif
-
-typedef struct caca_preprocesada {
-	natural idx_rango_bloque;
-	natural idx_inicio;
-	natural idx_fin;
-	entero_largo suma;
-} caca_preprocesada;
-
-natural num_numeros = 0;
-natural idx_actualizado = 0;
-natural limite_izq = 0;
-natural limite_der = 0;
-tipo_dato nuevo_valor = 0;
-tipo_dato viejo_pendejo = 0;
-tipo_dato *numeros = NULL;
-caca_preprocesada *datos_prepro = NULL;
-lista_pendeja *idx_rango_bloques_por_idx_arreglo[MAX_NUMEROS] = { 0 };
-natural tam_bloque = 0;
-natural num_bloques = 0;
-bitch_vector *mapa_unicos = NULL;
-hm_rr_bs_tabla *mapa_ocurrencias_en_subarreglos = &(hm_rr_bs_tabla ) { 0 };
-hm_rr_bs_tabla mapas_num_bloque_mem[MAX_NUMEROS + 200000] = { 0 };
-natural mapas_num_bloque_mem_usados = 0;
-natural num_nums_anadidos = 0;
-tipo_dato *nums_anadidos = NULL;
-lista_pendeja idx_rango_bloques_afectados_por_idx_bloque[CACA_X_MAX_BLOQUES] = {
-		0 };
-lista_pendeja idx_rango_bloques_por_idx_arreglo_realmente_incializados[MAX_NUMEROS] =
-		{ 0 };
 
 static inline int lee_matrix_long_stdin(tipo_dato *matrix, int *num_filas,
 		int *num_columnas, int num_max_filas, int num_max_columnas) {
@@ -625,7 +596,27 @@ int caca_comun_compara_enteros(const void *a, const void *b) {
 	return resultado;
 }
 
-#define caca_comun_mapa_bitch_checa(bits, posicion, resultado) \
+void caca_x_anade_caca(tipo_dato numero);
+void caca_x_quita_caca(tipo_dato numero);
+
+#if 1
+
+typedef unsigned long long bitch_vector;
+
+#define BITCH_MAX_NUMEROS_AGREGADOS MAX_NUMEROS
+#define BITCH_TAM_MAPA ( (CACA_X_MAX_VALORES_INT / (sizeof(bitch_vector) * 8)) + 1)
+
+entero_largo_sin_signo bitch_numeros_agregados[BITCH_MAX_NUMEROS_AGREGADOS] = {
+		0 };
+natural bitch_numeros_agregados_tam = 0;
+bitch_vector *bitch_mapa = NULL;
+
+static inline void bitch_init() {
+	bitch_mapa = calloc(BITCH_TAM_MAPA, sizeof(bitch_vector));
+	assert_timeout(bitch_mapa);
+}
+
+#define bitch_checa(bits, posicion, resultado) \
         __asm__ (\
                         "xor %%rdx,%%rdx\n"\
                         "movq %[bitch_posi],%%rax\n"\
@@ -633,43 +624,27 @@ int caca_comun_compara_enteros(const void *a, const void *b) {
                         "divq %%r8\n"\
                         "mov $1,%[resul]\n"\
                         "mov %%rdx,%%rcx\n"\
-                        "shlq %%cl,%[resul]\n"\
+                        "shll %%cl,%[resul]\n"\
                         "and (%[vectors],%%rax,8),%[resul]\n"\
                         : [resul] "=b" (resultado)\
                         : [bitch_posi] "r" (posicion), [vectors] "r" (bits)\
             :"rax","rdx","rcx","r8")
 
-/*
- static inline bool caca_comun_checa_bit(bitch_vector *bits,
- unsigned long posicion) {
- bool res = falso;
- int idx_arreglo = 0;
- int idx_registro = 0;
-
- idx_arreglo = posicion / 64;
- idx_registro = posicion % 64;
-
- res = !!(bits[idx_arreglo]
- & (bitch_vector) ((bitch_vector) 1 << idx_registro));
-
- return res;
- }
-
- */
-static inline void caca_comun_mapa_bitch_asigna(bitch_vector *bits,
-		unsigned long posicion) {
-	int idx_arreglo = 0;
-	int idx_registro = 0;
+static inline void bitch_asigna(bitch_vector *bits,
+		entero_largo_sin_signo posicion) {
+	natural idx_arreglo = 0;
+	natural idx_registro = 0;
 
 	idx_arreglo = posicion / 64;
 	idx_registro = posicion % 64;
 
 	bits[idx_arreglo] |= (bitch_vector) ((bitch_vector) 1 << idx_registro);
 
+	bitch_numeros_agregados[bitch_numeros_agregados_tam++] = posicion;
 }
 
-static inline void caca_comun_mapa_bitch_limpia(bitch_vector *bits,
-		unsigned long posicion) {
+static inline void bitch_limpia(bitch_vector *bits,
+		entero_largo_sin_signo posicion) {
 	int idx_arreglo = 0;
 	int idx_registro = 0;
 
@@ -677,582 +652,1532 @@ static inline void caca_comun_mapa_bitch_limpia(bitch_vector *bits,
 	idx_registro = posicion % 64;
 
 	bits[idx_arreglo] &= (bitch_vector) ~((bitch_vector) 1 << idx_registro);
-
 }
 
-static inline hm_rr_bs_tabla *caca_x_allocar_mapa(natural num_elems) {
-	hm_rr_bs_tabla *mapita = (mapas_num_bloque_mem
-			+ (mapas_num_bloque_mem_usados++));
-	hash_map_robin_hood_back_shift_init(mapita, num_elems);
-	return mapita;
+static inline void bitch_limpia_todo() {
+	for (natural i = 0; i < bitch_numeros_agregados_tam; i++) {
+		bool encendido = falso;
+		entero_largo_sin_signo num_actual = bitch_numeros_agregados[i];
+
+		bitch_checa(bitch_mapa, num_actual, encendido);
+		assert_timeout(encendido);
+		bitch_limpia(bitch_mapa, num_actual);
+	}
 }
 
-static inline void caca_x_inicializa_datos_preprocesados() {
-	entero_largo checa_bitch_res;
-	natural idx_dato_prepro = 0;
+#endif
 
-	nums_anadidos = calloc(MAX_NUMEROS, sizeof(tipo_dato));
-	assert_timeout(nums_anadidos);
+#if 1
+typedef enum mo_mada_tipo_query {
+	mo_mada_actualizacion = 'U', mo_mada_consulta = 'Q'
+} mo_mada_tipo_query;
 
-	tam_bloque = ceil(pow(num_numeros, 2.0 / 3.0));
-	num_bloques = (num_numeros / tam_bloque);
-	if (num_numeros % tam_bloque) {
-		num_bloques++;
-	}
+typedef struct mo_mada {
+	mo_mada_tipo_query tipo;
+	natural idx_query;
+	natural intervalo_idx_ini;
+	natural intervalo_idx_fin;
+	natural orden;
+	entero_largo resulcaca;
+} mo_mada;
 
-	caca_log_debug("el tam bloq %u num de bloqs %u\n", tam_bloque, num_bloques);
+natural mo_mada_tam_bloque = 0;
+entero_largo mo_mada_resultado = 0;
 
-	datos_prepro = calloc(num_bloques * num_bloques, sizeof(caca_preprocesada));
-	assert_timeout(datos_prepro);
+int mo_mada_ord_bloque(const void *pa, const void *pb) {
+	int res = 0;
+	mo_mada *a = (mo_mada *) pa;
+	mo_mada *b = (mo_mada *) pb;
+	natural idx_bloque_a = a->intervalo_idx_ini / mo_mada_tam_bloque;
+	natural idx_bloque_b = b->intervalo_idx_ini / mo_mada_tam_bloque;
+	natural idx_fin_a = a->intervalo_idx_fin;
+	natural idx_fin_b = b->intervalo_idx_fin;
+	natural idx_ini_a = a->intervalo_idx_ini;
+	natural idx_ini_b = b->intervalo_idx_ini;
 
-	nodos_mem = calloc(CACA_X_MAX_NODOS_LISTA, sizeof(nodos_mem));
-	assert_timeout(nodos_mem);
-
-	hash_map_robin_hood_back_shift_init(mapa_ocurrencias_en_subarreglos,
-			num_numeros << 1);
-
-	for (int i = 0; i < num_numeros; i++) {
-		tipo_dato num_actual = numeros[i];
-
-		caca_log_debug("checando num %d\n", num_actual);
-
-		caca_comun_mapa_bitch_checa(mapa_unicos,
-				caca_comun_mapa_bitch_ajusta_numero(num_actual),
-				checa_bitch_res);
-		if (!checa_bitch_res) {
-			caca_log_debug("num %d no estaba\n", num_actual);
-			caca_comun_mapa_bitch_asigna(mapa_unicos,
-					caca_comun_mapa_bitch_ajusta_numero(num_actual));
-			nums_anadidos[num_nums_anadidos++] = num_actual;
-		}
-	}
-
-	for (int k = 0; k < num_nums_anadidos; k++) {
-		tipo_dato num_actual = nums_anadidos[k];
-		bool nuevo_entry;
-
-		caca_log_debug("num %d a ver si si sta\n", num_actual);
-		caca_comun_mapa_bitch_checa(mapa_unicos,
-				caca_comun_mapa_bitch_ajusta_numero(num_actual),
-				checa_bitch_res);
-		assert_timeout(checa_bitch_res);
-
-		hash_map_robin_hood_back_shift_pon(mapa_ocurrencias_en_subarreglos,
-				num_actual,
-				(entero_largo) caca_x_allocar_mapa(num_bloques * num_bloques),
-				&nuevo_entry);
-		assert_timeout(nuevo_entry);
-		caca_comun_mapa_bitch_limpia(mapa_unicos,
-				caca_comun_mapa_bitch_ajusta_numero(num_actual));
-	}
-
-	for (int i = 0; i < num_bloques; i++) {
-		lista_pendeja *lista_pos = idx_rango_bloques_afectados_por_idx_bloque
-				+ i;
-		lista_pos->cola = lista_pos->cabeza = &lista_pos->cabeza_mem;
-		lista_pos->cabeza->data = CACA_X_VALOR_INVALIDO;
-	}
-
-	for (int i = 0; i < num_bloques; i++) {
-		for (int k = 0; k < i; k++) {
-			datos_prepro[i * num_bloques + k].suma = CACA_X_VALOR_INVALIDO;
-		}
-		for (int j = i; j < num_bloques; j++) {
-			idx_dato_prepro = i * num_bloques + j;
-			caca_preprocesada *bloque_prepro = datos_prepro + idx_dato_prepro;
-			num_nums_anadidos = 0;
-
-			bloque_prepro->suma = CACA_X_VALOR_INVALIDO;
-
-			limite_izq = i * tam_bloque;
-			limite_der = (j + 1) * tam_bloque - 1;
-			if (limite_der > num_numeros - 1) {
-				limite_der = num_numeros - 1;
+	if (idx_bloque_a != idx_bloque_b) {
+		res = idx_bloque_a - idx_bloque_b;
+	} else {
+		if (idx_fin_a != idx_fin_b) {
+			res = idx_fin_a - idx_fin_b;
+		} else {
+			if (idx_ini_a != idx_ini_b) {
+				res = idx_ini_a - idx_ini_b;
+			} else {
+				res = a->orden - b->orden;
 			}
-
-			bloque_prepro->idx_inicio = limite_izq;
-			bloque_prepro->idx_fin = limite_der;
-
-			caca_log_debug(
-					"creando listas de subarrays por posicon idx %u(%u,%u) limite izq %u limite der %u\n",
-					idx_dato_prepro, i, j, limite_izq, limite_der);
-
-			for (int k = i; k <= j; k++) {
-				lista_pendeja *lista_pos =
-						idx_rango_bloques_afectados_por_idx_bloque + k;
-
-				listilla_insert(lista_pos, idx_dato_prepro);
-				caca_log_debug(
-						"aora la lista de bloques afectados por bloq %u es %s\n",
-						k,
-						listilla_a_cadena(lista_pos, CACA_X_BUF_STATICO_DUMP_ARBOL));
-
-			}
-
 		}
 	}
 
-	for (int i = 0; i < num_numeros; i++) {
-		natural idx_bloque = i / tam_bloque;
-		idx_rango_bloques_por_idx_arreglo[i] =
-				idx_rango_bloques_afectados_por_idx_bloque + idx_bloque;
-		caca_log_debug(
-				"la lista de bloques afectados por idx arreglo %u es %s\n", i,
-				listilla_a_cadena(idx_rango_bloques_por_idx_arreglo[i], CACA_X_BUF_STATICO_DUMP_ARBOL));
-
-		idx_rango_bloques_por_idx_arreglo_realmente_incializados[i].cabeza =
-				idx_rango_bloques_por_idx_arreglo_realmente_incializados[i].cola =
-						&idx_rango_bloques_por_idx_arreglo_realmente_incializados[i].cabeza_mem;
-		idx_rango_bloques_por_idx_arreglo_realmente_incializados[i].cabeza->data =
-				CACA_X_VALOR_INVALIDO;
-	}
-
+	return res;
 }
 
-static inline natural caca_x_obten_idx_bloque_prepro(natural idx_pos_ini,
-		natural idx_pos_fin) {
-	int idx_bloque_inicio = idx_pos_ini / tam_bloque;
-	int idx_bloque_final = idx_pos_fin / tam_bloque;
-	natural idx_bloque = CACA_X_VALOR_INVALIDO;
-	caca_log_debug(
-			"para el bloq %u-%u de rango %u-%u obteniendo el bloque prepro\n",
-			idx_bloque_inicio, idx_bloque_final, idx_pos_ini, idx_pos_fin);
-	if (idx_pos_ini % tam_bloque) {
-		idx_bloque_inicio++;
-	}
-	if ((idx_pos_fin + 1) % tam_bloque) {
-		idx_bloque_final--;
-	}
-	caca_log_debug("el bloq inicial calculado %u, el final %u\n",
-			idx_bloque_inicio, idx_bloque_final);
-	if (idx_bloque_inicio <= idx_bloque_final) {
-		idx_bloque = idx_bloque_inicio * num_bloques + idx_bloque_final;
-	}
-	return idx_bloque;
+int mo_mada_ord_idx_query(const void *pa, const void *pb) {
+	int res = 0;
+	mo_mada *a = (mo_mada *) pa;
+	mo_mada *b = (mo_mada *) pb;
+
+	res = a->idx_query - b->idx_query;
+	return res;
 }
 
-static inline caca_preprocesada *caca_x_genera_bloque_prepro(natural idx_bloque) {
-	entero_largo checa_bitch_res;
-	caca_preprocesada *bloque_prepro = datos_prepro + idx_bloque;
-	natural idx_ini = bloque_prepro->idx_inicio;
-	natural idx_fin = bloque_prepro->idx_fin;
-	entero_largo suma_act = 0;
-	hm_iter iter;
+#define mo_mada_fn_ord_mo mo_mada_ord_bloque
+#define mo_mada_fn_ord_idx mo_mada_ord_idx_query
+#define mo_mada_fn_anade_caca caca_x_anade_caca
+#define mo_mada_fn_quita_caca caca_x_quita_caca
 
-	caca_log_debug("generando suma de bloque %u, %u-%u\n", idx_bloque, idx_ini,
-			idx_fin);
+static inline mo_mada *mo_mada_core(mo_mada *consultas, tipo_dato *numeros,
+		natural num_consultas, natural num_numeros) {
+	natural idx_izq_act = 0;
+	natural idx_der_act = 0;
+	mo_mada_tam_bloque = ceil(sqrt(num_numeros));
+	caca_log_debug("total de nums %u, tam bloq %u\n", num_numeros,
+			mo_mada_tam_bloque);
 
-	assert_timeout(bloque_prepro->suma==CACA_X_VALOR_INVALIDO);
-	assert_timeout(idx_ini <= idx_fin);
+	qsort(consultas, num_consultas, sizeof(mo_mada), mo_mada_fn_ord_mo);
 
-	num_nums_anadidos = 0;
-	for (natural i = idx_ini; i <= idx_fin; i++) {
-		bool nuevo_entry;
-		natural conteo_num_en_bloque;
-		tipo_dato num_actual = numeros[i];
-		hm_rr_bs_tabla *mapa_num_bloque;
-		lista_pendeja *listilla =
-				idx_rango_bloques_por_idx_arreglo_realmente_incializados + i;
+	idx_izq_act = idx_der_act = (consultas)->intervalo_idx_ini;
 
-		iter = hash_map_robin_hood_back_shift_obten(
-				mapa_ocurrencias_en_subarreglos, num_actual,
-				(entero_largo *) &mapa_num_bloque);
+	caca_log_debug("anadiendo inicialmente %u\n", numeros[idx_izq_act]);
+	mo_mada_fn_anade_caca((numeros[idx_izq_act]));
 
-		if (iter == HASH_MAP_VALOR_INVALIDO ) {
-			caca_log_debug("anadiendo %u al mapa gral x q no estaba\n",
-					num_actual);
-			mapa_num_bloque = caca_x_allocar_mapa(num_bloques * num_bloques);
-			iter = hash_map_robin_hood_back_shift_pon(
-					mapa_ocurrencias_en_subarreglos, num_actual,
-					(entero_largo) mapa_num_bloque, &nuevo_entry);
-			assert_timeout(iter!=HASH_MAP_VALOR_INVALIDO && nuevo_entry);
+	caca_log_debug("puta mierda %lld\n", mo_mada_resultado);
+
+	for (int i = 0; i < num_consultas; i++) {
+		natural consul_idx_izq = (consultas + i)->intervalo_idx_ini;
+		natural consul_idx_der = (consultas + i)->intervalo_idx_fin;
+
+		if ((consultas + i)->tipo == mo_mada_actualizacion) {
+			continue;
 		}
-
-		iter = hash_map_robin_hood_back_shift_pon(mapa_num_bloque, idx_bloque,
-				1, &nuevo_entry);
-
-		if (!nuevo_entry) {
-			assert_timeout(iter!=HASH_MAP_VALOR_INVALIDO);
-			conteo_num_en_bloque =
-					hash_map_robin_hood_back_shift_indice_obten_valor(
-							mapa_num_bloque, iter);
-
-			conteo_num_en_bloque++;
-
-			hash_map_robin_hood_back_shift_indice_pon_valor(mapa_num_bloque,
-					iter, conteo_num_en_bloque);
-		}
-
-		caca_comun_mapa_bitch_checa(mapa_unicos,
-				caca_comun_mapa_bitch_ajusta_numero(num_actual),
-				checa_bitch_res);
-		if (!checa_bitch_res) {
-			caca_log_debug("considerando %u para suma unicos\n", num_actual);
-			caca_comun_mapa_bitch_asigna(mapa_unicos,
-					caca_comun_mapa_bitch_ajusta_numero(num_actual));
-			nums_anadidos[num_nums_anadidos++] = num_actual;
-			suma_act += num_actual;
-		}
-
-		listilla_insert(listilla, idx_bloque);
-
-	}
-
-	for (int k = 0; k < num_nums_anadidos; k++) {
-		tipo_dato num_actual = nums_anadidos[k];
-		caca_log_debug("asegurando que %u este\n", num_actual);
-		caca_comun_mapa_bitch_checa(mapa_unicos,
-				caca_comun_mapa_bitch_ajusta_numero(num_actual),
-				checa_bitch_res);
-		assert_timeout(checa_bitch_res);
-
-		caca_comun_mapa_bitch_limpia(mapa_unicos,
-				caca_comun_mapa_bitch_ajusta_numero(num_actual));
-
-	}
-
-	bloque_prepro->suma = suma_act;
-
-	caca_log_debug("la suma de unicos %llu\n", suma_act);
-
-	bloque_prepro->idx_rango_bloque = idx_bloque;
-
-	num_nums_anadidos = 0;
-	return datos_prepro;
-}
-
-static inline void caca_x_actualizar_datos_preprocesados(
-		natural idx_pos_actualizar, tipo_dato nuevo_valor) {
-	bool nuevo_entry;
-	hm_iter iter = 0;
-	tipo_dato viejo_pendejo = numeros[idx_pos_actualizar];
-	lista_pendeja *lista_idx_bloques =
-			idx_rango_bloques_por_idx_arreglo_realmente_incializados
-					+ idx_pos_actualizar;
-	nodo_lista *nodo_act = NULL;
-	hm_rr_bs_tabla *tablon_viejo_pendejo = NULL;
-	hm_rr_bs_tabla *tablon_nuevo_valor = NULL;
-
-	caca_log_debug("la lista de bloques para idx %u es %s\n",
-			idx_pos_actualizar,
-			listilla_a_cadena(lista_idx_bloques, CACA_X_BUF_STATICO_DUMP_ARBOL));
-
-	iter = hash_map_robin_hood_back_shift_obten(mapa_ocurrencias_en_subarreglos,
-			viejo_pendejo, (entero_largo *) &tablon_viejo_pendejo);
-	assert_timeout(
-			iter != HASH_MAP_VALOR_INVALIDO && (entero_largo)tablon_viejo_pendejo!=HASH_MAP_VALOR_INVALIDO);
-
-	iter = hash_map_robin_hood_back_shift_obten(mapa_ocurrencias_en_subarreglos,
-			nuevo_valor, (entero_largo *) &tablon_nuevo_valor);
-	if (iter == HASH_MAP_VALOR_INVALIDO ) {
-		tablon_nuevo_valor = caca_x_allocar_mapa(num_bloques * num_bloques);
-
-		iter = hash_map_robin_hood_back_shift_pon(
-				mapa_ocurrencias_en_subarreglos, nuevo_valor,
-				(entero_largo) tablon_nuevo_valor, &nuevo_entry);
-
-		assert_timeout(iter != HASH_MAP_VALOR_INVALIDO && nuevo_entry);
-	}
-
-	nodo_act = lista_idx_bloques->cabeza->next;
-
-	while (nodo_act) {
-		natural idx_bloque_actual = nodo_act->data;
-		entero_largo ocurrencias = 0;
-
-		entero_largo *suma = &datos_prepro[idx_bloque_actual].suma;
-		caca_log_debug("en nodo %u el tablon %p\n", idx_bloque_actual,
-				tablon_viejo_pendejo);
-
-		caca_log_debug("el bloke %u tiene suma %lld i tablon %p\n",
-				idx_bloque_actual, *suma, tablon_viejo_pendejo);
-
-		iter = hash_map_robin_hood_back_shift_obten(tablon_viejo_pendejo,
-				idx_bloque_actual, (entero_largo *) &ocurrencias);
 
 		assert_timeout(
-				iter != HASH_MAP_VALOR_INVALIDO && ocurrencias!=HASH_MAP_VALOR_INVALIDO);
+				ceil(abs((int )idx_izq_act - (int )consul_idx_izq))
+						<= mo_mada_tam_bloque * 2);
 
-		caca_log_debug("las ocurrencias de %u son %u\n", viejo_pendejo,
-				(natural) ocurrencias);
+		caca_log_debug("vamos a bailar %u-%u\n", consul_idx_izq,
+				consul_idx_der);
 
-		ocurrencias--;
-		if (!ocurrencias) {
-			caca_log_debug("a suma actual %lld se le resta %u\n", *suma,
-					viejo_pendejo);
-			(*suma) -= viejo_pendejo;
-			hash_map_robin_hood_back_shift_indice_borra(tablon_viejo_pendejo,
-					iter);
-
-			caca_log_debug("borrando rango bloques %u de num %u\n",
-					idx_bloque_actual, viejo_pendejo);
-
-			if (hash_map_robin_hood_back_shift_esta_vacio(
-					tablon_viejo_pendejo)) {
-				hash_map_robin_hood_back_shift_borra(
-						mapa_ocurrencias_en_subarreglos, viejo_pendejo);
-				hash_map_robin_hood_back_shift_fini(tablon_viejo_pendejo);
-
-				caca_log_debug("num %u borrado de mapa gral\n",
-						idx_bloque_actual);
-			}
-		} else {
-			hash_map_robin_hood_back_shift_indice_pon_valor(
-					tablon_viejo_pendejo, iter, ocurrencias);
+		caca_log_debug("disminu izq act %u a izq consul %u\n", idx_izq_act,
+				consul_idx_izq);
+		while (idx_izq_act > consul_idx_izq) {
+			idx_izq_act--;
+			mo_mada_fn_anade_caca(numeros[idx_izq_act]);
+			caca_log_debug("puta mierda %lld\n", mo_mada_resultado);
 		}
 
-		iter = hash_map_robin_hood_back_shift_pon(tablon_nuevo_valor,
-				idx_bloque_actual, 1, &nuevo_entry);
-
-		assert_timeout(iter!=HASH_MAP_VALOR_INVALIDO);
-
-		if (nuevo_entry) {
-			caca_log_debug("en valor nuevo %u no estaba, sumandolo a %lld\n",
-					nuevo_valor, *suma);
-			(*suma) += nuevo_valor;
-		} else {
-			ocurrencias = hash_map_robin_hood_back_shift_indice_obten_valor(
-					tablon_nuevo_valor, iter);
-			ocurrencias++;
-			hash_map_robin_hood_back_shift_indice_pon_valor(tablon_nuevo_valor,
-					iter, ocurrencias);
-			caca_log_debug(
-					"en valor nuevo %u ya estaba, aora ai %u ocurrencias\n",
-					nuevo_valor,
-					(natural) hash_map_robin_hood_back_shift_indice_obten_valor( tablon_nuevo_valor, iter));
+		caca_log_debug("aumen der act %u a der consul %u\n", idx_der_act,
+				consul_idx_der);
+		while (idx_der_act < consul_idx_der) {
+			idx_der_act++;
+			mo_mada_fn_anade_caca(numeros[idx_der_act]);
+			caca_log_debug("puta mierda %lld\n", mo_mada_resultado);
 		}
 
-		nodo_act = nodo_act->next;
+		caca_log_debug("aumen izq act %u a izq consul %u\n", idx_izq_act,
+				consul_idx_izq);
+		while (idx_izq_act < consul_idx_izq) {
+			mo_mada_fn_quita_caca(numeros[idx_izq_act]);
+			idx_izq_act++;
+		}
+
+		caca_log_debug("disminu der act %u a der consul %u\n", idx_der_act,
+				consul_idx_der);
+		while (idx_der_act > consul_idx_der) {
+			mo_mada_fn_quita_caca(numeros[idx_der_act]);
+			idx_der_act--;
+		}
+
+		caca_log_debug("el conteo uniq de la consul %u es %lld\n", i,
+				mo_mada_resultado);
+		(consultas + i)->resulcaca = mo_mada_resultado;
 	}
 
-	numeros[idx_pos_actualizar] = nuevo_valor;
+	qsort(consultas, num_consultas, sizeof(mo_mada), mo_mada_fn_ord_idx);
+	return consultas;
 }
 
-static inline caca_preprocesada *caca_x_obten_bloque_prepro(natural idx_bloque) {
-	entero_largo suma_enc = 0;
-	caca_preprocesada *dato_prepro = datos_prepro + idx_bloque;
-	suma_enc = dato_prepro->suma;
+#endif
 
-	caca_log_debug("obteniendo el bloke %u, %u-%u\n", idx_bloque,
-			dato_prepro->idx_inicio, dato_prepro->idx_fin);
+#if 1
 
-	if (suma_enc == CACA_X_VALOR_INVALIDO) {
-		caca_x_genera_bloque_prepro(idx_bloque);
+#define TROZO_TREE_MAX_NUMEROS MAX_NUMEROS
+#define TROZO_TREE_MAX_NODOS ((TROZO_TREE_MAX_NUMEROS<<1)+2)
+#define TROZO_TREE_MAX_VALOR INT_MAX
+
+typedef struct trozo_tree {
+	struct trozo_tree *hijo_izq;
+	struct trozo_tree *hijo_der;
+	tipo_dato valor;
+} trozo_tree;
+
+trozo_tree nodos_trozo[TROZO_TREE_MAX_NODOS] = { 0 };
+natural nodos_trozo_usados = 0;
+tipo_dato trozo_tree_numeros[TROZO_TREE_MAX_NUMEROS] = { 0 };
+natural trozo_tree_numeros_tam = 0;
+natural idx_ini_buscado = 0;
+natural idx_fin_buscado = 0;
+natural idx_a_actualizar = 0;
+
+static inline trozo_tree *trozo_tree_nuevo_nodo() {
+	trozo_tree *nodo_nuevo = (nodos_trozo + (nodos_trozo_usados++));
+	return nodo_nuevo;
+}
+
+static inline void trozo_tree_contruye(trozo_tree **nodo_actual,
+		natural idx_ini, natural idx_fin) {
+	trozo_tree *nodo_actual_int = NULL;
+	if (!*nodo_actual) {
+		*nodo_actual = trozo_tree_nuevo_nodo();
 	}
+	nodo_actual_int = *nodo_actual;
+	if (idx_ini != idx_fin) {
+		natural idx_mid = idx_ini + ((idx_fin - idx_ini) >> 1);
 
-	return dato_prepro;
-}
+		trozo_tree_contruye(&nodo_actual_int->hijo_izq, idx_ini, idx_mid);
+		trozo_tree_contruye(&nodo_actual_int->hijo_der, idx_mid + 1, idx_fin);
 
-static inline entero_largo caca_x_calcula_suma_unicos(natural idx_ini,
-		natural idx_fin) {
-	bool nuevo_entry;
-	entero_largo checa_bitch_res;
-	entero_largo suma = 0;
-	natural idx_bloque = 0;
-	caca_preprocesada *bloque_prepro = NULL;
-
-	idx_bloque = caca_x_obten_idx_bloque_prepro(idx_ini, idx_fin);
-
-	caca_log_debug("para el intervalo %u-%u el idx bloque %u\n", idx_ini,
-			idx_fin, idx_bloque);
-
-	num_nums_anadidos = 0;
-
-	if (idx_bloque != (natural) CACA_X_VALOR_INVALIDO) {
-		bloque_prepro = caca_x_obten_bloque_prepro(idx_bloque);
-		assert_timeout(bloque_prepro);
-		natural idx_bloque_ini = bloque_prepro->idx_inicio;
-		natural idx_bloque_fin = bloque_prepro->idx_fin;
-
-		caca_log_debug("calculando suma unicos previa a bloque de %u-%u\n",
-				idx_ini, idx_bloque_ini);
-		for (natural i = idx_ini; i < idx_bloque_ini; i++) {
-			tipo_dato num_actual = numeros[i];
-			caca_comun_mapa_bitch_checa(mapa_unicos,
-					caca_comun_mapa_bitch_ajusta_numero(num_actual),
-					checa_bitch_res);
-			if (!checa_bitch_res) {
-				entero_largo ocurrencias;
-				hm_iter iter;
-				hm_rr_bs_tabla *mapa_ocurrencias_por_bloque;
-
-				caca_log_debug("el num %d en idx %u no esta en el mapita\n",
-						num_actual, i);
-
-				caca_comun_mapa_bitch_asigna(mapa_unicos,
-						caca_comun_mapa_bitch_ajusta_numero(num_actual));
-				nums_anadidos[num_nums_anadidos++] = num_actual;
-
-				iter = hash_map_robin_hood_back_shift_obten(
-						mapa_ocurrencias_en_subarreglos, num_actual,
-						(entero_largo *) &mapa_ocurrencias_por_bloque);
-
-				if (iter == HASH_MAP_VALOR_INVALIDO ) {
-					caca_log_debug("%d no estaba en el mapa gral\n",
-							num_actual);
-					mapa_ocurrencias_por_bloque = caca_x_allocar_mapa(
-							num_bloques * num_bloques);
-
-					iter = hash_map_robin_hood_back_shift_pon(
-							mapa_ocurrencias_en_subarreglos, num_actual,
-							(entero_largo) mapa_ocurrencias_por_bloque,
-							&nuevo_entry);
-
-					assert_timeout(iter!=HASH_MAP_VALOR_INVALIDO && nuevo_entry);
-				}
-
-				assert_timeout(
-						iter!=HASH_MAP_VALOR_INVALIDO && (entero_largo)mapa_ocurrencias_por_bloque!=HASH_MAP_VALOR_INVALIDO);
-
-				iter = hash_map_robin_hood_back_shift_obten(
-						mapa_ocurrencias_por_bloque, idx_bloque,
-						(entero_largo *) &ocurrencias);
-
-				caca_log_debug(
-						"el num %d tiene %u ocurrencias en bloque %u (%u-%u)\n",
-						num_actual, (natural) ocurrencias, idx_bloque,
-						idx_bloque_ini, idx_bloque_fin);
-
-				if (iter == HASH_MAP_VALOR_INVALIDO ) {
-					assert_timeout(ocurrencias==HASH_MAP_VALOR_INVALIDO);
-					suma += num_actual;
-				}
-			}
-
-		}
-
-		caca_log_debug("calculando suma unicos posterior a bloque de %u-%u\n",
-				idx_bloque_fin + 1, idx_fin);
-		for (natural i = idx_bloque_fin + 1; i <= idx_fin; i++) {
-			tipo_dato num_actual = numeros[i];
-
-			caca_comun_mapa_bitch_checa(mapa_unicos,
-					caca_comun_mapa_bitch_ajusta_numero(num_actual),
-					checa_bitch_res);
-
-			if (!checa_bitch_res) {
-				entero_largo ocurrencias;
-				hm_iter iter;
-				hm_rr_bs_tabla *mapa_ocurrencias_por_bloque;
-
-				caca_log_debug("el num %d de idx %u no esta en el mapita\n",
-						num_actual, i);
-
-				caca_comun_mapa_bitch_asigna(mapa_unicos,
-						caca_comun_mapa_bitch_ajusta_numero(num_actual));
-				nums_anadidos[num_nums_anadidos++] = num_actual;
-
-				iter = hash_map_robin_hood_back_shift_obten(
-						mapa_ocurrencias_en_subarreglos, num_actual,
-						(entero_largo *) &mapa_ocurrencias_por_bloque);
-
-				if (iter == HASH_MAP_VALOR_INVALIDO ) {
-					caca_log_debug("%d no estaba en el mapa gral\n",
-							num_actual);
-					mapa_ocurrencias_por_bloque = caca_x_allocar_mapa(
-							num_bloques * num_bloques);
-
-					iter = hash_map_robin_hood_back_shift_pon(
-							mapa_ocurrencias_en_subarreglos, num_actual,
-							(entero_largo) mapa_ocurrencias_por_bloque,
-							&nuevo_entry);
-
-					assert_timeout(iter!=HASH_MAP_VALOR_INVALIDO && nuevo_entry);
-				}
-
-				iter = hash_map_robin_hood_back_shift_obten(
-						mapa_ocurrencias_por_bloque, idx_bloque,
-						(entero_largo *) &ocurrencias);
-
-				caca_log_debug(
-						"el num %u tiene %u ocurrencias en bloque %u (%u-%u)\n",
-						num_actual, (natural) ocurrencias, idx_bloque,
-						idx_bloque_ini, idx_bloque_fin);
-
-				if (iter == HASH_MAP_VALOR_INVALIDO ) {
-					assert_timeout(ocurrencias==HASH_MAP_VALOR_INVALIDO);
-					suma += num_actual;
-				}
-			}
-
-		}
-
-		caca_log_debug("la suma del bloque prepro %lld, la calculeada %lld\n",
-				bloque_prepro->suma, suma);
-		suma += bloque_prepro->suma;
-
+		nodo_actual_int->valor = caca_comun_min(
+				nodo_actual_int->hijo_izq->valor,
+				nodo_actual_int->hijo_der->valor);
 	} else {
-		caca_log_debug("no ay bloque prepro, %u-%u\n", idx_ini, idx_fin);
-		for (natural i = idx_ini; i <= idx_fin; i++) {
-			tipo_dato num_actual = numeros[i];
+		nodo_actual_int->valor = trozo_tree_numeros[idx_ini];
+	}
+}
 
-			caca_comun_mapa_bitch_checa(mapa_unicos,
-					caca_comun_mapa_bitch_ajusta_numero(num_actual),
-					checa_bitch_res);
-			if (!checa_bitch_res) {
+static inline void trozo_tree_actualiza(trozo_tree **nodo_actual,
+		natural idx_ini, natural idx_fin, tipo_dato nuevo_valor) {
+	natural idx_mid = idx_ini + ((idx_fin - idx_ini) >> 1);
+	trozo_tree *nodo_actual_int = NULL;
+	if (!*nodo_actual) {
+		*nodo_actual = trozo_tree_nuevo_nodo();
+	}
+	nodo_actual_int = *nodo_actual;
+	if (idx_ini == idx_fin) {
+		assert_timeout(idx_ini == idx_fin);
+		assert_timeout(idx_a_actualizar == idx_fin);
+		nodo_actual_int->valor += trozo_tree_numeros[idx_a_actualizar];
+		return;
+	}
+	if (idx_a_actualizar <= idx_mid) {
+		trozo_tree_actualiza(&nodo_actual_int->hijo_izq, idx_ini, idx_mid,
+				nuevo_valor);
+	} else {
+		trozo_tree_actualiza(&nodo_actual_int->hijo_der, idx_mid + 1, idx_fin,
+				nuevo_valor);
+	}
 
-				caca_log_debug("el num %d no esta en el mapita\n", num_actual);
+	nodo_actual_int->valor = TROZO_TREE_MAX_VALOR;
+	if (nodo_actual_int->hijo_izq) {
+		nodo_actual_int->valor += nodo_actual_int->hijo_izq->valor;
+	} else {
+		nodo_actual_int->valor += nodo_actual_int->hijo_der->valor;
+	}
+}
 
-				caca_comun_mapa_bitch_asigna(mapa_unicos,
-						caca_comun_mapa_bitch_ajusta_numero(num_actual));
-				nums_anadidos[num_nums_anadidos++] = num_actual;
+static inline tipo_dato trozo_tree_consulta(trozo_tree *nodo_actual,
+		natural idx_ini, natural idx_fin) {
+	tipo_dato resul = TROZO_TREE_MAX_VALOR;
 
-				suma += num_actual;
+	if (idx_ini_buscado > idx_fin) {
+		resul = TROZO_TREE_MAX_VALOR;
+	} else {
+		if (idx_fin_buscado < idx_ini) {
+			resul = TROZO_TREE_MAX_VALOR;
+		} else {
+			if (!nodo_actual) {
+				resul = TROZO_TREE_MAX_VALOR;
+			} else {
+				if (idx_ini >= idx_ini_buscado && idx_fin <= idx_fin_buscado) {
+					resul = nodo_actual->valor;
+				} else {
+					natural idx_mid = idx_ini + ((idx_fin - idx_ini) >> 1);
+					tipo_dato resul_izq = 0;
+					tipo_dato resul_der = 0;
+
+					resul_izq = trozo_tree_consulta(nodo_actual->hijo_izq,
+							idx_ini, idx_mid);
+					resul_der = trozo_tree_consulta(nodo_actual->hijo_der,
+							idx_mid + 1, idx_fin);
+
+					resul = caca_comun_min(resul_izq, resul_der);
+				}
 			}
 		}
 	}
+	return resul;
+}
 
-	for (int k = 0; k < num_nums_anadidos; k++) {
-		tipo_dato num_actual = nums_anadidos[k];
-		caca_comun_mapa_bitch_checa(mapa_unicos,
-				caca_comun_mapa_bitch_ajusta_numero(num_actual),
-				checa_bitch_res);
-		assert_timeout(checa_bitch_res);
+#endif
 
-		caca_comun_mapa_bitch_limpia(mapa_unicos,
-				caca_comun_mapa_bitch_ajusta_numero(num_actual));
+#if 1
+#define BIT_CH_VALOR_INVALIDO ULLONG_MAX
+#define BIT_CH_MAX_NODOS MAX_NUMEROS
 
+typedef struct bit_ch {
+	natural num_nodos_bit_ch;
+//	tipo_dato nodos_bit_ch[BIT_CH_MAX_NODOS + 2];
+	trozo_tree *nodos_bit_ch[BIT_CH_MAX_NODOS + 2];
+} bit_ch;
+
+static inline void bit_ch_init(bit_ch *bit, tipo_dato valor_inicial,
+		natural num_cacas) {
+
+	bit->num_nodos_bit_ch = num_cacas;
+
+}
+
+static inline void bit_ch_actualiza_trozos(bit_ch *bit, natural idx_bit_ch,
+		natural idx_a_actualizar_en_trozo, tipo_dato num_nuevo) {
+	trozo_tree **trozos = (trozo_tree **) bit->nodos_bit_ch;
+	for (natural i = idx_bit_ch; i <= bit->num_nodos_bit_ch; i += (i & (-i))) {
+		trozo_tree_actualiza(trozos + i, 1, trozo_tree_numeros_tam, num_nuevo);
 	}
+}
 
+static inline void bit_ch_actualiza(bit_ch *bit, natural ocurrencia_anterior,
+		natural ocurrencia_a_actualizar, natural ocurrencia_siguiente,
+		tipo_dato num_nuevo) {
+
+	bit_ch_actualiza_trozos(bit, ocurrencia_anterior + 1,
+			ocurrencia_a_actualizar, num_nuevo);
+	bit_ch_actualiza_trozos(bit, ocurrencia_anterior + 1, ocurrencia_siguiente,
+			-num_nuevo);
+
+	bit_ch_actualiza_trozos(bit, ocurrencia_a_actualizar + 1,
+			ocurrencia_a_actualizar, -num_nuevo);
+	bit_ch_actualiza_trozos(bit, ocurrencia_a_actualizar + 1,
+			ocurrencia_siguiente, num_nuevo);
+}
+
+static inline entero_largo bit_ch_consulta_trozos(bit_ch *bit,
+		natural idx_bit_ch, natural idx_trozo) {
+	entero_largo suma = 0;
+	trozo_tree **trozos = bit->nodos_bit_ch;
+	for (int i = idx_bit_ch; i > 0; i -= (i & (-i))) {
+		suma += trozo_tree_consulta(trozos[i], 1, idx_trozo);
+	}
 	return suma;
 }
 
+#if 0
+static inline void bit_ch_aumenta(bit_ch *bit, tipo_dato nuevo_valor,
+		natural idx) {
+	tipo_dato *nodos = bit->nodos_bit_ch;
+	caca_log_debug("q verga actualizando %u con %lld", idx, nuevo_valor);
+	for (natural i = idx; i <= bit->num_nodos_bit_ch; i += (i & (-i))) {
+		caca_log_debug("actualizando caca %u con %lld antes %lld", i,
+				nuevo_valor, nodos[i]);
+		nodos[i] += nuevo_valor;
+		caca_log_debug("actualizado caca %u aora %lld", i, nodos[i]);
+	}
+}
+
+static inline tipo_dato bit_ch_consulta(bit_ch *bit, natural idx) {
+	tipo_dato *nodos = bit->nodos_bit_ch;
+	tipo_dato res = 0;
+	for (int i = idx; i > 0; i -= (i & (-i))) {
+		assert_timeout(i<BIT_CH_MAX_NODOS + 2);
+		caca_log_debug("consultando caca %u tiene %lld", i, nodos[i]);
+		res += nodos[i];
+	}
+	caca_log_debug("regresando %lld", res);
+	return res;
+}
+
+static inline void bit_ch_aumenta_rango(bit_ch *bit, tipo_dato nuevo_valor,
+		natural idx_ini, natural idx_fin) {
+	caca_log_debug("aumentando de %u a %u con valor %lld", idx_ini, idx_fin,
+			nuevo_valor);
+
+	bit_ch_aumenta(bit, nuevo_valor, idx_ini);
+	bit_ch_aumenta(bit, -nuevo_valor, idx_fin + 1);
+}
+
+static inline void bit_ch_aumenta_rango_consulta_rango(bit_ch *bit_puto,
+		bit_ch *bit_aux, natural idx_ini, natural idx_fin,
+		tipo_dato nuevo_valor) {
+
+	caca_log_debug("aumentando de %u a %u con valor %lld para consulta rango",
+			idx_ini, idx_fin, nuevo_valor);
+
+	bit_ch_aumenta_rango(bit_puto, nuevo_valor, idx_ini, idx_fin);
+	caca_log_debug(
+			"actualizando para consulta rango inicial %d con %lld (%lld * %u)",
+			idx_ini, nuevo_valor * (idx_ini - 1), nuevo_valor, idx_ini - 1);
+	bit_ch_aumenta(bit_aux, nuevo_valor * (idx_ini - 1), idx_ini);
+	caca_log_debug(
+			"actualizando para consulta rango final %d con %lld(%lld,%u)",
+			idx_fin + 1, -nuevo_valor * idx_fin, -nuevo_valor, idx_fin);
+	bit_ch_aumenta(bit_aux, -nuevo_valor * idx_fin, idx_fin + 1);
+}
+
+static inline tipo_dato bit_ch_consulta_rango_actualizado_rango(
+		bit_ch *bit_puto, bit_ch *bit_aux, natural idx) {
+	tipo_dato resul = 0;
+	tipo_dato valor_puto = 0;
+	tipo_dato valor_aux = 0;
+
+	valor_puto = bit_ch_consulta(bit_puto, idx);
+
+	caca_log_debug("el valor putual en %u es %lld, aportara %lld (%lld * %u)",
+			idx, valor_puto, valor_puto * idx, valor_puto, idx);
+
+	valor_aux = bit_ch_consulta(bit_aux, idx);
+
+	caca_log_debug("el valor aux en %u es %lld", idx, valor_puto);
+
+	resul = valor_puto * idx - valor_aux;
+
+	caca_log_debug("la suma acumulacaca hasta %u es %lld", idx, resul);
+
+	return resul;
+}
+
+static inline tipo_dato bit_ch_consulta_rango(bit_ch *bit_puto, bit_ch *bit_aux,
+		natural idx_ini, natural idx_fin) {
+	tipo_dato resul = 0;
+	tipo_dato resul_idx_ini = 0;
+	tipo_dato resul_idx_fin = 0;
+
+	resul_idx_ini = bit_ch_consulta_rango_actualizado_rango(bit_puto, bit_aux,
+			idx_ini - 1);
+	caca_log_debug("la suma acumulacaca ini hasta %u es %lld", idx_ini,
+			resul_idx_ini);
+
+	resul_idx_fin = bit_ch_consulta_rango_actualizado_rango(bit_puto, bit_aux,
+			idx_fin);
+	caca_log_debug("la suma acumulacaca fin hasta %u es %lld", idx_fin,
+			resul_idx_fin);
+
+	resul = resul_idx_fin - resul_idx_ini;
+
+	caca_log_debug("la suma acumulacaca del rango %u-%u es %lld", idx_ini,
+			idx_fin, resul);
+
+	return resul;
+}
+#endif
+
+#endif
+
+#if 1
+
+#define AVL_TREE_VALOR_INVALIDO CACA_X_VALOR_INVALIDO
+#define AVL_TREE_MAX_RANGO_A_MAPEAR (MAX_VALOR<<1)
+
+struct avl_tree_node_s {
+	tipo_dato llave;
+	natural altura;
+	natural num_decendientes;
+	natural indice_en_arreglo;
+	natural ocurrencias;
+	tipo_dato pasajero_oscuro;
+	struct avl_tree_node_s *left;
+	struct avl_tree_node_s *right;
+	struct avl_tree_node_s *padre;
+};
+
+typedef struct avl_tree_node_s avl_tree_node_t;
+
+struct avl_tree_s {
+	natural max_nodos;
+	natural nodos_realmente_en_arbol;
+	natural nodos_usados;
+	struct avl_tree_node_s *root;
+	avl_tree_node_t *nodos_mem;
+	natural *nodos_libres_idx;
+	unsigned long siguiente_idx_para_usar;
+	unsigned long ultimo_idx_anadido;
+//	bitch_vector mapa_recorridos[AVL_TREE_MAX_RANGO_A_MAPEAR / (sizeof(bitch_vector) * 8)];
+//	natural numeros_marcados[AVL_TREE_MAX_RANGO_A_MAPEAR];
+};
+
+typedef struct avl_tree_s avl_tree_t;
+
+typedef struct avl_tree_iterator_t {
+	avl_tree_t *arbolin;
+//	char *contador_visitas;
+	avl_tree_node_t *nodo_actual;
+} avl_tree_iterator_t;
+
+/* Create a new AVL tree. */
+avl_tree_t *avl_tree_create(avl_tree_t **arbolin, int max_nodos) {
+	avl_tree_t *tree = NULL;
+
+	assert_timeout(arbolin);
+
+	tree = calloc(1, sizeof(avl_tree_t));
+
+	assert_timeout(tree);
+
+	tree->max_nodos = max_nodos;
+
+	tree->nodos_mem = calloc(max_nodos * 2, sizeof(avl_tree_node_t));
+
+	assert_timeout(tree->nodos_mem);
+
+	tree->root = NULL;
+
+	*arbolin = tree;
+
+	tree->nodos_libres_idx = calloc(max_nodos, sizeof(natural));
+	memset(tree->nodos_libres_idx, 0xffff, sizeof(natural) * max_nodos);
+
+	assert_timeout(tree->nodos_libres_idx);
+
+	return tree;
+}
+
+static inline void avl_tree_destroy(avl_tree_t *arbolin) {
+	free(arbolin->nodos_mem);
+	free(arbolin->nodos_libres_idx);
+	free(arbolin);
+
+}
+
+/* Initialize a new node. */
+avl_tree_node_t *avl_tree_create_node(avl_tree_t *arbolin) {
+	avl_tree_node_t *node = NULL;
+
+	assert_timeout(
+			arbolin->siguiente_idx_para_usar < arbolin->ultimo_idx_anadido
+					|| ((arbolin->siguiente_idx_para_usar
+							== arbolin->ultimo_idx_anadido)
+							&& arbolin->nodos_usados < arbolin->max_nodos));
+
+	if (arbolin->siguiente_idx_para_usar < arbolin->ultimo_idx_anadido) {
+		node = arbolin->nodos_mem
+				+ arbolin->nodos_libres_idx[arbolin->siguiente_idx_para_usar
+						% arbolin->max_nodos];
+		node->indice_en_arreglo =
+				arbolin->nodos_libres_idx[arbolin->siguiente_idx_para_usar
+						% arbolin->max_nodos];
+
+		arbolin->nodos_libres_idx[arbolin->siguiente_idx_para_usar
+				% arbolin->max_nodos] = 0xffffffff;
+		arbolin->siguiente_idx_para_usar++;
+	} else {
+		node = arbolin->nodos_mem + arbolin->nodos_usados++;
+		node->indice_en_arreglo = arbolin->nodos_usados - 1;
+	}
+	arbolin->nodos_realmente_en_arbol++;
+	caca_log_debug("aumentando nodos realmente en arbol a %u",
+			arbolin->nodos_realmente_en_arbol);
+	return node;
+}
+
+/* Find the height of an AVL no repulsivamente */
+int avl_tree_node_height(avl_tree_node_t *node) {
+	return node ? node->altura : 0;
+}
+
+static inline void avl_tree_node_actualizar_altura(avl_tree_node_t *node) {
+	int height_left = 0;
+	int height_right = 0;
+
+	if (node->left) {
+		height_left = node->left->altura;
+	}
+	if (node->right) {
+		height_right = node->right->altura;
+	}
+	if (node->left || node->right) {
+		node->altura = (height_right > height_left ? height_right : height_left)
+				+ 1;
+	} else {
+		node->altura = 0;
+	}
+}
+
+static inline void avl_tree_node_actualizar_num_decendientes(
+		avl_tree_node_t *node) {
+	int conteo_left = 0;
+	int conteo_right = 0;
+
+	if (node->left) {
+		conteo_left = node->left->num_decendientes;
+	}
+	if (node->right) {
+		conteo_right = node->right->num_decendientes;
+	}
+	if (node->left || node->right) {
+		node->num_decendientes = conteo_left + conteo_right
+				+ (node->left ? 1 : 0) + (node->right ? 1 : 0);
+	} else {
+		node->num_decendientes = 0;
+	}
+}
+
+/* Left Left Rotate */
+avl_tree_node_t *avl_tree_rotate_leftleft(avl_tree_node_t *node) {
+	avl_tree_node_t *a = node;
+	avl_tree_node_t *b = a->left;
+	avl_tree_node_t *padre = NULL;
+
+	padre = node->padre;
+
+	a->left = b->right;
+	b->right = a;
+
+	avl_tree_node_actualizar_altura(a);
+	avl_tree_node_actualizar_altura(b);
+	avl_tree_node_actualizar_num_decendientes(a);
+	avl_tree_node_actualizar_num_decendientes(b);
+
+	a->padre = b;
+	b->padre = padre;
+	if (a->left) {
+		a->left->padre = a;
+	}
+
+	return (b);
+}
+
+/* Left Right Rotate */
+avl_tree_node_t *avl_tree_rotate_leftright(avl_tree_node_t *node) {
+	avl_tree_node_t *a = node;
+	avl_tree_node_t *b = a->left;
+	avl_tree_node_t *c = b->right;
+	avl_tree_node_t *padre = NULL;
+
+	padre = node->padre;
+
+	a->left = c->right;
+	b->right = c->left;
+	c->left = b;
+	c->right = a;
+
+	avl_tree_node_actualizar_altura(a);
+	avl_tree_node_actualizar_altura(b);
+	avl_tree_node_actualizar_altura(c);
+
+	avl_tree_node_actualizar_num_decendientes(a);
+	avl_tree_node_actualizar_num_decendientes(b);
+	avl_tree_node_actualizar_num_decendientes(c);
+
+	a->padre = c;
+	b->padre = c;
+	c->padre = padre;
+	if (a->left) {
+		a->left->padre = a;
+	}
+	if (b->right) {
+		b->right->padre = b;
+	}
+
+	return (c);
+}
+
+/* Right Left Rotate */
+avl_tree_node_t *avl_tree_rotate_rightleft(avl_tree_node_t *node) {
+	avl_tree_node_t *a = node;
+	avl_tree_node_t *b = a->right;
+	avl_tree_node_t *c = b->left;
+	avl_tree_node_t *padre = NULL;
+
+	padre = node->padre;
+
+	a->right = c->left;
+	b->left = c->right;
+	c->right = b;
+	c->left = a;
+
+	avl_tree_node_actualizar_altura(a);
+	avl_tree_node_actualizar_altura(b);
+	avl_tree_node_actualizar_altura(c);
+
+	avl_tree_node_actualizar_num_decendientes(a);
+	avl_tree_node_actualizar_num_decendientes(b);
+	avl_tree_node_actualizar_num_decendientes(c);
+
+	a->padre = c;
+	b->padre = c;
+	c->padre = padre;
+	if (a->right) {
+		a->right->padre = a;
+	}
+	if (b->left) {
+		b->left->padre = b;
+	}
+
+	return (c);
+}
+
+/* Right Right Rotate */
+avl_tree_node_t *avl_tree_rotate_rightright(avl_tree_node_t *node) {
+	avl_tree_node_t *a = node;
+	avl_tree_node_t *b = a->right;
+	avl_tree_node_t *padre = NULL;
+
+	padre = node->padre;
+
+	a->right = b->left;
+	b->left = a;
+
+	avl_tree_node_actualizar_altura(a);
+	avl_tree_node_actualizar_altura(b);
+
+	avl_tree_node_actualizar_num_decendientes(a);
+	avl_tree_node_actualizar_num_decendientes(b);
+
+	a->padre = b;
+	b->padre = padre;
+	if (a->right) {
+		a->right->padre = a;
+	}
+
+	return (b);
+}
+
+/* Find the balance of an AVL node */
+int avl_tree_balance_factor(avl_tree_node_t *node) {
+	int bf = 0;
+
+	if (node->left)
+		bf += avl_tree_node_height(node->left);
+	if (node->right)
+		bf -= avl_tree_node_height(node->right);
+
+	return bf;
+}
+
+static inline avl_tree_node_t *avl_tree_balance_node_insertar(
+		const avl_tree_node_t *node, const tipo_dato llave_nueva,
+		const tipo_dato pasajero_oscuro) {
+	avl_tree_node_t *newroot = NULL;
+	avl_tree_node_t *nodo_actual = NULL;
+
+	newroot = (avl_tree_node_t *) node;
+	nodo_actual = node->padre;
+	while (nodo_actual) {
+
+		int bf = 0;
+		avl_tree_node_t *padre = NULL;
+		avl_tree_node_t **rama_padre = NULL;
+
+		bf = avl_tree_balance_factor(nodo_actual);
+
+		if (bf >= 2) {
+			/* Left Heavy */
+			if (llave_nueva > nodo_actual->left->llave) {
+				newroot = avl_tree_rotate_leftright(nodo_actual);
+			} else {
+				if (llave_nueva < nodo_actual->left->llave) {
+					newroot = avl_tree_rotate_leftleft(nodo_actual);
+				} else {
+					if (pasajero_oscuro > nodo_actual->left->pasajero_oscuro) {
+						newroot = avl_tree_rotate_leftright(nodo_actual);
+					} else {
+						newroot = avl_tree_rotate_leftleft(nodo_actual);
+					}
+				}
+			}
+
+		} else if (bf <= -2) {
+			/* Right Heavy */
+			if (llave_nueva < nodo_actual->right->llave) {
+				newroot = avl_tree_rotate_rightleft(nodo_actual);
+			} else {
+				if (llave_nueva > nodo_actual->right->llave) {
+					newroot = avl_tree_rotate_rightright(nodo_actual);
+				} else {
+					if (pasajero_oscuro < nodo_actual->right->pasajero_oscuro) {
+						newroot = avl_tree_rotate_rightleft(nodo_actual);
+					} else {
+						newroot = avl_tree_rotate_rightright(nodo_actual);
+					}
+				}
+			}
+
+		} else {
+			/* This node is balanced -- no change. */
+			newroot = nodo_actual;
+			avl_tree_node_actualizar_altura(nodo_actual);
+		}
+
+		if (newroot->padre) {
+			padre = newroot->padre;
+			if (llave_nueva < padre->llave) {
+				rama_padre = &padre->left;
+			} else {
+				if (llave_nueva > padre->llave) {
+					rama_padre = &padre->right;
+				} else {
+					if (pasajero_oscuro < padre->pasajero_oscuro) {
+						rama_padre = &padre->left;
+					} else {
+						if (pasajero_oscuro > padre->pasajero_oscuro) {
+							rama_padre = &padre->right;
+						} else {
+							assert_timeout(0);
+						}
+					}
+				}
+			}
+			*rama_padre = newroot;
+		}
+
+		nodo_actual = nodo_actual->padre;
+	}
+
+	return (newroot);
+}
+
+/* Balance a given tree */
+void avl_tree_balance_insertar(avl_tree_t *tree, avl_tree_node_t *nodo,
+		tipo_dato llave_nueva, tipo_dato pasajero_oscuro) {
+
+	avl_tree_node_t *newroot = NULL;
+
+	newroot = avl_tree_balance_node_insertar(nodo, llave_nueva,
+			pasajero_oscuro);
+
+	if (newroot != tree->root) {
+		tree->root = newroot;
+	}
+}
+
+/* Insert a new node. */
+void avl_tree_insert(avl_tree_t *tree, tipo_dato value,
+		tipo_dato pasajero_oscuro) {
+	avl_tree_node_t *node = NULL;
+	avl_tree_node_t *next = NULL;
+	avl_tree_node_t *last = NULL;
+
+	/* Well, there must be a first case */
+	if (tree->root == NULL ) {
+		node = avl_tree_create_node(tree);
+		node->llave = value;
+		node->pasajero_oscuro = pasajero_oscuro;
+
+		tree->root = node;
+
+		/* Okay.  We have a root already.  Where do we put this? */
+	} else {
+		next = tree->root;
+
+		while (next != NULL ) {
+			last = next;
+
+			next->num_decendientes++;
+
+			if (value < next->llave) {
+				next = next->left;
+			} else {
+				if (value > next->llave) {
+					next = next->right;
+				} else {
+					if (value == next->llave) {
+
+						if (pasajero_oscuro < next->pasajero_oscuro) {
+							next = next->left;
+						} else {
+							if (pasajero_oscuro > next->pasajero_oscuro) {
+								next = next->right;
+							} else {
+								avl_tree_node_t *ancestro_actal = NULL;
+								/* Have we already inserted this node? */
+								next->ocurrencias++;
+								caca_log_debug(
+										"llave ya existe, aumentando contador a carajo %u\n",
+										next->ocurrencias);
+
+								ancestro_actal = next;
+								while (ancestro_actal) {
+									caca_log_debug("bajando decendientes de %u",
+											ancestro_actal->llave);
+									ancestro_actal->num_decendientes--;
+									ancestro_actal = ancestro_actal->padre;
+								}
+								return;
+							}
+						}
+					} else {
+						caca_log_debug("verga, no es maior menor ni igual\n");
+						assert_timeout(0);
+					}
+				}
+			}
+		}
+
+		node = avl_tree_create_node(tree);
+		node->llave = value;
+		node->pasajero_oscuro = pasajero_oscuro;
+
+		if (value < last->llave) {
+			last->left = node;
+		} else {
+			if (value > last->llave) {
+				last->right = node;
+			} else {
+				if (pasajero_oscuro < last->pasajero_oscuro) {
+					last->left = node;
+				} else {
+					last->right = node;
+				}
+			}
+		}
+
+		node->padre = last;
+
+	}
+	node->ocurrencias = 1;
+
+	avl_tree_balance_insertar(tree, node, value, pasajero_oscuro);
+}
+
+/* Find the node containing a given value */
+avl_tree_node_t *avl_tree_find(avl_tree_t *tree, tipo_dato value,
+		tipo_dato pasajero_oscuro) {
+	avl_tree_node_t *current = tree->root;
+
+	while (current) {
+		if (value > current->llave) {
+			current = current->right;
+		} else {
+			if (value < current->llave) {
+				current = current->left;
+			} else {
+				if (pasajero_oscuro != AVL_TREE_VALOR_INVALIDO) {
+					if (pasajero_oscuro > current->pasajero_oscuro) {
+						current = current->right;
+					} else {
+						if (pasajero_oscuro < current->pasajero_oscuro) {
+							current = current->left;
+						} else {
+							break;
+						}
+					}
+				} else {
+					break;
+				}
+			}
+		}
+	}
+
+	return current ? current->llave == value ? current : NULL :NULL;
+}
+
+	/* Do a depth first traverse of a node. */
+void avl_tree_traverse_node_dfs(avl_tree_node_t *node, int depth) {
+	int i = 0;
+
+	if (node->left)
+		avl_tree_traverse_node_dfs(node->left, depth + 2);
+
+	for (i = 0; i < depth; i++)
+		putchar(' ');
+	printf("%d: %d\n", node->llave, avl_tree_balance_factor(node));
+
+	if (node->right)
+		avl_tree_traverse_node_dfs(node->right, depth + 2);
+}
+
+/* Do a depth first traverse of a tree. */
+void avl_tree_traverse_dfs(avl_tree_t *tree) {
+	avl_tree_traverse_node_dfs(tree->root, 0);
+}
+
+static inline void avl_tree_iterador_ini(avl_tree_t *arbolin,
+		avl_tree_iterator_t *iter) {
+//	iter->contador_visitas = calloc(arbolin->max_nodos, sizeof(char));
+//	assert_timeout(iter->contador_visitas);
+	iter->arbolin = arbolin;
+}
+
+static inline void avl_tree_iterador_fini(avl_tree_iterator_t *iter) {
+//	free(iter->contador_visitas);
+}
+
+static inline avl_tree_node_t* avl_tree_iterador_siguiente(
+		avl_tree_iterator_t *iter) {
+	bool res_bitch;
+	avl_tree_node_t *nodo = NULL;
+	avl_tree_node_t *nodo_actual = NULL;
+
+	nodo_actual = iter->nodo_actual;
+	if (!nodo_actual) {
+		iter->nodo_actual = iter->arbolin->root;
+		bitch_checa(bitch_mapa, iter->nodo_actual->indice_en_arreglo,
+				res_bitch);
+		if (res_bitch) {
+			return NULL ;
+		}
+		bitch_asigna(bitch_mapa, iter->nodo_actual->indice_en_arreglo);
+		return iter->nodo_actual;
+	}
+
+	if (nodo->right) {
+		bitch_checa(bitch_mapa, nodo_actual->right->indice_en_arreglo,
+				res_bitch);
+	}
+	if (nodo_actual->right && !res_bitch) {
+		nodo_actual = nodo_actual->right;
+		while (nodo_actual->left) {
+			nodo_actual = nodo_actual->left;
+		}
+		nodo = nodo_actual;
+		bitch_asigna(bitch_mapa, nodo->indice_en_arreglo);
+	} else {
+		nodo_actual = nodo_actual->padre;
+		if (nodo_actual) {
+			bitch_checa(bitch_mapa, nodo_actual->indice_en_arreglo, res_bitch);
+		}
+		while (nodo_actual && res_bitch) {
+			nodo_actual = nodo_actual->padre;
+			if (nodo_actual) {
+				bitch_checa(bitch_mapa, nodo_actual->indice_en_arreglo,
+						res_bitch);
+			}
+		}
+		if (!nodo_actual) {
+			nodo = NULL;
+		} else {
+			nodo = nodo_actual;
+			bitch_asigna(bitch_mapa, nodo->indice_en_arreglo);
+		}
+	}
+
+	iter->nodo_actual = nodo;
+
+	return nodo;
+}
+
+static inline avl_tree_node_t* avl_tree_iterador_anterior(
+		avl_tree_iterator_t *iter) {
+	bool res_bitch;
+	avl_tree_node_t *nodo = NULL;
+	avl_tree_node_t *nodo_actual = NULL;
+
+	nodo_actual = iter->nodo_actual;
+	if (!nodo_actual) {
+		iter->nodo_actual = iter->arbolin->root;
+		bitch_checa(bitch_mapa, iter->nodo_actual->indice_en_arreglo,
+				res_bitch);
+		if (res_bitch) {
+			return NULL ;
+		}
+		bitch_asigna(bitch_mapa, iter->nodo_actual->indice_en_arreglo);
+		return iter->nodo_actual;
+	}
+
+	if (nodo_actual->left) {
+		bitch_checa(bitch_mapa, nodo_actual->left->indice_en_arreglo,
+				res_bitch);
+	}
+	if (nodo_actual->left && !res_bitch) {
+		nodo_actual = nodo_actual->left;
+		while (nodo_actual->right) {
+			nodo_actual = nodo_actual->right;
+		}
+		nodo = nodo_actual;
+		bitch_asigna(bitch_mapa, nodo->indice_en_arreglo);
+	} else {
+		nodo_actual = nodo_actual->padre;
+		if (nodo_actual) {
+			bitch_checa(bitch_mapa, nodo_actual->indice_en_arreglo, res_bitch);
+		}
+		while (nodo_actual && res_bitch) {
+			nodo_actual = nodo_actual->padre;
+			if (nodo_actual) {
+				bitch_checa(bitch_mapa, nodo_actual->indice_en_arreglo,
+						res_bitch);
+			}
+		}
+		if (!nodo_actual) {
+			nodo = NULL;
+		} else {
+			nodo = nodo_actual;
+			bitch_asigna(bitch_mapa, nodo->indice_en_arreglo);
+		}
+	}
+
+	iter->nodo_actual = nodo;
+
+	return nodo;
+}
+
+static inline avl_tree_node_t* avl_tree_iterador_obtener_actual(
+		avl_tree_iterator_t *iter) {
+	avl_tree_node_t *nodo = NULL;
+
+	nodo = iter->nodo_actual;
+
+	return nodo;
+
+}
+
+static inline char *avl_tree_inoder_node_travesti(avl_tree_node_t *nodo,
+		char *buf, int profundidad_maxima) {
+	char num_buf[100] = { '\0' };
+	int profundidad = 0;
+	int i = 0;
+
+	assert_timeout(profundidad_maxima == -1 || profundidad != -1);
+
+	if (nodo != NULL ) {
+		profundidad = profundidad_maxima - nodo->altura;
+
+		assert_timeout(!nodo->right || nodo->right->padre == nodo);
+		avl_tree_inoder_node_travesti(nodo->right, buf, profundidad_maxima);
+
+		if (profundidad_maxima != -1) {
+			for (i = 0; i < profundidad; i++) {
+				strcat(buf, " ");
+			}
+		}
+		sprintf(num_buf, "%d", nodo->llave);
+		strcat(buf, num_buf);
+		if (profundidad_maxima != -1) {
+			strcat(buf, "\n");
+		}
+
+		assert_timeout(!nodo->left || nodo->left->padre == nodo);
+		avl_tree_inoder_node_travesti(nodo->left, buf, profundidad_maxima);
+
+		/*
+		 if (profundidad_maxima != -1) {
+		 strcat(buf, "\n");
+		 for (int i = 0; i <= profundidad; i++) {
+		 strcat(buf, " ");
+		 }
+		 }
+		 */
+	}
+	return buf;
+}
+
+static inline char* avl_tree_sprint(avl_tree_t *arbolini, char *buf) {
+	avl_tree_inoder_node_travesti(arbolini->root, buf, -1);
+	return buf;
+}
+
+static inline char *avl_tree_inoder_node_travesti_conteo(avl_tree_node_t *nodo,
+		char *buf, int profundidad_maxima) {
+	char num_buf[100] = { '\0' };
+	int profundidad = 0;
+	int i = 0;
+
+	assert_timeout(profundidad_maxima == -1 || profundidad != -1);
+
+	if (nodo != NULL ) {
+		profundidad = profundidad_maxima - nodo->altura;
+
+		assert_timeout(!nodo->right || nodo->right->padre == nodo);
+		avl_tree_inoder_node_travesti_conteo(nodo->right, buf,
+				profundidad_maxima);
+
+		if (profundidad_maxima != -1) {
+			for (i = 0; i < profundidad; i++) {
+				strcat(buf, " ");
+			}
+		}
+		sprintf(num_buf, "%d [%u,%u] (%u) ocu %u", nodo->llave,
+				(natural ) (nodo->llave), (natural ) nodo->llave,
+				nodo->num_decendientes, nodo->ocurrencias);
+		strcat(buf, num_buf);
+		if (profundidad_maxima != -1) {
+			strcat(buf, "\n");
+		}
+
+		assert_timeout(!nodo->left || nodo->left->padre == nodo);
+		avl_tree_inoder_node_travesti_conteo(nodo->left, buf,
+				profundidad_maxima);
+
+		/*
+		 if (profundidad_maxima != -1) {
+		 strcat(buf, "\n");
+		 for (int i = 0; i <= profundidad; i++) {
+		 strcat(buf, " ");
+		 }
+		 }
+		 */
+	}
+	return buf;
+}
+
+static inline char* avl_tree_sprint_identado(avl_tree_t *arbolini, char *buf) {
+	int profundidad_maxima = 0;
+
+	*buf = '\0';
+
+	if (!arbolini->root) {
+		return buf;
+	}
+
+	profundidad_maxima = arbolini->root->altura;
+	avl_tree_inoder_node_travesti_conteo(arbolini->root, buf,
+			profundidad_maxima);
+	return buf;
+}
+
+static inline avl_tree_node_t* avl_tree_iterador_asignar_actual(
+		avl_tree_iterator_t *iter, avl_tree_node_t *nodo) {
+	bool res_bitch;
+
+	bitch_checa(bitch_mapa, nodo->indice_en_arreglo, res_bitch);
+	assert_timeout(!res_bitch);
+	iter->nodo_actual = nodo;
+
+	bitch_asigna(bitch_mapa, iter->nodo_actual->indice_en_arreglo);
+	return iter->nodo_actual;
+}
+
+static inline avl_tree_node_t* avl_tree_max_min(avl_tree_t *arbolin, bool max) {
+	avl_tree_node_t *nodo_actual = NULL;
+	avl_tree_node_t *last_of_us = NULL;
+
+	nodo_actual = last_of_us = arbolin->root;
+
+	while (nodo_actual) {
+		last_of_us = nodo_actual;
+		if (max) {
+			nodo_actual = nodo_actual->right;
+		} else {
+			nodo_actual = nodo_actual->left;
+		}
+	}
+
+	return last_of_us;
+}
+
+static inline void avl_tree_validar_arbolin_indices(avl_tree_t *arbolin,
+		avl_tree_node_t *nodo) {
+	if (nodo != NULL ) {
+		assert_timeout(&arbolin->nodos_mem[nodo->indice_en_arreglo] == nodo);
+		assert_timeout(!nodo->left || nodo->left->padre == nodo);
+		avl_tree_validar_arbolin_indices(arbolin, nodo->left);
+		assert_timeout(!nodo->right || nodo->right->padre == nodo);
+		avl_tree_validar_arbolin_indices(arbolin, nodo->right);
+	}
+}
+
+static inline void avl_tree_validar_orden(avl_tree_t *arbolin) {
+	avl_tree_iterator_t *iter = &(avl_tree_iterator_t ) { 0 };
+	avl_tree_node_t *nodo_inicial = NULL;
+	avl_tree_node_t *nodo_actual = NULL;
+	tipo_dato llave_ant = 0;
+	tipo_dato pasajero_oscuro_ant = 0;
+	if (!arbolin->root) {
+		return;
+	}
+
+	nodo_inicial = avl_tree_max_min(arbolin, falso);
+
+	avl_tree_iterador_ini(arbolin, iter);
+	avl_tree_iterador_asignar_actual(iter, nodo_inicial);
+
+	llave_ant = nodo_inicial->llave;
+	pasajero_oscuro_ant = nodo_inicial->pasajero_oscuro;
+
+	while ((nodo_actual = avl_tree_iterador_siguiente(iter))) {
+		assert_timeout(llave_ant <= nodo_actual->llave);
+		assert_timeout(
+				llave_ant < nodo_actual->llave
+						|| pasajero_oscuro_ant <= nodo_actual->pasajero_oscuro);
+		llave_ant = nodo_actual->llave;
+		pasajero_oscuro_ant = nodo_actual->pasajero_oscuro;
+	}
+
+	avl_tree_iterador_fini(iter);
+}
+
+static inline void avl_tree_validar_alv(avl_tree_t *arbolin) {
+	avl_tree_validar_arbolin_indices(arbolin, arbolin->root);
+	avl_tree_validar_orden(arbolin);
+}
+
+/* Balance a given node */
+/* Given a non-empty binary search tree, return the node with minimum
+ key value found in that tree. Note that the entire tree does not
+ need to be searched. */
+static inline avl_tree_node_t* avl_tree_siguiente_nodo_inorder(
+		avl_tree_node_t *node) {
+	avl_tree_node_t *current = node;
+
+	/* loop down to find the leftmost leaf */
+	while (current->left != NULL ) {
+		current = current->left;
+	}
+
+	return current;
+}
+
+static inline avl_tree_node_t *avl_tree_nodo_borrar(avl_tree_t *arbolini,
+		avl_tree_node_t *root, tipo_dato key, bool ignora_conteo,
+		tipo_dato pasajero_oscuro) {
+
+	if (root == NULL ) {
+		return root;
+	}
+
+	if (key < root->llave) {
+		root->left = avl_tree_nodo_borrar(arbolini, root->left, key,
+				ignora_conteo, pasajero_oscuro);
+		assert_timeout(!root->left || root->left->padre == root);
+	} else {
+		if (key > root->llave) {
+			root->right = avl_tree_nodo_borrar(arbolini, root->right, key,
+					ignora_conteo, pasajero_oscuro);
+			assert_timeout(!root->right || root->right->padre == root);
+		} else {
+			if (pasajero_oscuro == AVL_TREE_VALOR_INVALIDO) {
+				if ((root->ocurrencias - 1) == 0 || ignora_conteo) {
+					if (root->left == NULL || root->right == NULL ) {
+						caca_log_debug("el nodo q si c va ALV %d %u",
+								root->llave, root->pasajero_oscuro);
+						avl_tree_node_t *temp =
+								root->left ? root->left : root->right;
+
+						if (temp == NULL ) {
+							temp = root;
+							root = NULL;
+						} else {
+							natural idx_en_arreglo = 0;
+							avl_tree_node_t *padre = NULL;
+
+							padre = root->padre;
+							idx_en_arreglo = root->indice_en_arreglo;
+							*root = *temp;
+							root->padre = padre;
+							root->indice_en_arreglo = idx_en_arreglo;
+							if (root->left) {
+								root->left->padre = root;
+							}
+							if (root->right) {
+								root->right->padre = root;
+							}
+						}
+
+						assert_timeout(
+								arbolini->ultimo_idx_anadido
+										- arbolini->siguiente_idx_para_usar
+										< arbolini->max_nodos);
+						arbolini->nodos_libres_idx[arbolini->ultimo_idx_anadido++
+								% arbolini->max_nodos] =
+								temp->indice_en_arreglo;
+						memset(temp, 0, sizeof(avl_tree_node_t));
+						temp->llave = AVL_TREE_VALOR_INVALIDO;
+						temp->pasajero_oscuro = AVL_TREE_VALOR_INVALIDO;
+						arbolini->nodos_realmente_en_arbol--;
+						caca_log_debug(
+								"disminuiendo nodos realmente en arbol a %u",
+								arbolini->nodos_realmente_en_arbol);
+
+					} else {
+						caca_log_debug("el nodo q c va ALV cpm des,adre %d %u",
+								root->llave, root->pasajero_oscuro);
+						avl_tree_node_t *temp = avl_tree_siguiente_nodo_inorder(
+								root->right);
+
+						root->llave = temp->llave;
+						root->pasajero_oscuro = temp->pasajero_oscuro;
+						root->ocurrencias = temp->ocurrencias;
+
+						root->right = avl_tree_nodo_borrar(arbolini,
+								root->right, temp->llave, verdadero,
+								temp->pasajero_oscuro);
+					}
+				} else {
+					root->ocurrencias--;
+					return root;
+				}
+			} else {
+				if (pasajero_oscuro < root->pasajero_oscuro) {
+					root->left = avl_tree_nodo_borrar(arbolini, root->left, key,
+							ignora_conteo, pasajero_oscuro);
+					assert_timeout(!root->left || root->left->padre == root);
+				} else {
+					if (pasajero_oscuro > root->pasajero_oscuro) {
+						root->right = avl_tree_nodo_borrar(arbolini,
+								root->right, key, ignora_conteo,
+								pasajero_oscuro);
+						assert_timeout(
+								!root->right || root->right->padre == root);
+					} else {
+
+						if ((root->ocurrencias - 1) == 0 || ignora_conteo) {
+							if (root->left == NULL || root->right == NULL ) {
+								caca_log_debug("el nodo q si c va ALV %d %u",
+										root->llave, root->pasajero_oscuro);
+								avl_tree_node_t *temp =
+										root->left ? root->left : root->right;
+
+								if (temp == NULL ) {
+									temp = root;
+									root = NULL;
+								} else {
+									natural idx_en_arreglo = 0;
+									avl_tree_node_t *padre = NULL;
+
+									padre = root->padre;
+									idx_en_arreglo = root->indice_en_arreglo;
+									*root = *temp;
+									root->padre = padre;
+									root->indice_en_arreglo = idx_en_arreglo;
+									if (root->left) {
+										root->left->padre = root;
+									}
+									if (root->right) {
+										root->right->padre = root;
+									}
+								}
+
+								assert_timeout(
+										arbolini->ultimo_idx_anadido
+												- arbolini->siguiente_idx_para_usar
+												< arbolini->max_nodos);
+								arbolini->nodos_libres_idx[arbolini->ultimo_idx_anadido++
+										% arbolini->max_nodos] =
+										temp->indice_en_arreglo;
+								memset(temp, 0, sizeof(avl_tree_node_t));
+								temp->llave = AVL_TREE_VALOR_INVALIDO;
+								arbolini->nodos_realmente_en_arbol--;
+								caca_log_debug(
+										"disminuiendo nodos realmente en arbol a %u",
+										arbolini->nodos_realmente_en_arbol);
+
+							} else {
+								caca_log_debug(
+										"el nodo q c va ALV con desmadre %d %u",
+										root->llave, root->pasajero_oscuro);
+								avl_tree_node_t *temp =
+										avl_tree_siguiente_nodo_inorder(
+												root->right);
+
+								root->llave = temp->llave;
+								root->pasajero_oscuro = temp->pasajero_oscuro;
+								root->ocurrencias = temp->ocurrencias;
+
+								root->right = avl_tree_nodo_borrar(arbolini,
+										root->right, temp->llave, verdadero,
+										temp->pasajero_oscuro);
+							}
+
+						} else {
+							root->ocurrencias--;
+							return root;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if (root == NULL ) {
+		return root;
+	}
+
+	avl_tree_node_actualizar_altura(root);
+	avl_tree_node_actualizar_num_decendientes(root);
+
+	int balance = avl_tree_balance_factor(root);
+
+	if (balance > 1 && avl_tree_balance_factor(root->left) >= 0) {
+		return avl_tree_rotate_leftleft(root);
+	}
+
+	if (balance > 1 && avl_tree_balance_factor(root->left) < 0) {
+		return avl_tree_rotate_leftright(root);
+	}
+
+	if (balance < -1 && avl_tree_balance_factor(root->right) <= 0) {
+		return avl_tree_rotate_rightright(root);
+	}
+
+	if (balance < -1 && avl_tree_balance_factor(root->right) > 0) {
+		return avl_tree_rotate_rightleft(root);
+	}
+
+	return root;
+}
+
+void avl_tree_borrar(avl_tree_t *tree, tipo_dato value,
+		tipo_dato pasajero_oscuro) {
+
+	avl_tree_node_t *newroot = NULL;
+	caca_log_debug("borrando valor %d", value);
+
+	if (!tree->root) {
+		return;
+	}
+	newroot = avl_tree_nodo_borrar(tree, tree->root, value, falso,
+			pasajero_oscuro);
+
+	if (newroot != tree->root) {
+		tree->root = newroot;
+	}
+}
+
+static inline bool avl_tree_es_hijo_perra(avl_tree_node_t *nodo) {
+	bool es_hijo_perra = falso;
+
+	caca_log_debug("tonig padre %p nodo left %p nodo act %p", nodo->padre,
+			nodo->padre ? nodo->padre->left : NULL, nodo);
+	if (nodo->padre) {
+		caca_log_debug("tiene padre");
+		if ((tipo_dato) nodo->padre->left == (tipo_dato) nodo) {
+			caca_log_debug("es ijo izq");
+			es_hijo_perra = verdadero;
+		}
+	}
+
+	return es_hijo_perra;
+}
+
+#endif
+
+int numeros[MAX_NUMEROS + 1] = { 0 };
+natural numeros_tam = 0;
+mo_mada consultas[MAX_QUERIES] = { 0 };
+natural consultas_tam = 0;
+
+void caca_x_anade_caca(tipo_dato numero) {
+	bool res_bitch = falso;
+	bitch_checa(bitch_mapa, ((entero_largo_sin_signo)numero), res_bitch);
+	if (!res_bitch) {
+		mo_mada_resultado += numero;
+		bitch_asigna(bitch_mapa, numero);
+	}
+}
+
+void caca_x_quita_caca(tipo_dato numero) {
+	bool res_bitch = falso;
+	bitch_checa(bitch_mapa, ((entero_largo_sin_signo)numero), res_bitch);
+	if (res_bitch) {
+		mo_mada_resultado -= numero;
+		bitch_limpia(bitch_mapa, numero);
+	}
+}
+
 static inline void caca_x_main() {
-	int *matriz_nums = NULL;
-	int num_filas = 0;
-	int num_queries = 0;
-	int cont_queries = 0;
+	natural num_queries = 0;
+	natural cont_queries = 0;
 	char tipo_query = 0;
-	int idx_query_ini = 0;
-	int idx_query_fin = 0;
+	natural idx_query_ini = 0;
+	natural idx_query_fin = 0;
 
 	char buf[100] = { '\0' };
 
-	matriz_nums = calloc(CACA_X_MAX_NUMEROS_REDONDEADO * 3, sizeof(int));
-	assert_timeout(matriz_nums);
+	bitch_init();
 
-	mapa_unicos = calloc(
-			(CACA_X_MAX_VALORES_INT / (sizeof(bitch_vector) * 8)) + 1,
-			sizeof(bitch_vector));
-	assert_timeout(mapa_unicos);
+	scanf("%u\n", &numeros_tam);
 
-	num_filas = 3;
-	lee_matrix_long_stdin(matriz_nums, &num_filas, NULL, 3,
-			CACA_X_MAX_NUMEROS_REDONDEADO);
+	lee_matrix_long_stdin(numeros + 1, &(int ) { 1 }, NULL, 1, numeros_tam + 1);
 
-	num_numeros = *matriz_nums;
-	numeros = matriz_nums + CACA_X_MAX_NUMEROS_REDONDEADO;
-	num_queries = *(numeros + CACA_X_MAX_NUMEROS_REDONDEADO);
+	scanf("%u\n", &num_queries);
+	consultas_tam = num_queries;
 
-	caca_log_debug("a vece siento q %d\n", num_numeros);
+	caca_log_debug("el num nums %u el num qs %u\n", numeros_tam, consultas_tam);
+
+	caca_log_debug("a vece siento q %d\n", numeros_tam);
 	caca_log_debug("as corrido con algo de s %s\n",
-			caca_arreglo_a_cadena(numeros, num_numeros, buf));
+			caca_arreglo_a_cadena(numeros, numeros_tam + 1, buf));
 	caca_log_debug("en estas paginas %d\n", num_queries);
 
-	caca_x_inicializa_datos_preprocesados();
-
-	while (cont_queries < num_queries) {
-		entero_largo sum = 0;
+	while (cont_queries < consultas_tam) {
+		mo_mada *consul_act = consultas + cont_queries;
 		scanf("%c %d %d\n", &tipo_query, &idx_query_ini, &idx_query_fin);
 		if (tipo_query == 'Q' && idx_query_ini > idx_query_fin) {
 			tipo_dato tmp = 0;
@@ -1263,36 +2188,22 @@ static inline void caca_x_main() {
 		caca_log_debug("q: %c, ini %d, fin %d\n", tipo_query, idx_query_ini,
 				idx_query_fin);
 
-		switch (tipo_query) {
-		case 'Q':
-			limite_izq = idx_query_ini - 1;
-			limite_der = idx_query_fin - 1;
-			sum = caca_x_calcula_suma_unicos(limite_izq, limite_der);
-			printf("%lld\n", sum);
-			break;
-		case 'U':
-
-			idx_actualizado = idx_query_ini - 1;
-			nuevo_valor = idx_query_fin;
-			caca_x_actualizar_datos_preprocesados(idx_actualizado, nuevo_valor);
-
-			break;
-		default:
-			abort();
-			break;
-		}
+		consul_act->idx_query = cont_queries;
+		consul_act->intervalo_idx_ini = idx_query_ini;
+		consul_act->intervalo_idx_fin = idx_query_fin;
+		consul_act->orden = cont_queries;
+		consul_act->tipo = tipo_query;
 
 		cont_queries++;
 	}
 
-	/*
-	 while (1) {
-	 printf("dormdo\n");
-	 sleep(10);
-	 }
-	 */
-//	free(mapa_unicos);
-	free(matriz_nums);
+	mo_mada_core(consultas, numeros, consultas_tam, numeros_tam);
+	for (int i = 0; i < consultas_tam; i++) {
+		caca_log_debug("dancing cat %u-%u da %lld\n",
+				consultas[i].intervalo_idx_ini, consultas[i].intervalo_idx_fin,
+				consultas[i].resulcaca);
+	}
+
 }
 
 int main(void) {

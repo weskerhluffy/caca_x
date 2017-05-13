@@ -68,34 +68,39 @@ void refresh(int& p, int pz, int py, int pos, LL vv) {
 	else
 		refresh(pl[p].r, Right, pos, vv);
 	pl[p].v = 0;
-	if (pl[p].l != -1)
-	{
+	if (pl[p].l != -1) {
 		pl[p].v = pl[pl[p].l].v;
 	}
-	if (pl[p].r != -1)
-	{
+	if (pl[p].r != -1) {
 		pl[p].v += pl[pl[p].r].v;
 	}
 }
 LL query(int p, int pz, int py, int zz, int yy) {
+	printf("dentro de query p %d\n", p);
 	int mid = (pz + py) >> 1;
+	LL caca = 0;
 	if (p < 0) {
-		return 0;
-	}
-	if (pz == zz && py == yy) {
-		return pl[p].v;
-	}
-	if (yy <= mid) {
-		return query(pl[p].l, Left, zz, yy);
+		caca = 0;
 	} else {
-		if (mid < zz) {
-			return query(pl[p].r, Right, zz, yy);
+		if (pz == zz && py == yy) {
+			caca = pl[p].v;
 		} else {
-			LL t1 = query(pl[p].l, Left, zz, mid);
-			LL t2 = query(pl[p].r, Right, mid + 1, yy);
-			return t1 + t2;
+			if (yy <= mid) {
+				caca = query(pl[p].l, Left, zz, yy);
+			} else {
+				if (mid < zz) {
+					caca = query(pl[p].r, Right, zz, yy);
+				} else {
+					LL t1 = query(pl[p].l, Left, zz, mid);
+					LL t2 = query(pl[p].r, Right, mid + 1, yy);
+					caca = t1 + t2;
+				}
+			}
 		}
 	}
+	printf("p %u pz %u py %u zz %u yy %u regreso %d \n", p, pz, py, zz, yy,
+			caca);
+	return caca;
 }
 struct BIT {
 	int n, r[Maxn];
@@ -105,24 +110,31 @@ struct BIT {
 			r[i] = -1;
 	}
 	void add(int x, int y, LL vv) {
-		for (x += 3; x <= n; x += x & -x)
+		for (x += 3; x <= n; x += x & -x) {
+			printf("refrescando x:%u r x:%d y:%u vv:%d\n", x - 3, r[x], y, vv);
 			refresh(r[x], 1, n + 1, y, vv);
+			printf("refrescado  x:%u r x:%d y:%u vv:%d\n", x - 3, r[x], y, vv);
+		}
 	}
 	void add(int x1, int y1, int x2, int y2, LL vv) {
+		printf("refrescando arriba x1:%u y1:%u x2:%u y2:%u vv:%d\n", x1, y1, x2,
+				y2, vv);
+		printf("refre 1 \n");
 		add(x1, y1, vv);
+		printf("refre 2 \n");
 		add(x1, y2 + 1, -vv);
+		printf("refre 3 \n");
 		add(x2 + 1, y1, -vv);
+		printf("refre 4 \n");
 		add(x2 + 1, y2 + 1, vv);
 	}
 	LL sum(int x, int y1, int y2) {
 		LL ret = 0;
 		for (x += 3; x > 0; x -= x & -x) {
+			printf("queriando x:%u r x:%d y1:%u y2:%u\n", x - 3, r[x], y1, y2);
 			ret += query(r[x], 1, n + 1, y1, y2);
 		}
 		return ret;
-	}
-	LL sum(int x1, int x2, int y1, int y2) {
-		return sum(x2, y1, y2) - sum(x1 - 1, y1, y2);
 	}
 } B;
 struct Query {
@@ -146,6 +158,7 @@ void getRange(int x, int y, PII &range) {
 	std::set<int>::iterator it;
 	std::set<int>&th = pos[y];
 	it = th.lower_bound(x);
+	printf("obteniando rango x %u y %d\n", x, y);
 	if (it == th.begin())
 		range.AA = 0;
 	else
@@ -155,6 +168,8 @@ void getRange(int x, int y, PII &range) {
 		range.BB = n + 1;
 	else
 		range.BB = *it;
+
+	printf("rango resultante AA %u BB %u\n", range.AA, range.BB);
 }
 int main() {
 //    freopen("9066in.txt","r",stdin);
@@ -164,6 +179,7 @@ int main() {
 	memset(B.r, 0, sizeof(B.r));
 	memset(q, 0, sizeof(q));
 	scanf("%d", &n);
+	printf("leido n %d\n", n);
 	for (i = 1; i <= n; i++)
 		scanf("%d", &a[i]);
 	scanf("%d", &nq);
@@ -199,6 +215,7 @@ int main() {
 	}
 	std::sort(q + 1, q + nq + 1, cmp2);
 	pcnt = 0;
+	printf("aora n es %d\n", n);
 	B.init(n);
 	for (i = 1; i <= nq; i++) {
 		if (q[i].tp == 'Q') {
