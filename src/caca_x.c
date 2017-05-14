@@ -1162,7 +1162,7 @@ avl_tree_node_t *avl_tree_create_node(avl_tree_t *arbolin) {
 		node->indice_en_arreglo = arbolin->nodos_usados - 1;
 	}
 	arbolin->nodos_realmente_en_arbol++;
-	caca_log_debug("aumentando nodos realmente en arbol a %u",
+	caca_log_debug("aumentando nodos realmente en arbol a %u\n",
 			arbolin->nodos_realmente_en_arbol);
 	return node;
 }
@@ -1527,13 +1527,30 @@ void avl_tree_insert(avl_tree_t *tree, tipo_dato value,
 	avl_tree_balance_insertar(tree, node, value, pasajero_oscuro);
 }
 
+static inline bool avl_tree_es_hijo_perra(avl_tree_node_t *nodo) {
+	bool es_hijo_perra = falso;
+
+	caca_log_debug("tonig padre %p nodo left %p nodo act %p\n", nodo->padre,
+			nodo->padre ? nodo->padre->left : NULL, nodo);
+	if (nodo->padre) {
+		caca_log_debug("tiene padre\n");
+		if ((tipo_dato) nodo->padre->left == (tipo_dato) nodo) {
+			caca_log_debug("es ijo izq");
+			es_hijo_perra = verdadero;
+		}
+	}
+
+	return es_hijo_perra;
+}
 /* Find the node containing a given value */
 avl_tree_node_t *avl_tree_find(avl_tree_t *tree, tipo_dato value,
 		tipo_dato pasajero_oscuro) {
 	avl_tree_node_t *current = tree->root;
+	avl_tree_node_t *last_of_us = NULL;
 
 	while (current) {
 		if (value > current->llave) {
+			last_of_us = current;
 			current = current->right;
 		} else {
 			if (value < current->llave) {
@@ -1541,6 +1558,7 @@ avl_tree_node_t *avl_tree_find(avl_tree_t *tree, tipo_dato value,
 			} else {
 				if (pasajero_oscuro != AVL_TREE_VALOR_INVALIDO) {
 					if (pasajero_oscuro > current->pasajero_oscuro) {
+						last_of_us = current;
 						current = current->right;
 					} else {
 						if (pasajero_oscuro < current->pasajero_oscuro) {
@@ -1555,11 +1573,14 @@ avl_tree_node_t *avl_tree_find(avl_tree_t *tree, tipo_dato value,
 			}
 		}
 	}
+	if (!current) {
+		current = last_of_us;
+	}
 
-	return current ? current->llave == value ? current : NULL :NULL;
+	return current;
 }
 
-	/* Do a depth first traverse of a node. */
+/* Do a depth first traverse of a node. */
 void avl_tree_traverse_node_dfs(avl_tree_node_t *node, int depth) {
 	int i = 0;
 
@@ -2110,22 +2131,6 @@ void avl_tree_borrar(avl_tree_t *tree, tipo_dato value,
 	}
 }
 
-static inline bool avl_tree_es_hijo_perra(avl_tree_node_t *nodo) {
-	bool es_hijo_perra = falso;
-
-	caca_log_debug("tonig padre %p nodo left %p nodo act %p", nodo->padre,
-			nodo->padre ? nodo->padre->left : NULL, nodo);
-	if (nodo->padre) {
-		caca_log_debug("tiene padre");
-		if ((tipo_dato) nodo->padre->left == (tipo_dato) nodo) {
-			caca_log_debug("es ijo izq");
-			es_hijo_perra = verdadero;
-		}
-	}
-
-	return es_hijo_perra;
-}
-
 #endif
 
 int numeros[MAX_NUMEROS + 1] = { 0 };
@@ -2157,6 +2162,7 @@ static inline void caca_x_main() {
 	char tipo_query = 0;
 	natural idx_query_ini = 0;
 	natural idx_query_fin = 0;
+	avl_tree_t *arbolin = NULL;
 
 	char buf[100] = { '\0' };
 
@@ -2198,12 +2204,51 @@ static inline void caca_x_main() {
 	}
 
 	mo_mada_core(consultas, numeros, consultas_tam, numeros_tam);
+#ifdef CACA_X_LOG
 	for (int i = 0; i < consultas_tam; i++) {
 		caca_log_debug("dancing cat %u-%u da %lld\n",
 				consultas[i].intervalo_idx_ini, consultas[i].intervalo_idx_fin,
 				consultas[i].resulcaca);
 	}
+#endif
 
+	avl_tree_create(&arbolin, MAX_NUMEROS);
+
+	for (int i = 1; i <= numeros_tam; i++) {
+		tipo_dato numero_act = numeros[i];
+		avl_tree_insert(arbolin, numero_act, i);
+	}
+#ifdef CACA_X_LOG
+	for (int i = 1; i <= numeros_tam; i++) {
+		tipo_dato numero_act = numeros[i];
+		avl_tree_node_t *nodo_caca = NULL;
+
+		caca_log_debug("el inmediato anterior de %u(%u)\n", numero_act, i - 1);
+		nodo_caca = avl_tree_find(arbolin, numero_act, i - 1);
+		if (nodo_caca) {
+			caca_log_debug("es %u(%u)\n", nodo_caca->llave,
+					nodo_caca->pasajero_oscuro);
+		} else {
+			caca_log_debug("nada antes\n");
+		}
+	}
+#endif
+
+	for (int i = 0; i < consultas_tam; i++) {
+		mo_mada *consul = consultas + i;
+
+		assert_timeout(
+				consul->tipo == mo_mada_consulta
+						|| consul->tipo == mo_mada_actualizacion);
+
+		if (consul->tipo == mo_mada_actualizacion) {
+			natural idx_actualizar = consul->intervalo_idx_ini;
+			tipo_dato valor_nuevo = consul->intervalo_idx_fin;
+
+		} else {
+
+		}
+	}
 }
 
 int main(void) {
