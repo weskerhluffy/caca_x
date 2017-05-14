@@ -663,6 +663,8 @@ static inline void bitch_limpia_todo() {
 		assert_timeout(encendido);
 		bitch_limpia(bitch_mapa, num_actual);
 	}
+
+	bitch_numeros_agregados_tam = 0;
 }
 
 #endif
@@ -1544,13 +1546,13 @@ static inline bool avl_tree_es_hijo_perra(avl_tree_node_t *nodo) {
 }
 /* Find the node containing a given value */
 avl_tree_node_t *avl_tree_find(avl_tree_t *tree, tipo_dato value,
-		tipo_dato pasajero_oscuro) {
+		tipo_dato pasajero_oscuro, bool buscar_ant) {
 	avl_tree_node_t *current = tree->root;
 	avl_tree_node_t *last_of_us = NULL;
 
 	while (current) {
 		if (value > current->llave) {
-			last_of_us = current;
+//			last_of_us = current;
 			current = current->right;
 		} else {
 			if (value < current->llave) {
@@ -1558,10 +1560,15 @@ avl_tree_node_t *avl_tree_find(avl_tree_t *tree, tipo_dato value,
 			} else {
 				if (pasajero_oscuro != AVL_TREE_VALOR_INVALIDO) {
 					if (pasajero_oscuro > current->pasajero_oscuro) {
-						last_of_us = current;
+						if (buscar_ant) {
+							last_of_us = current;
+						}
 						current = current->right;
 					} else {
 						if (pasajero_oscuro < current->pasajero_oscuro) {
+							if (!buscar_ant) {
+								last_of_us = current;
+							}
 							current = current->left;
 						} else {
 							break;
@@ -2131,9 +2138,61 @@ void avl_tree_borrar(avl_tree_t *tree, tipo_dato value,
 	}
 }
 
+static inline avl_tree_node_t* avl_tree_nodo_posicion_anterior(
+		avl_tree_t *arbolin, avl_tree_node_t *nodo_actual) {
+	avl_tree_node_t *nodo_sig;
+
+	nodo_sig = nodo_actual;
+
+	if (nodo_sig->left) {
+		nodo_sig = nodo_sig->left;
+		while (nodo_sig->right) {
+			nodo_sig = nodo_sig->right;
+		}
+	} else {
+		avl_tree_node_t *last_of_us = nodo_sig;
+		nodo_sig = nodo_sig->padre;
+		while (nodo_sig) {
+			if (!avl_tree_es_hijo_perra(last_of_us)) {
+				break;
+			}
+			last_of_us = nodo_sig;
+			nodo_sig = nodo_sig->padre;
+		}
+	}
+
+	return nodo_sig;
+}
+
+static inline avl_tree_node_t* avl_tree_nodo_posicion_siguiente(
+		avl_tree_t *arbolin, avl_tree_node_t *nodo_actual) {
+	avl_tree_node_t *nodo_sig = NULL;
+
+	nodo_sig = nodo_actual;
+
+	if (nodo_sig->right) {
+		nodo_sig = nodo_sig->right;
+		while (nodo_sig->left) {
+			nodo_sig = nodo_sig->left;
+		}
+	} else {
+		avl_tree_node_t *last_of_us = nodo_sig;
+		nodo_sig = nodo_sig->padre;
+		while (nodo_sig) {
+			if (avl_tree_es_hijo_perra(last_of_us)) {
+				break;
+			}
+			last_of_us = nodo_sig;
+			nodo_sig = nodo_sig->padre;
+		}
+	}
+
+	return nodo_sig;
+}
+
 #endif
 
-int numeros[MAX_NUMEROS + 1] = { 0 };
+int numeros[MAX_NUMEROS + 2] = { 0 };
 natural numeros_tam = 0;
 mo_mada consultas[MAX_QUERIES] = { 0 };
 natural consultas_tam = 0;
@@ -2224,12 +2283,21 @@ static inline void caca_x_main() {
 		avl_tree_node_t *nodo_caca = NULL;
 
 		caca_log_debug("el inmediato anterior de %u(%u)\n", numero_act, i - 1);
-		nodo_caca = avl_tree_find(arbolin, numero_act, i - 1);
+		nodo_caca = avl_tree_find(arbolin, numero_act, i - 1,verdadero);
 		if (nodo_caca) {
 			caca_log_debug("es %u(%u)\n", nodo_caca->llave,
 					nodo_caca->pasajero_oscuro);
 		} else {
 			caca_log_debug("nada antes\n");
+		}
+
+		caca_log_debug("el inmediato posterior de %u(%u)\n", numero_act, i + 1);
+		nodo_caca = avl_tree_find(arbolin, numero_act, i + 1,falso);
+		if (nodo_caca) {
+			caca_log_debug("es %u(%u)\n", nodo_caca->llave,
+					nodo_caca->pasajero_oscuro);
+		} else {
+			caca_log_debug("nada despues\n");
 		}
 	}
 #endif
@@ -2243,12 +2311,86 @@ static inline void caca_x_main() {
 
 		if (consul->tipo == mo_mada_actualizacion) {
 			natural idx_actualizar = consul->intervalo_idx_ini;
+			natural idx_viejo_ant = 0;
+			natural idx_viejo_pos = numeros_tam + 1;
+			natural idx_nuevo_ant = 0;
+			natural idx_nuevo_pos = numeros_tam + 1;
 			tipo_dato valor_nuevo = consul->intervalo_idx_fin;
+			tipo_dato viejo_pendejo = numeros[idx_actualizar];
+			avl_tree_node_t *ocurrencia_viejo_ant = NULL;
+			avl_tree_node_t *ocurrencia_viejo_act = NULL;
+			avl_tree_node_t *ocurrencia_viejo_pos = NULL;
+			avl_tree_node_t *ocurrencia_nuevo_ant = NULL;
+			avl_tree_node_t *ocurrencia_nuevo_pos = NULL;
 
+			ocurrencia_viejo_act = avl_tree_find(arbolin, viejo_pendejo,
+					idx_actualizar, verdadero);
+			assert_timeout(
+					ocurrencia_viejo_act
+							&& ocurrencia_viejo_act->llave == viejo_pendejo
+							&& ocurrencia_viejo_act->pasajero_oscuro
+									== idx_actualizar);
+
+			ocurrencia_viejo_ant = avl_tree_nodo_posicion_anterior(arbolin,
+					ocurrencia_viejo_act);
+
+			ocurrencia_viejo_pos = avl_tree_nodo_posicion_siguiente(arbolin,
+					ocurrencia_viejo_act);
+
+			caca_log_debug(
+					"de nodo %u(%u) el anterior es %u(%u) el sig %u(%u)\n",
+					viejo_pendejo, idx_actualizar,
+					ocurrencia_viejo_ant ? ocurrencia_viejo_ant->llave : -1,
+					ocurrencia_viejo_ant ?
+							ocurrencia_viejo_ant->pasajero_oscuro : -1,
+					ocurrencia_viejo_pos ? ocurrencia_viejo_pos->llave : -1,
+					ocurrencia_viejo_pos ?
+							ocurrencia_viejo_pos->pasajero_oscuro : -1);
+
+			if (ocurrencia_viejo_ant
+					&& ocurrencia_viejo_ant->llave == viejo_pendejo) {
+				idx_viejo_ant = ocurrencia_viejo_ant->pasajero_oscuro;
+			}
+			if (ocurrencia_viejo_pos
+					&& ocurrencia_viejo_pos->llave == viejo_pendejo) {
+				idx_viejo_pos = ocurrencia_viejo_pos->pasajero_oscuro;
+			}
+
+			caca_log_debug("de viejo pendejo %d el ant %u el pos %u\n",
+					viejo_pendejo, idx_viejo_ant, idx_viejo_pos);
+
+			ocurrencia_nuevo_ant = avl_tree_find(arbolin, valor_nuevo,
+					idx_actualizar, verdadero);
+			assert_timeout(
+					!ocurrencia_nuevo_ant
+							|| ocurrencia_nuevo_ant->llave != valor_nuevo
+							|| ocurrencia_nuevo_ant->pasajero_oscuro
+									!= idx_actualizar);
+			if (ocurrencia_nuevo_ant) {
+				ocurrencia_viejo_pos = avl_tree_nodo_posicion_siguiente(arbolin,
+						ocurrencia_nuevo_ant);
+			} else {
+				ocurrencia_nuevo_ant = avl_tree_find(arbolin, valor_nuevo,
+						idx_actualizar, falso);
+			}
+
+			if (ocurrencia_nuevo_ant
+					&& ocurrencia_nuevo_ant->llave == valor_nuevo) {
+				idx_nuevo_ant = ocurrencia_nuevo_ant->pasajero_oscuro;
+			}
+			if (ocurrencia_nuevo_pos
+					&& ocurrencia_nuevo_pos->llave == valor_nuevo) {
+				idx_nuevo_pos = ocurrencia_nuevo_pos->pasajero_oscuro;
+
+			}
+
+			caca_log_debug("de nueva mierda %d el ant %u el pos %u",
+					valor_nuevo, idx_nuevo_ant, idx_nuevo_pos);
 		} else {
 
 		}
 	}
+
 }
 
 int main(void) {
