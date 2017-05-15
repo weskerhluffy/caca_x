@@ -37,9 +37,9 @@
 #define CACA_X_BUF_STATICO_DUMP_ARBOL (char[1000] ) { '\0' }
 
 /*
-#define caca_log_debug printf
+ #define caca_log_debug printf
  */
- #define caca_log_debug(formato, args...) 0
+#define caca_log_debug(formato, args...) 0
 #define assert_timeout(condition) assert(condition);
 /*
  #define assert_timeout(condition) 0
@@ -756,7 +756,7 @@ static inline mo_mada *mo_mada_core(mo_mada *consultas, tipo_dato *numeros,
 #if 0
 		assert_timeout(
 				ceil(abs((int )idx_izq_act - (int )consul_idx_izq))
-						<= mo_mada_tam_bloque * 2);
+				<= mo_mada_tam_bloque * 2);
 #endif
 
 		caca_log_debug("vamos a bailar %u-%u\n", consul_idx_izq,
@@ -2354,11 +2354,9 @@ static inline void caca_x_main() {
 					"de nodo %u(%u) el anterior es %u(%u) el sig %u(%u)\n",
 					viejo_pendejo, idx_actualizar,
 					ocurrencia_viejo_ant ? ocurrencia_viejo_ant->llave : -1,
-					ocurrencia_viejo_ant ?
-							ocurrencia_viejo_ant->pasajero_oscuro : -1,
+					ocurrencia_viejo_ant ? ocurrencia_viejo_ant->pasajero_oscuro : -1,
 					ocurrencia_viejo_pos ? ocurrencia_viejo_pos->llave : -1,
-					ocurrencia_viejo_pos ?
-							ocurrencia_viejo_pos->pasajero_oscuro : -1);
+					ocurrencia_viejo_pos ? ocurrencia_viejo_pos->pasajero_oscuro : -1);
 
 			if (ocurrencia_viejo_ant
 					&& ocurrencia_viejo_ant->llave == viejo_pendejo) {
@@ -2378,7 +2376,8 @@ static inline void caca_x_main() {
 					!ocurrencia_nuevo_ant
 							|| ocurrencia_nuevo_ant->llave != valor_nuevo
 							|| ocurrencia_nuevo_ant->pasajero_oscuro
-									!= idx_actualizar);
+									!= idx_actualizar
+							|| valor_nuevo == numeros[idx_actualizar]);
 			if (ocurrencia_nuevo_ant) {
 				ocurrencia_viejo_pos = avl_tree_nodo_posicion_siguiente(arbolin,
 						ocurrencia_nuevo_ant);
@@ -2410,6 +2409,7 @@ static inline void caca_x_main() {
 					idx_viejo_pos, -viejo_pendejo);
 			bit_ch_actualiza(biatch, idx_nuevo_ant, idx_actualizar,
 					idx_nuevo_pos, valor_nuevo);
+			numeros[idx_actualizar] = valor_nuevo;
 		} else {
 			entero_largo delta = 0;
 			entero_largo resu = 0;
@@ -2423,7 +2423,7 @@ static inline void caca_x_main() {
 
 			caca_log_debug("el resul nuevo %lld viene de %lld\n", resu,
 					consul->resulcaca);
-			printf("%lld\n",resu);
+			printf("%lld\n", resu);
 		}
 	}
 
