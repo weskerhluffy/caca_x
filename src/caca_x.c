@@ -2409,6 +2409,10 @@ static inline void caca_x_main() {
 					idx_viejo_pos, -viejo_pendejo);
 			bit_ch_actualiza(biatch, idx_nuevo_ant, idx_actualizar,
 					idx_nuevo_pos, valor_nuevo);
+
+			avl_tree_borrar(arbolin, viejo_pendejo, idx_actualizar);
+			avl_tree_insert(arbolin, valor_nuevo, idx_actualizar);
+
 			numeros[idx_actualizar] = valor_nuevo;
 		} else {
 			entero_largo delta = 0;
