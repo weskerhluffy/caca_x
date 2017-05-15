@@ -36,10 +36,10 @@
 
 #define CACA_X_BUF_STATICO_DUMP_ARBOL (char[1000] ) { '\0' }
 
-#define caca_log_debug printf
 /*
- #define caca_log_debug(formato, args...) 0
+#define caca_log_debug printf
  */
+ #define caca_log_debug(formato, args...) 0
 #define assert_timeout(condition) assert(condition);
 /*
  #define assert_timeout(condition) 0
@@ -753,9 +753,11 @@ static inline mo_mada *mo_mada_core(mo_mada *consultas, tipo_dato *numeros,
 			continue;
 		}
 
+#if 0
 		assert_timeout(
 				ceil(abs((int )idx_izq_act - (int )consul_idx_izq))
 						<= mo_mada_tam_bloque * 2);
+#endif
 
 		caca_log_debug("vamos a bailar %u-%u\n", consul_idx_izq,
 				consul_idx_der);
@@ -803,8 +805,8 @@ static inline mo_mada *mo_mada_core(mo_mada *consultas, tipo_dato *numeros,
 
 #if 1
 
-#define TROZO_TREE_MAX_NUMEROS MAX_NUMEROS
-#define TROZO_TREE_MAX_NODOS ((TROZO_TREE_MAX_NUMEROS<<1)+2)
+#define TROZO_TREE_MAX_NUMEROS (MAX_NUMEROS+2)
+#define TROZO_TREE_MAX_NODOS (((TROZO_TREE_MAX_NUMEROS<<1)+2)*100)
 #define TROZO_TREE_MAX_VALOR INT_MAX
 
 typedef struct trozo_tree {
@@ -815,11 +817,12 @@ typedef struct trozo_tree {
 
 trozo_tree nodos_trozo[TROZO_TREE_MAX_NODOS] = { 0 };
 natural nodos_trozo_usados = 0;
-tipo_dato trozo_tree_numeros[TROZO_TREE_MAX_NUMEROS] = { 0 };
+tipo_dato *trozo_tree_numeros = NULL;
+//tipo_dato trozo_tree_numeros[TROZO_TREE_MAX_NUMEROS] = { 0 };
 natural trozo_tree_numeros_tam = 0;
-natural idx_ini_buscado = 0;
-natural idx_fin_buscado = 0;
-natural idx_a_actualizar = 0;
+natural trozo_tree_idx_ini_buscado = 0;
+natural trozo_tree_idx_fin_buscado = 0;
+natural trozo_tree_idx_a_actualizar = 0;
 
 static inline trozo_tree *trozo_tree_nuevo_nodo() {
 	trozo_tree *nodo_nuevo = (nodos_trozo + (nodos_trozo_usados++));
@@ -857,11 +860,11 @@ static inline void trozo_tree_actualiza(trozo_tree **nodo_actual,
 	nodo_actual_int = *nodo_actual;
 	if (idx_ini == idx_fin) {
 		assert_timeout(idx_ini == idx_fin);
-		assert_timeout(idx_a_actualizar == idx_fin);
-		nodo_actual_int->valor += trozo_tree_numeros[idx_a_actualizar];
+		assert_timeout(trozo_tree_idx_a_actualizar == idx_fin);
+		nodo_actual_int->valor += nuevo_valor;
 		return;
 	}
-	if (idx_a_actualizar <= idx_mid) {
+	if (trozo_tree_idx_a_actualizar <= idx_mid) {
 		trozo_tree_actualiza(&nodo_actual_int->hijo_izq, idx_ini, idx_mid,
 				nuevo_valor);
 	} else {
@@ -869,7 +872,7 @@ static inline void trozo_tree_actualiza(trozo_tree **nodo_actual,
 				nuevo_valor);
 	}
 
-	nodo_actual_int->valor = TROZO_TREE_MAX_VALOR;
+	nodo_actual_int->valor = 0;
 	if (nodo_actual_int->hijo_izq) {
 		nodo_actual_int->valor += nodo_actual_int->hijo_izq->valor;
 	} else {
@@ -877,32 +880,33 @@ static inline void trozo_tree_actualiza(trozo_tree **nodo_actual,
 	}
 }
 
-static inline tipo_dato trozo_tree_consulta(trozo_tree *nodo_actual,
+static inline entero_largo trozo_tree_consulta(trozo_tree *nodo_actual,
 		natural idx_ini, natural idx_fin) {
-	tipo_dato resul = TROZO_TREE_MAX_VALOR;
+	tipo_dato resul = 0;
 
-	if (idx_ini_buscado > idx_fin) {
-		resul = TROZO_TREE_MAX_VALOR;
+	if (trozo_tree_idx_ini_buscado > idx_fin) {
+		resul = 0;
 	} else {
-		if (idx_fin_buscado < idx_ini) {
-			resul = TROZO_TREE_MAX_VALOR;
+		if (trozo_tree_idx_fin_buscado < idx_ini) {
+			resul = 0;
 		} else {
 			if (!nodo_actual) {
-				resul = TROZO_TREE_MAX_VALOR;
+				resul = 0;
 			} else {
-				if (idx_ini >= idx_ini_buscado && idx_fin <= idx_fin_buscado) {
+				if (idx_ini >= trozo_tree_idx_ini_buscado
+						&& idx_fin <= trozo_tree_idx_fin_buscado) {
 					resul = nodo_actual->valor;
 				} else {
 					natural idx_mid = idx_ini + ((idx_fin - idx_ini) >> 1);
-					tipo_dato resul_izq = 0;
-					tipo_dato resul_der = 0;
+					entero_largo resul_izq = 0;
+					entero_largo resul_der = 0;
 
 					resul_izq = trozo_tree_consulta(nodo_actual->hijo_izq,
 							idx_ini, idx_mid);
 					resul_der = trozo_tree_consulta(nodo_actual->hijo_der,
 							idx_mid + 1, idx_fin);
 
-					resul = caca_comun_min(resul_izq, resul_der);
+					resul = resul_izq + resul_der;
 				}
 			}
 		}
@@ -923,16 +927,19 @@ typedef struct bit_ch {
 } bit_ch;
 
 static inline void bit_ch_init(bit_ch *bit, tipo_dato valor_inicial,
-		natural num_cacas) {
+		natural num_cacas, tipo_dato *numeros) {
 
 	bit->num_nodos_bit_ch = num_cacas;
-
+	trozo_tree_numeros = numeros;
 }
 
 static inline void bit_ch_actualiza_trozos(bit_ch *bit, natural idx_bit_ch,
 		natural idx_a_actualizar_en_trozo, tipo_dato num_nuevo) {
 	trozo_tree **trozos = (trozo_tree **) bit->nodos_bit_ch;
+	trozo_tree_idx_a_actualizar = idx_a_actualizar_en_trozo;
 	for (natural i = idx_bit_ch; i <= bit->num_nodos_bit_ch; i += (i & (-i))) {
+		caca_log_debug("actualizando bit idx %u asta pos %u con %d\n", i,
+				idx_a_actualizar_en_trozo, num_nuevo);
 		trozo_tree_actualiza(trozos + i, 1, trozo_tree_numeros_tam, num_nuevo);
 	}
 }
@@ -956,8 +963,11 @@ static inline entero_largo bit_ch_consulta_trozos(bit_ch *bit,
 		natural idx_bit_ch, natural idx_trozo) {
 	entero_largo suma = 0;
 	trozo_tree **trozos = bit->nodos_bit_ch;
+	trozo_tree_idx_ini_buscado = 1;
+	trozo_tree_idx_fin_buscado = idx_trozo;
 	for (int i = idx_bit_ch; i > 0; i -= (i & (-i))) {
-		suma += trozo_tree_consulta(trozos[i], 1, idx_trozo);
+		caca_log_debug("consultando trozo %u\n", i);
+		suma += trozo_tree_consulta(trozos[i], 1, trozo_tree_numeros_tam);
 	}
 	return suma;
 }
@@ -2196,6 +2206,7 @@ int numeros[MAX_NUMEROS + 2] = { 0 };
 natural numeros_tam = 0;
 mo_mada consultas[MAX_QUERIES] = { 0 };
 natural consultas_tam = 0;
+bit_ch *biatch = &(bit_ch ) { 0 };
 
 void caca_x_anade_caca(tipo_dato numero) {
 	bool res_bitch = falso;
@@ -2302,6 +2313,8 @@ static inline void caca_x_main() {
 	}
 #endif
 
+	bit_ch_init(biatch, 0, numeros_tam + 2, numeros);
+	trozo_tree_numeros_tam = numeros_tam + 2;
 	for (int i = 0; i < consultas_tam; i++) {
 		mo_mada *consul = consultas + i;
 
@@ -2374,6 +2387,12 @@ static inline void caca_x_main() {
 						idx_actualizar, falso);
 			}
 
+			assert_timeout(
+					!ocurrencia_nuevo_pos
+							|| ocurrencia_nuevo_pos->llave != valor_nuevo
+							|| ocurrencia_nuevo_pos->pasajero_oscuro
+									!= idx_actualizar);
+
 			if (ocurrencia_nuevo_ant
 					&& ocurrencia_nuevo_ant->llave == valor_nuevo) {
 				idx_nuevo_ant = ocurrencia_nuevo_ant->pasajero_oscuro;
@@ -2384,10 +2403,27 @@ static inline void caca_x_main() {
 
 			}
 
-			caca_log_debug("de nueva mierda %d el ant %u el pos %u",
+			caca_log_debug("de nueva mierda %d el ant %u el pos %u\n",
 					valor_nuevo, idx_nuevo_ant, idx_nuevo_pos);
-		} else {
 
+			bit_ch_actualiza(biatch, idx_viejo_ant, idx_actualizar,
+					idx_viejo_pos, -viejo_pendejo);
+			bit_ch_actualiza(biatch, idx_nuevo_ant, idx_actualizar,
+					idx_nuevo_pos, valor_nuevo);
+		} else {
+			entero_largo delta = 0;
+			entero_largo resu = 0;
+			natural idx_ini = consul->intervalo_idx_ini;
+			natural idx_fin = consul->intervalo_idx_fin;
+			delta = bit_ch_consulta_trozos(biatch, idx_ini, idx_fin);
+
+			caca_log_debug("le delta %lld\n", delta);
+
+			resu = consul->resulcaca + delta;
+
+			caca_log_debug("el resul nuevo %lld viene de %lld\n", resu,
+					consul->resulcaca);
+			printf("%lld\n",resu);
 		}
 	}
 
