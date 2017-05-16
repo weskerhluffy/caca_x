@@ -640,7 +640,7 @@ static inline void bitch_asigna(bitch_vector *bits,
 
 	bits[idx_arreglo] |= (bitch_vector) ((bitch_vector) 1 << idx_registro);
 
-	bitch_numeros_agregados[bitch_numeros_agregados_tam++] = posicion;
+//	bitch_numeros_agregados[bitch_numeros_agregados_tam++] = posicion;
 }
 
 static inline void bitch_limpia(bitch_vector *bits,
