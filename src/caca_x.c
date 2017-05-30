@@ -36,10 +36,10 @@
 
 #define CACA_X_BUF_STATICO_DUMP_ARBOL (char[1000] ) { '\0' }
 
+#define caca_log_debug printf
 /*
- #define caca_log_debug printf
+ #define caca_log_debug(formato, args...) 0
  */
-#define caca_log_debug(formato, args...) 0
 #define assert_timeout(condition) assert(condition);
 /*
  #define assert_timeout(condition) 0
@@ -622,10 +622,10 @@ static inline void bitch_init() {
                         "movq %[bitch_posi],%%rax\n"\
                         "movq $64,%%r8\n"\
                         "divq %%r8\n"\
-                        "mov $1,%[resul]\n"\
+                        "movq $1,%[resul]\n"\
                         "mov %%rdx,%%rcx\n"\
-                        "shll %%cl,%[resul]\n"\
-                        "and (%[vectors],%%rax,8),%[resul]\n"\
+                        "shl %%cl,%[resul]\n"\
+                        "andq (%[vectors],%%rax,8),%[resul]\n"\
                         : [resul] "=b" (resultado)\
                         : [bitch_posi] "r" (posicion), [vectors] "r" (bits)\
             :"rax","rdx","rcx","r8")
@@ -656,7 +656,7 @@ static inline void bitch_limpia(bitch_vector *bits,
 
 static inline void bitch_limpia_todo() {
 	for (natural i = 0; i < bitch_numeros_agregados_tam; i++) {
-		bool encendido = falso;
+		tipo_dato encendido = falso;
 		entero_largo_sin_signo num_actual = bitch_numeros_agregados[i];
 
 		bitch_checa(bitch_mapa, num_actual, encendido);
@@ -671,7 +671,7 @@ static inline void bitch_limpia_todo() {
 
 #if 1
 typedef enum mo_mada_tipo_query {
-	mo_mada_actualizacion = 'U', mo_mada_consulta = 'Q'
+	mo_mada_actualizacion = 'U', mo_mada_consulta = 0
 } mo_mada_tipo_query;
 
 typedef struct mo_mada {
@@ -815,7 +815,8 @@ typedef struct trozo_tree {
 	tipo_dato valor;
 } trozo_tree;
 
-trozo_tree nodos_trozo[TROZO_TREE_MAX_NODOS] = { 0 };
+trozo_tree *nodos_trozo = NULL;
+//trozo_tree nodos_trozo[TROZO_TREE_MAX_NODOS] = { 0 };
 natural nodos_trozo_usados = 0;
 tipo_dato *trozo_tree_numeros = NULL;
 //tipo_dato trozo_tree_numeros[TROZO_TREE_MAX_NUMEROS] = { 0 };
@@ -2209,18 +2210,21 @@ natural consultas_tam = 0;
 bit_ch *biatch = &(bit_ch ) { 0 };
 
 void caca_x_anade_caca(tipo_dato numero) {
-	bool res_bitch = falso;
-	bitch_checa(bitch_mapa, ((entero_largo_sin_signo)numero), res_bitch);
-	if (!res_bitch) {
-		mo_mada_resultado += numero;
-		bitch_asigna(bitch_mapa, numero);
-	}
+	entero_largo_sin_signo cardinalidad_actual = 0;
+	hm_iter iter = 0;
+	iter = hash_map_robin_hood_back_shift_obten(tablon, numero,
+			(entero_largo*) &cardinalidad_actual);
+
+	mo_mada_resultado += ((cardinalidad_actual << 1) + 1) * numero;
+	hash_map_robin_hood_back_shift_indice_pon_valor(tablon, iter,
+			cardinalidad_actual + 1);
 }
 
 void caca_x_quita_caca(tipo_dato numero) {
-	bool res_bitch = falso;
+	entero_largo_sin_signo res_bitch = falso;
 	bitch_checa(bitch_mapa, ((entero_largo_sin_signo)numero), res_bitch);
 	if (res_bitch) {
+		caca_log_debug("quitando num %d\n", numero);
 		mo_mada_resultado -= numero;
 		bitch_limpia(bitch_mapa, numero);
 	}
@@ -2237,6 +2241,7 @@ static inline void caca_x_main() {
 	char buf[100] = { '\0' };
 
 	bitch_init();
+	nodos_trozo = calloc(TROZO_TREE_MAX_NODOS, sizeof(trozo_tree));
 
 	scanf("%u\n", &numeros_tam);
 
@@ -2354,9 +2359,11 @@ static inline void caca_x_main() {
 					"de nodo %u(%u) el anterior es %u(%u) el sig %u(%u)\n",
 					viejo_pendejo, idx_actualizar,
 					ocurrencia_viejo_ant ? ocurrencia_viejo_ant->llave : -1,
-					ocurrencia_viejo_ant ? ocurrencia_viejo_ant->pasajero_oscuro : -1,
+					ocurrencia_viejo_ant ?
+							ocurrencia_viejo_ant->pasajero_oscuro : -1,
 					ocurrencia_viejo_pos ? ocurrencia_viejo_pos->llave : -1,
-					ocurrencia_viejo_pos ? ocurrencia_viejo_pos->pasajero_oscuro : -1);
+					ocurrencia_viejo_pos ?
+							ocurrencia_viejo_pos->pasajero_oscuro : -1);
 
 			if (ocurrencia_viejo_ant
 					&& ocurrencia_viejo_ant->llave == viejo_pendejo) {
