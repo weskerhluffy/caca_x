@@ -4,3 +4,5 @@
 /a.out.dSYM
 /fiesta_mierda.dSYM
 /shame.dSYM
+*.piton.log
+*.c.log
