@@ -1080,7 +1080,7 @@ static inline mo_mada *mo_mada_core(mo_mada *consultas, tipo_dato *numeros,
 	caca_log_debug("anadiendo inicialmente %u\n", numeros[idx_izq_act]);
 	mo_mada_fn_anade_caca((numeros[idx_izq_act]));
 
-	caca_log_debug("puta mierda %lld\n", mo_mada_resultado);
+	caca_log_debug("puta mierda inicial %lld\n", mo_mada_resultado);
 
 	for (int i = 0; i < num_consultas; i++) {
 		natural consul_idx_izq = (consultas + i)->intervalo_idx_ini;
@@ -1104,7 +1104,7 @@ static inline mo_mada *mo_mada_core(mo_mada *consultas, tipo_dato *numeros,
 		while (idx_izq_act > consul_idx_izq) {
 			idx_izq_act--;
 			mo_mada_fn_anade_caca(numeros[idx_izq_act]);
-			caca_log_debug("puta mierda %lld\n", mo_mada_resultado);
+			caca_log_debug("puta mierda 1 %lld\n", mo_mada_resultado);
 		}
 
 		caca_log_debug("aumen der act %u a der consul %u\n", idx_der_act,
@@ -1112,13 +1112,14 @@ static inline mo_mada *mo_mada_core(mo_mada *consultas, tipo_dato *numeros,
 		while (idx_der_act < consul_idx_der) {
 			idx_der_act++;
 			mo_mada_fn_anade_caca(numeros[idx_der_act]);
-			caca_log_debug("puta mierda %lld\n", mo_mada_resultado);
+			caca_log_debug("puta mierda 2 %lld\n", mo_mada_resultado);
 		}
 
 		caca_log_debug("aumen izq act %u a izq consul %u\n", idx_izq_act,
 				consul_idx_izq);
 		while (idx_izq_act < consul_idx_izq) {
 			mo_mada_fn_quita_caca(numeros[idx_izq_act]);
+			caca_log_debug("puta mierda 3 %lld\n", mo_mada_resultado);
 			idx_izq_act++;
 		}
 
@@ -1126,6 +1127,7 @@ static inline mo_mada *mo_mada_core(mo_mada *consultas, tipo_dato *numeros,
 				consul_idx_der);
 		while (idx_der_act > consul_idx_der) {
 			mo_mada_fn_quita_caca(numeros[idx_der_act]);
+			caca_log_debug("puta mierda 4 %lld\n", mo_mada_resultado);
 			idx_der_act--;
 		}
 
@@ -2570,7 +2572,7 @@ void caca_x_quita_caca(tipo_dato numero) {
 	hash_map_robin_hood_back_shift_indice_pon_valor(ocurrencias_mapa, iter,
 			cardinalidad_actual - 1);
 	assert_timeout(cardinalidad_actual >= 0);
-	if (!cardinalidad_actual) {
+	if (!(cardinalidad_actual - 1)) {
 		mo_mada_resultado -= numero;
 	}
 }

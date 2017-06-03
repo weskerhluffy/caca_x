@@ -31,11 +31,12 @@ do
 	date
 #	python cagada/shit.py < $caca > $caca_log_piton
 	./shame < $caca > $caca_log_piton
+	return_codi=$?
 	date
 	diferencia_ojala=$(diff $caca_log_c $caca_log_piton)
 	echo "la diferencia es"
-	echo "$diferencia_ojala CACA"
-	if [[ ! -z "$diferencia_ojala" ]]
+	#echo "$diferencia_ojala CACA"
+	if [[ ! -z "$diferencia_ojala" && $return_codi -eq 0 ]]
 	then
 		echo "verga, diff en $caca"
 #		exit 1
