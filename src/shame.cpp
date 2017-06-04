@@ -68,12 +68,10 @@ void refresh(int& p, int pz, int py, int pos, LL vv) {
 	else
 		refresh(pl[p].r, Right, pos, vv);
 	pl[p].v = 0;
-	if (pl[p].l != -1)
-	{
+	if (pl[p].l != -1) {
 		pl[p].v = pl[pl[p].l].v;
 	}
-	if (pl[p].r != -1)
-	{
+	if (pl[p].r != -1) {
 		pl[p].v += pl[pl[p].r].v;
 	}
 }
@@ -171,6 +169,13 @@ int main() {
 		char buff[2];
 		scanf("%s%d%d", buff, &q[i].x, &q[i].y);
 		q[i].tp = buff[0];
+		if (q[i].tp == 'Q') {
+			if (q[i].x > q[i].y) {
+				int caca = q[i].x;
+				q[i].x = q[i].y;
+				q[i].y = caca;
+			}
+		}
 		q[i].id = i;
 	}
 	std::sort(q + 1, q + nq + 1, cmp1);

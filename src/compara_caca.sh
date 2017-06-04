@@ -39,7 +39,7 @@ do
 	if [[ ! -z "$diferencia_ojala" && $return_codi -eq 0 ]]
 	then
 		echo "verga, diff en $caca"
-#		exit 1
+		exit 1
 	fi
 	mv $caca ya_echos/
 done

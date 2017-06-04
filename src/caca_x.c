@@ -534,7 +534,7 @@ static inline int lee_matrix_long_stdin(tipo_dato *matrix, int *num_filas,
 			}
 			*(matrix + indice_filas * num_max_columnas + indice_columnas) =
 					numero;
-			caca_log_debug("en col %d, fil %d, el valor %lu\n", indice_columnas,
+			caca_log_debug("en col %d, fil %d, el valor %ld\n", indice_columnas,
 					indice_filas, numero);
 			indice_columnas++;
 			caca_log_debug("las columnas son %d\n", indice_columnas);
@@ -1077,7 +1077,7 @@ static inline mo_mada *mo_mada_core(mo_mada *consultas, tipo_dato *numeros,
 
 	idx_izq_act = idx_der_act = (consultas)->intervalo_idx_ini;
 
-	caca_log_debug("anadiendo inicialmente %u\n", numeros[idx_izq_act]);
+	caca_log_debug("anadiendo inicialmente %d\n", numeros[idx_izq_act]);
 	mo_mada_fn_anade_caca((numeros[idx_izq_act]));
 
 	caca_log_debug("puta mierda inicial %lld\n", mo_mada_resultado);
@@ -1151,7 +1151,7 @@ static inline mo_mada *mo_mada_core(mo_mada *consultas, tipo_dato *numeros,
 typedef struct trozo_tree {
 	struct trozo_tree *hijo_izq;
 	struct trozo_tree *hijo_der;
-	tipo_dato valor;
+	entero_largo valor;
 } trozo_tree;
 
 trozo_tree *nodos_trozo = NULL;
@@ -1202,6 +1202,9 @@ static inline void trozo_tree_actualiza(trozo_tree **nodo_actual,
 		assert_timeout(idx_ini == idx_fin);
 		assert_timeout(trozo_tree_idx_a_actualizar == idx_fin);
 		nodo_actual_int->valor += nuevo_valor;
+		caca_log_debug(
+				"trozo individual %u aora vale verga %lld, se le sumio %d\n",
+				idx_ini, nodo_actual_int->valor, nuevo_valor);
 		return;
 	}
 	if (trozo_tree_idx_a_actualizar <= idx_mid) {
@@ -1214,16 +1217,25 @@ static inline void trozo_tree_actualiza(trozo_tree **nodo_actual,
 
 	nodo_actual_int->valor = 0;
 	if (nodo_actual_int->hijo_izq) {
+		caca_log_debug("sumando izq %lld\n", nodo_actual_int->hijo_izq->valor);
 		nodo_actual_int->valor += nodo_actual_int->hijo_izq->valor;
-	} else {
+	}
+	if (nodo_actual_int->hijo_der) {
+		caca_log_debug("sumando der %lld\n", nodo_actual_int->hijo_der->valor);
 		nodo_actual_int->valor += nodo_actual_int->hijo_der->valor;
 	}
+
+	caca_log_debug(
+			"trozo %u-%u aora vale verga %lld, se le sumio %d hijo izq %p hijo der %p\n",
+			idx_ini, idx_fin, nodo_actual_int->valor, nuevo_valor,
+			nodo_actual_int->hijo_izq, nodo_actual_int->hijo_der);
 }
 
 static inline entero_largo trozo_tree_consulta(trozo_tree *nodo_actual,
 		natural idx_ini, natural idx_fin) {
-	tipo_dato resul = 0;
+	entero_largo resul = 0;
 
+	caca_log_debug("me lleva la mierda %u-%u\n", idx_ini, idx_fin);
 	if (trozo_tree_idx_ini_buscado > idx_fin) {
 		resul = 0;
 	} else {
@@ -1251,6 +1263,9 @@ static inline entero_largo trozo_tree_consulta(trozo_tree *nodo_actual,
 			}
 		}
 	}
+	caca_log_debug("consulta %u-%u, intervalo buscado %u-%u aporto %lld\n",
+			idx_ini, idx_fin, trozo_tree_idx_ini_buscado,
+			trozo_tree_idx_fin_buscado, resul);
 	return resul;
 }
 
@@ -1306,8 +1321,11 @@ static inline entero_largo bit_ch_consulta_trozos(bit_ch *bit,
 	trozo_tree_idx_ini_buscado = 1;
 	trozo_tree_idx_fin_buscado = idx_trozo;
 	for (int i = idx_bit_ch; i > 0; i -= (i & (-i))) {
-		caca_log_debug("consultando trozo %u\n", i);
-		suma += trozo_tree_consulta(trozos[i], 1, trozo_tree_numeros_tam);
+		entero_largo aportacion = 0;
+		caca_log_debug("consultando trozo %u hasta %u\n", i, idx_trozo);
+		aportacion = trozo_tree_consulta(trozos[i], 1, trozo_tree_numeros_tam);
+		suma += aportacion;
+		caca_log_debug("%lld\n", aportacion);
 	}
 	return suma;
 }
@@ -2553,8 +2571,8 @@ hm_rr_bs_tabla *ultimo_idx_mapa = &(hm_rr_bs_tabla ) { 0 };
 void caca_x_anade_caca(tipo_dato numero) {
 	entero_largo_sin_signo cardinalidad_actual = 0;
 	hm_iter iter = 0;
-	iter = hash_map_robin_hood_back_shift_obten(ocurrencias_mapa, numero,
-			(entero_largo*) &cardinalidad_actual);
+	iter = hash_map_robin_hood_back_shift_obten(ocurrencias_mapa,
+			(natural) numero, (entero_largo*) &cardinalidad_actual);
 
 	if (!cardinalidad_actual) {
 		mo_mada_resultado += numero;
@@ -2566,8 +2584,8 @@ void caca_x_anade_caca(tipo_dato numero) {
 void caca_x_quita_caca(tipo_dato numero) {
 	entero_largo_sin_signo cardinalidad_actual = 0;
 	hm_iter iter = 0;
-	iter = hash_map_robin_hood_back_shift_obten(ocurrencias_mapa, numero,
-			(entero_largo*) &cardinalidad_actual);
+	iter = hash_map_robin_hood_back_shift_obten(ocurrencias_mapa,
+			(natural) numero, (entero_largo*) &cardinalidad_actual);
 
 	hash_map_robin_hood_back_shift_indice_pon_valor(ocurrencias_mapa, iter,
 			cardinalidad_actual - 1);
@@ -2629,10 +2647,10 @@ static inline void caca_x_main() {
 	hash_map_robin_hood_back_shift_init(ocurrencias_mapa, numeros_tam << 2);
 	hash_map_robin_hood_back_shift_init(ultimo_idx_mapa, numeros_tam << 2);
 	for (int i = 0; i <= numeros_tam; i++) {
-		hash_map_robin_hood_back_shift_pon(ocurrencias_mapa, numeros[i], 0,
-				&(bool ) { 0 });
-		hash_map_robin_hood_back_shift_pon(ultimo_idx_mapa, numeros[i], 0,
-				&(bool ) { 0 });
+		hash_map_robin_hood_back_shift_pon(ocurrencias_mapa,
+				(natural) numeros[i], 0, &(bool ) { 0 });
+		hash_map_robin_hood_back_shift_pon(ultimo_idx_mapa,
+				(natural) numeros[i], 0, &(bool ) { 0 });
 	}
 	mo_mada_core(consultas, numeros, consultas_tam, numeros_tam);
 	caca_log_debug("hecha momada\n");
@@ -2657,19 +2675,19 @@ static inline void caca_x_main() {
 		tipo_dato numero_act = numeros[i];
 		avl_tree_node_t *nodo_caca = NULL;
 
-		caca_log_debug("el inmediato anterior de %u(%u)\n", numero_act, i - 1);
+		caca_log_debug("el inmediato anterior de %d(%u)\n", numero_act, i - 1);
 		nodo_caca = avl_tree_find(arbolin, numero_act, i - 1,verdadero);
 		if (nodo_caca) {
-			caca_log_debug("es %u(%u)\n", nodo_caca->llave,
+			caca_log_debug("es %d(%u)\n", nodo_caca->llave,
 					nodo_caca->pasajero_oscuro);
 		} else {
 			caca_log_debug("nada antes\n");
 		}
 
-		caca_log_debug("el inmediato posterior de %u(%u)\n", numero_act, i + 1);
+		caca_log_debug("el inmediato posterior de %d(%u)\n", numero_act, i + 1);
 		nodo_caca = avl_tree_find(arbolin, numero_act, i + 1,falso);
 		if (nodo_caca) {
-			caca_log_debug("es %u(%u)\n", nodo_caca->llave,
+			caca_log_debug("es %d(%u)\n", nodo_caca->llave,
 					nodo_caca->pasajero_oscuro);
 		} else {
 			caca_log_debug("nada despues\n");
@@ -2699,6 +2717,9 @@ static inline void caca_x_main() {
 			avl_tree_node_t *ocurrencia_viejo_pos = NULL;
 			avl_tree_node_t *ocurrencia_nuevo_ant = NULL;
 			avl_tree_node_t *ocurrencia_nuevo_pos = NULL;
+
+			caca_log_debug("aactualizando pos %u con %d antes tenia %d\n",
+					idx_actualizar, valor_nuevo, viejo_pendejo);
 
 			ocurrencia_viejo_act = avl_tree_find(arbolin, viejo_pendejo,
 					idx_actualizar, verdadero);
@@ -2785,6 +2806,7 @@ static inline void caca_x_main() {
 			entero_largo resu = 0;
 			natural idx_ini = consul->intervalo_idx_ini;
 			natural idx_fin = consul->intervalo_idx_fin;
+			caca_log_debug("coconsulta %u-%u\n", idx_ini, idx_fin);
 			delta = bit_ch_consulta_trozos(biatch, idx_ini, idx_fin);
 
 			caca_log_debug("le delta %lld\n", delta);
