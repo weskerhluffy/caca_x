@@ -36,10 +36,10 @@
 
 #define CACA_X_BUF_STATICO_DUMP_ARBOL (char[1000] ) { '\0' }
 
-#define caca_log_debug printf
 /*
- #define caca_log_debug(formato, args...) 0
+#define caca_log_debug printf
  */
+ #define caca_log_debug(formato, args...) 0
 #define assert_timeout(condition) assert(condition);
 /*
  #define assert_timeout(condition) 0
@@ -2766,10 +2766,10 @@ static inline void caca_x_main() {
 			caca_log_debug("encontro ocurrencia ant de %d(%u) %p\n",
 					valor_nuevo, idx_actualizar, ocurrencia_nuevo_ant);
 			if (ocurrencia_nuevo_ant) {
-				ocurrencia_viejo_pos = avl_tree_nodo_posicion_siguiente(arbolin,
+				ocurrencia_nuevo_pos = avl_tree_nodo_posicion_siguiente(arbolin,
 						ocurrencia_nuevo_ant);
 			} else {
-				ocurrencia_nuevo_ant = avl_tree_find(arbolin, valor_nuevo,
+				ocurrencia_nuevo_pos = avl_tree_find(arbolin, valor_nuevo,
 						idx_actualizar, falso);
 			}
 			caca_log_debug("pero q mierdas %p\n", ocurrencia_nuevo_ant);
