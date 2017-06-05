@@ -41,7 +41,7 @@ const LL MOD = 1000000007;
 #define Right mid+1,py
 const int Maxn = 50005;
 const int Maxq = 100005;
-const int Maxm = 4000005;
+const int Maxm = 8000005;
 
 struct node {
 	int l, r;
@@ -51,7 +51,7 @@ int pcnt, n;
 
 void newnode(int &p) {
 	pl[p = ++pcnt].v = 0;
-	assert(pcnt <= 4000000);
+	assert(pcnt <= 8000000);
 	pl[p].l = -1;
 	pl[p].r = -1;
 }
