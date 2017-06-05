@@ -5,35 +5,663 @@
 #include <assert.h>
 #include <stddef.h>
 #include <unistd.h>
+#include <math.h>
+#include <stdint.h>
 #define MAX_NUMEROS 50000
-#define MAX_NUMEROS_REDONDEADO 65536
 #define MAX_VALOR INT_MAX
 #define MAX_QUERIES 100000
-// 12 es 10 de el num, 1 del espacio 1 de signo
 #define TAM_MAX_LINEA (MAX_NUMEROS*12) 
-#define MAX_NODOS (1 << 16)
-#define CACA_X_VALOR_INVALIDO -1
-#define CACA_X_MAX_VALORES_INT ((unsigned int)((unsigned int)INT_MAX-(INT_MIN)))
-#define CACA_X_BUF_STATICO_DUMP_ARBOL (char[1000] ) { '\0' }
+#define CX_MAX_PROFUNDIDAD 19
+#define CX_MAX_NODOS_AFECTADOS CX_MAX_PROFUNDIDAD*2
+#define CX_MAX_NUMEROS_REDONDEADO (1<<(CX_MAX_PROFUNDIDAD-2))
+#define CX_MAX_NODOS (1 << CX_MAX_PROFUNDIDAD)
+#define CX_VALOR_INVALIDO -1LL
+#define CX_MAX_VALORES_INT UINT_MAX
+#define CX_MAX_NODOS_LISTA 13000000
+#define CX_MAX_BLOQUES 37
+#define CX_BUF_STATICO_DUMP_ARBOL (char[1000] ) { '\0' }
 #define caca_log_debug(formato, args...) 0
 #define ass(condition) assert(condition);
 typedef int td;
 typedef unsigned int nat;
-typedef long long entero_largo;
-typedef unsigned long long bitch_vector;
+typedef long long enl;
+typedef unsigned long long enl_sin_signo;
 typedef enum BOOLEANOS {
 	falso = 0, verdadero
 } bool;
-#define max(x,y) ((x) < (y) ? (y) : (x))
-#define min(x,y) ((x) < (y) ? (x) : (y))
+#define caca_comun_max(x,y) ((x) < (y) ? (y) : (x))
+#define caca_comun_min(x,y) ((x) < (y) ? (x) : (y))
+static inline int lee_matrix_long_stdin(td *matrix, int *num_filas,
+		int *num_columnas, int num_max_filas, int num_max_columnas) {
+	int indice_filas = 0;
+	int indice_columnas = 0;
+	long numero = 0;
+	char *sig_cadena_numero = NULL;
+	char *cadena_numero_act = NULL;
+	char *linea = NULL;
+	linea = calloc(TAM_MAX_LINEA, sizeof(char));
+	while (indice_filas < num_max_filas && fgets(linea, TAM_MAX_LINEA, stdin)) {
+		indice_columnas = 0;
+		cadena_numero_act = linea;
+		for (sig_cadena_numero = linea;; sig_cadena_numero =
+				cadena_numero_act) {
+			numero = strtol(sig_cadena_numero, &cadena_numero_act, 10);
+			if (cadena_numero_act == sig_cadena_numero) {
+				break;
+			}
+			*(matrix + indice_filas * num_max_columnas + indice_columnas) =
+					numero;
+
+			indice_columnas++;
+
+			setbuf(stdout, NULL );
+		}
+		if (num_columnas) {
+			num_columnas[indice_filas] = indice_columnas;
+		}
+		indice_filas++;
+
+	}
+	*num_filas = indice_filas;
+	free(linea);
+	return 0;
+}
+int caca_comun_compara_enteros(const void *a, const void *b) {
+	int a_int = 0;
+	int b_int = 0;
+	int resultado = 0;
+	a_int = *(int *) a;
+	b_int = *(int *) b;
+	resultado = a_int - b_int;
+	return resultado;
+}
+void cax_anade_caca(td numero);
+void cax_quita_caca(td numero);
 #if 1
-#define AVL_TREE_VALOR_INVALIDO CACA_X_VALOR_INVALIDO
+typedef nat hm_iter;
+#define HM_VALOR_INVALIDO ((hm_iter)CX_VALOR_INVALIDO)
+typedef struct hash_map_entry {
+	enl ll;
+	enl valor;
+} hm_entry;
+typedef struct hash_map_cubeta {
+	uint64_t hash;
+	hm_entry *entry;
+} hm_cubeta;
+typedef struct hmrh {
+	hm_cubeta *buckets_;
+	uint64_t num_buckets_;
+	uint64_t num_buckets_used_;
+	uint64_t probing_min_;
+	uint64_t probing_max_;
+} hm_rr_bs_tabla;
+int hmrh_init(hm_rr_bs_tabla *ht, int num_cubetas) {
+	ht->num_buckets_ = num_cubetas;
+	ht->buckets_ = (hm_cubeta *) calloc(ht->num_buckets_, sizeof(hm_cubeta));
+	ht->num_buckets_used_ = 0;
+	ht->probing_max_ = num_cubetas;
+	return 0;
+}
+int hmrh_fini(hm_rr_bs_tabla *ht) {
+	if (ht->buckets_ != NULL ) {
+		for (uint32_t i = 0; i < ht->num_buckets_; i++) {
+			if (ht->buckets_[i].entry != NULL ) {
+				free(ht->buckets_[i].entry);
+				ht->buckets_[i].entry = NULL;
+			}
+		}
+		free(ht->buckets_);
+	}
+	return 0;
+}
+static inline int hmrh_llena_distancia_a_indice_inicio(
+		hm_rr_bs_tabla *ht, uint64_t index_stored, uint64_t *distance) {
+	hm_cubeta cubeta = ht->buckets_[index_stored];
+	*distance = 0;
+	if (cubeta.entry == NULL )
+		return -1;
+	uint64_t num_cubetas = ht->num_buckets_;
+	uint64_t index_init = cubeta.hash % num_cubetas;
+	if (index_init <= index_stored) {
+		*distance = index_stored - index_init;
+	} else {
+		*distance = index_stored + (num_cubetas - index_init);
+	}
+	return 0;
+}
+hm_iter hmrh_obten(hm_rr_bs_tabla *ht, const enl key,
+		enl *value) {
+	uint64_t num_cubetas = ht->num_buckets_;
+	uint64_t prob_max = ht->probing_max_;
+//	uint64_t hash = hash_function_caca(key);
+	uint64_t hash = key % num_cubetas;
+	uint64_t index_init = hash;
+	uint64_t probe_distance = 0;
+	uint64_t index_current;
+	bool found = falso;
+	uint32_t i;
+	*value = HM_VALOR_INVALIDO;
+	for (i = 0; i < num_cubetas; i++) {
+		index_current = (index_init + i) % num_cubetas;
+		hm_entry *entrada = ht->buckets_[index_current].entry;
+		if (entrada == NULL ) {
+			break;
+		}
+		hmrh_llena_distancia_a_indice_inicio(ht,
+				index_current, &probe_distance);
+		if (i > probe_distance) {
+			break;
+		}
+		if (entrada->ll == key) {
+			*value = entrada->valor;
+			found = verdadero;
+			break;
+		}
+	}
+	if (found)
+		return index_current;
+	return HM_VALOR_INVALIDO ;
+}
+hm_iter hmrh_pon(hm_rr_bs_tabla *ht, enl key,
+		enl value, bool *nuevo_entry) {
+	uint64_t num_cubetas = ht->num_buckets_;
+	uint64_t prob_max = ht->probing_max_;
+	uint64_t prob_min = ht->probing_min_;
+	hm_cubeta *cubetas = ht->buckets_;
+	*nuevo_entry = verdadero;
+	if (ht->num_buckets_used_ == num_cubetas) {
+		*nuevo_entry = falso;
+		return HM_VALOR_INVALIDO ;
+	}
+	ht->num_buckets_used_ += 1;
+	uint64_t hash = key % num_cubetas;
+	uint64_t index_init = hash;
+	hm_entry *entry = (hm_entry *) calloc(1, sizeof(hm_entry));
+	entry->ll = key;
+	entry->valor = value;
+	uint64_t index_current = index_init % num_cubetas;
+	uint64_t probe_current = 0;
+	uint64_t probe_distance;
+	hm_entry *entry_temp;
+	uint64_t hash_temp;
+	uint64_t i;
+	for (i = 0; i < num_cubetas; i++) {
+		index_current = (index_init + i) % num_cubetas;
+		hm_cubeta *cubeta = cubetas + index_current;
+		if (cubeta->entry == NULL ) {
+			cubeta->entry = entry;
+			cubeta->hash = hash;
+			if (index_current > prob_max) {
+				ht->probing_max_ = index_current;
+			}
+			if (index_current < prob_min) {
+				ht->probing_min_ = index_current;
+			}
+			break;
+		} else {
+			if (cubeta->entry->ll == key) {
+				free(entry);
+				*nuevo_entry = falso;
+				break;
+			}
+			hmrh_llena_distancia_a_indice_inicio(ht,
+					index_current, &probe_distance);
+			if (probe_current > probe_distance) {
+				// Swapping the current bucket with the one to insert
+				entry_temp = cubeta->entry;
+				hash_temp = cubeta->hash;
+				cubeta->entry = entry;
+				cubeta->hash = hash;
+				entry = entry_temp;
+				hash = hash_temp;
+				probe_current = probe_distance;
+			}
+		}
+		probe_current++;
+	}
+	return index_current;
+}
+int hmrh_borra(hm_rr_bs_tabla *ht, const td key) {
+	uint64_t num_cubetas = ht->num_buckets_;
+	uint64_t prob_max = ht->probing_max_;
+	uint64_t prob_min = ht->probing_max_;
+	uint64_t hash = key % num_cubetas;
+	uint64_t index_init = hash;
+	bool found = falso;
+	uint64_t index_current = 0;
+	uint64_t probe_distance = 0;
+	hm_entry *entrada = NULL;
+	for (uint64_t i = 0; i < num_cubetas; i++) {
+		index_current = (index_init + i) % num_cubetas;
+		entrada = ht->buckets_[index_current].entry;
+		hmrh_llena_distancia_a_indice_inicio(ht,
+				index_current, &probe_distance);
+		if (entrada == NULL || i > probe_distance) {
+			break;
+		}
+		if (entrada->ll == key) {
+			found = verdadero;
+			break;
+		}
+	}
+	if (found) {
+		free(entrada);
+		uint64_t i = 1;
+		uint64_t index_previous = 0, index_swap = 0;
+		for (i = 1; i < num_cubetas; i++) {
+			index_previous = (index_current + i - 1) % num_cubetas;
+			index_swap = (index_current + i) % num_cubetas;
+			hm_cubeta *cubeta_swap = ht->buckets_ + index_swap;
+			hm_cubeta *cubeta_previous = ht->buckets_ + index_previous;
+			if (cubeta_swap->entry == NULL ) {
+				cubeta_previous->entry = NULL;
+				break;
+			}
+			uint64_t distance;
+			if (hmrh_llena_distancia_a_indice_inicio(
+					ht, index_swap, &distance) != 0) {
+				fprintf(stderr, "Error in FillDistanceToInitIndex()");
+			}
+			if (!distance) {
+				cubeta_previous->entry = NULL;
+				break;
+			}
+			cubeta_previous->entry = cubeta_swap->entry;
+			cubeta_previous->hash = cubeta_swap->hash;
+		}
+		if (i < num_cubetas) {
+			if (index_previous == prob_min) {
+				prob_min++;
+				if (prob_min >= num_cubetas) {
+					prob_min = 0;
+				} else {
+					while (prob_min < num_cubetas
+							&& ht->buckets_[prob_min].entry) {
+						prob_min++;
+					}
+					if (prob_min >= num_cubetas) {
+						prob_min = num_cubetas;
+					}
+				}
+				ht->probing_min_ = prob_min;
+			}
+			if (index_previous == prob_max) {
+				prob_max--;
+				if (prob_max >= num_cubetas) {
+					prob_max = num_cubetas;
+				} else {
+					while (((int64_t) prob_max) >= 0
+							&& ht->buckets_[prob_max].entry) {
+						prob_max--;
+					}
+					if (prob_max >= num_cubetas) {
+						prob_max = 0;
+					}
+				}
+				ht->probing_max_ = prob_max;
+			}
+		}
+		ht->num_buckets_used_--;
+		return 0;
+	}
+	return 1;
+}
+static inline void hmrh_indice_pon_valor(
+		hm_rr_bs_tabla *ht, hm_iter indice, enl valor) {
+	ass(indice <= ht->probing_max_ && indice >= ht->probing_min_);
+	hm_entry *entrada = ht->buckets_[indice].entry;
+	ass(entrada);
+	entrada->valor = valor;
+}
+int hmrh_indice_borra(hm_rr_bs_tabla *ht,
+		hm_iter indice) {
+	ass(indice <= ht->probing_max_ && indice >= ht->probing_min_);
+	uint64_t num_cubetas = ht->num_buckets_;
+	uint64_t prob_max = ht->probing_max_;
+	uint64_t prob_min = ht->probing_max_;
+	uint64_t index_current = indice;
+	hm_entry *entrada = ht->buckets_[index_current].entry;
+	ass(entrada);
+	free(entrada);
+	uint64_t i = 1;
+	uint64_t index_previous = 0, index_swap = 0;
+	for (i = 1; i < num_cubetas; i++) {
+		index_previous = (index_current + i - 1) % num_cubetas;
+		index_swap = (index_current + i) % num_cubetas;
+		hm_cubeta *cubeta_swap = ht->buckets_ + index_swap;
+		hm_cubeta *cubeta_previous = ht->buckets_ + index_previous;
+		if (cubeta_swap->entry == NULL ) {
+			cubeta_previous->entry = NULL;
+			break;
+		}
+		uint64_t distance;
+		if (hmrh_llena_distancia_a_indice_inicio(ht,
+				index_swap, &distance) != 0) {
+			fprintf(stderr, "Error in FillDistanceToInitIndex()");
+		}
+		if (!distance) {
+			cubeta_previous->entry = NULL;
+			break;
+		}
+		cubeta_previous->entry = cubeta_swap->entry;
+		cubeta_previous->hash = cubeta_swap->hash;
+	}
+	if (i < num_cubetas) {
+		if (index_previous == prob_min) {
+			prob_min++;
+			if (prob_min >= num_cubetas) {
+				prob_min = 0;
+			} else {
+				while (prob_min < num_cubetas && ht->buckets_[prob_min].entry) {
+					prob_min++;
+				}
+				if (prob_min >= num_cubetas) {
+					prob_min = num_cubetas;
+				}
+			}
+			ht->probing_min_ = prob_min;
+		}
+		if (index_previous == prob_max) {
+			prob_max--;
+			if (prob_max >= num_cubetas) {
+				prob_max = num_cubetas;
+			} else {
+				while (((int64_t) prob_max) >= 0 && ht->buckets_[prob_max].entry) {
+					prob_max--;
+				}
+				if (prob_max >= num_cubetas) {
+					prob_max = 0;
+				}
+			}
+			ht->probing_max_ = prob_max;
+		}
+	}
+	ht->num_buckets_used_--;
+	return 0;
+}
+#endif
+#if 1
+typedef unsigned long long bitch_vector;
+#define BITCH_MAX_NUMEROS_AGREGADOS MAX_NUMEROS
+#define BITCH_TAM_MAPA ( (CX_MAX_VALORES_INT / (sizeof(bitch_vector) * 8)) + 1)
+enl_sin_signo bitch_numeros_agregados[BITCH_MAX_NUMEROS_AGREGADOS] = { 0 };
+nat bitch_numeros_agregados_tam = 0;
+bitch_vector *bitch_mapa = NULL;
+static inline void bitch_init() {
+	bitch_mapa = calloc(BITCH_TAM_MAPA, sizeof(bitch_vector));
+	ass(bitch_mapa);
+}
+#define bitch_checa(bits, posicion, resultado) \
+        __asm__ (\
+                        "xor %%rdx,%%rdx\n"\
+                        "movq %[bitch_posi],%%rax\n"\
+                        "movq $64,%%r8\n"\
+                        "divq %%r8\n"\
+                        "movq $1,%[resul]\n"\
+                        "mov %%rdx,%%rcx\n"\
+                        "shl %%cl,%[resul]\n"\
+                        "andq (%[vectors],%%rax,8),%[resul]\n"\
+                        : [resul] "=b" (resultado)\
+                        : [bitch_posi] "r" (posicion), [vectors] "r" (bits)\
+            :"rax","rdx","rcx","r8")
+#endif
+#if 1
+typedef enum mo_mada_tipo_query {
+	mo_mada_actizacion = 'U', mo_mada_consulta = 'Q'
+} mo_mada_tipo_query;
+typedef struct mo_mada {
+	mo_mada_tipo_query tipo;
+	nat idx_query;
+	nat intervalo_idx_ini;
+	nat intervalo_idx_fin;
+	nat orden;
+	enl resulcaca;
+} mo_mada;
+nat mo_mada_tam_bloque = 0;
+enl mo_mada_resultado = 0;
+int mo_mada_ord_bloque(const void *pa, const void *pb) {
+	int res = 0;
+	mo_mada *a = (mo_mada *) pa;
+	mo_mada *b = (mo_mada *) pb;
+	nat idx_bloque_a = a->intervalo_idx_ini / mo_mada_tam_bloque;
+	nat idx_bloque_b = b->intervalo_idx_ini / mo_mada_tam_bloque;
+	nat idx_fin_a = a->intervalo_idx_fin;
+	nat idx_fin_b = b->intervalo_idx_fin;
+	nat idx_ini_a = a->intervalo_idx_ini;
+	nat idx_ini_b = b->intervalo_idx_ini;
+	if (idx_bloque_a != idx_bloque_b) {
+		res = idx_bloque_a - idx_bloque_b;
+	} else {
+		if (idx_fin_a != idx_fin_b) {
+			res = idx_fin_a - idx_fin_b;
+		} else {
+			if (idx_ini_a != idx_ini_b) {
+				res = idx_ini_a - idx_ini_b;
+			} else {
+				res = a->orden - b->orden;
+			}
+		}
+	}
+	return res;
+}
+int mo_mada_ord_idx_query(const void *pa, const void *pb) {
+	int res = 0;
+	mo_mada *a = (mo_mada *) pa;
+	mo_mada *b = (mo_mada *) pb;
+	res = a->idx_query - b->idx_query;
+	return res;
+}
+#define mo_mada_fn_ord_mo mo_mada_ord_bloque
+#define mo_mada_fn_ord_idx mo_mada_ord_idx_query
+#define mo_mada_fn_anade_caca cax_anade_caca
+#define mo_mada_fn_quita_caca cax_quita_caca
+static inline mo_mada *mo_mada_core(mo_mada *consultas, td *numeros,
+		nat num_consultas, nat num_numeros) {
+	nat idx_izq_act = 0;
+	nat idx_der_act = 0;
+	mo_mada_tam_bloque = ceil(sqrt(num_numeros));
+	qsort(consultas, num_consultas, sizeof(mo_mada), mo_mada_fn_ord_mo);
+	idx_izq_act = idx_der_act = (consultas)->intervalo_idx_ini;
+	mo_mada_fn_anade_caca((numeros[idx_izq_act]));
+	for (int i = 0; i < num_consultas; i++) {
+		nat consul_idx_izq = (consultas + i)->intervalo_idx_ini;
+		nat consul_idx_der = (consultas + i)->intervalo_idx_fin;
+		if ((consultas + i)->tipo == mo_mada_actizacion) {
+			continue;
+		}
+#if 0
+		ass(
+				ceil(abs((int )idx_izq_act - (int )consul_idx_izq))
+				<= mo_mada_tam_bloque * 2);
+#endif
+
+		while (idx_izq_act > consul_idx_izq) {
+			idx_izq_act--;
+			mo_mada_fn_anade_caca(numeros[idx_izq_act]);
+
+		}
+
+		while (idx_der_act < consul_idx_der) {
+			idx_der_act++;
+			mo_mada_fn_anade_caca(numeros[idx_der_act]);
+
+		}
+
+		while (idx_izq_act < consul_idx_izq) {
+			mo_mada_fn_quita_caca(numeros[idx_izq_act]);
+
+			idx_izq_act++;
+		}
+
+		while (idx_der_act > consul_idx_der) {
+			mo_mada_fn_quita_caca(numeros[idx_der_act]);
+
+			idx_der_act--;
+		}
+
+		(consultas + i)->resulcaca = mo_mada_resultado;
+	}
+	qsort(consultas, num_consultas, sizeof(mo_mada), mo_mada_fn_ord_idx);
+	return consultas;
+}
+#endif
+#if 1
+#define TRT_MAX_NUMEROS (MAX_NUMEROS+2)
+#define TRT_MAX_NODOS (((TRT_MAX_NUMEROS<<1)+2)*100)
+#define TRT_MAX_VALOR INT_MAX
+typedef struct trt {
+	struct trt *hijo_izq;
+	struct trt *hijo_der;
+	enl valor;
+} trt;
+trt *nds_trozo = NULL;
+nat nds_trozo_usados = 0;
+td *trt_numeros = NULL;
+nat trt_numeros_tam = 0;
+nat trt_idx_ini_buscado = 0;
+nat trt_idx_fin_buscado = 0;
+nat trt_idx_a_actizar = 0;
+static inline trt *trt_nuevo_nd() {
+	trt *nd_nuevo = (nds_trozo + (nds_trozo_usados++));
+	return nd_nuevo;
+}
+static inline void trt_contruye(trt **nd_act, nat idx_ini, nat idx_fin) {
+	trt *nd_act_int = NULL;
+	if (!*nd_act) {
+		*nd_act = trt_nuevo_nd();
+	}
+	nd_act_int = *nd_act;
+	if (idx_ini != idx_fin) {
+		nat idx_mid = idx_ini + ((idx_fin - idx_ini) >> 1);
+		trt_contruye(&nd_act_int->hijo_izq, idx_ini, idx_mid);
+		trt_contruye(&nd_act_int->hijo_der, idx_mid + 1, idx_fin);
+		nd_act_int->valor = caca_comun_min(
+				nd_act_int->hijo_izq->valor,
+				nd_act_int->hijo_der->valor);
+	} else {
+		nd_act_int->valor = trt_numeros[idx_ini];
+	}
+}
+static inline void trt_actiza(trt **nd_act, nat idx_ini, nat idx_fin,
+		td nuevo_valor) {
+	nat idx_mid = idx_ini + ((idx_fin - idx_ini) >> 1);
+	trt *nd_act_int = NULL;
+	if (!*nd_act) {
+		*nd_act = trt_nuevo_nd();
+	}
+	nd_act_int = *nd_act;
+	if (idx_ini == idx_fin) {
+		ass(idx_ini == idx_fin);
+		ass(trt_idx_a_actizar == idx_fin);
+		nd_act_int->valor += nuevo_valor;
+
+		return;
+	}
+	if (trt_idx_a_actizar <= idx_mid) {
+		trt_actiza(&nd_act_int->hijo_izq, idx_ini, idx_mid, nuevo_valor);
+	} else {
+		trt_actiza(&nd_act_int->hijo_der, idx_mid + 1, idx_fin,
+				nuevo_valor);
+	}
+	nd_act_int->valor = 0;
+	if (nd_act_int->hijo_izq) {
+
+		nd_act_int->valor += nd_act_int->hijo_izq->valor;
+	}
+	if (nd_act_int->hijo_der) {
+
+		nd_act_int->valor += nd_act_int->hijo_der->valor;
+	}
+}
+static inline enl trt_consulta(trt *nd_act, nat idx_ini, nat idx_fin) {
+	enl resul = 0;
+	if (trt_idx_ini_buscado > idx_fin) {
+		resul = 0;
+	} else {
+		if (trt_idx_fin_buscado < idx_ini) {
+			resul = 0;
+		} else {
+			if (!nd_act) {
+				resul = 0;
+			} else {
+				if (idx_ini >= trt_idx_ini_buscado
+						&& idx_fin <= trt_idx_fin_buscado) {
+					resul = nd_act->valor;
+				} else {
+					nat idx_mid = idx_ini + ((idx_fin - idx_ini) >> 1);
+					enl resul_izq = 0;
+					enl resul_der = 0;
+					resul_izq = trt_consulta(nd_act->hijo_izq, idx_ini,
+							idx_mid);
+					resul_der = trt_consulta(nd_act->hijo_der, idx_mid + 1,
+							idx_fin);
+					resul = resul_izq + resul_der;
+				}
+			}
+		}
+	}
+	return resul;
+}
+#endif
+#if 1
+#define BIT_CH_VALOR_INVALIDO ULLONG_MAX
+#define BIT_CH_MAX_NODOS MAX_NUMEROS
+typedef struct bit_ch {
+	nat num_nds_bit_ch;
+//	td nds_bit_ch[BIT_CH_MAX_NODOS + 2];
+	trt *nds_bit_ch[BIT_CH_MAX_NODOS + 2];
+} bit_ch;
+static inline void bit_ch_init(bit_ch *bit, td valor_inicial, nat num_cacas,
+		td *numeros) {
+	bit->num_nds_bit_ch = num_cacas;
+	trt_numeros = numeros;
+}
+static inline void bit_ch_actiza_trozos(bit_ch *bit, nat idx_bit_ch,
+		nat idx_a_actizar_en_trozo, td num_nuevo) {
+	trt **trozos = (trt **) bit->nds_bit_ch;
+	trt_idx_a_actizar = idx_a_actizar_en_trozo;
+	for (nat i = idx_bit_ch; i <= bit->num_nds_bit_ch; i += (i & (-i))) {
+
+		trt_actiza(trozos + i, 1, trt_numeros_tam, num_nuevo);
+	}
+}
+static inline void bit_ch_actiza(bit_ch *bit, nat ocurrencia_anterior,
+		nat ocurrencia_a_actizar, nat ocurrencia_sig, td num_nuevo) {
+	bit_ch_actiza_trozos(bit, ocurrencia_anterior + 1,
+			ocurrencia_a_actizar, num_nuevo);
+	bit_ch_actiza_trozos(bit, ocurrencia_anterior + 1, ocurrencia_sig,
+			-num_nuevo);
+	bit_ch_actiza_trozos(bit, ocurrencia_a_actizar + 1,
+			ocurrencia_a_actizar, -num_nuevo);
+	bit_ch_actiza_trozos(bit, ocurrencia_a_actizar + 1,
+			ocurrencia_sig, num_nuevo);
+}
+static inline enl bit_ch_consulta_trozos(bit_ch *bit, nat idx_bit_ch,
+		nat idx_trozo) {
+	enl suma = 0;
+	trt **trozos = bit->nds_bit_ch;
+	trt_idx_ini_buscado = 1;
+	trt_idx_fin_buscado = idx_trozo;
+	for (int i = idx_bit_ch; i > 0; i -= (i & (-i))) {
+		enl aportacion = 0;
+
+		aportacion = trt_consulta(trozos[i], 1, trt_numeros_tam);
+		suma += aportacion;
+
+	}
+	return suma;
+}
+#endif
+#if 1
+#define AVL_TREE_VALOR_INVALIDO CX_VALOR_INVALIDO
+#define AVL_TREE_MAX_RANGO_A_MAPEAR (MAX_VALOR<<1)
 struct avt_node_s {
 	td ll;
 	nat altura;
 	nat num_decendientes;
 	nat indice_en_arreglo;
 	nat ocu;
+	td pasajero_oscuro;
 	struct avt_node_s *lf;
 	struct avt_node_s *rg;
 	struct avt_node_s *padre;
@@ -43,21 +671,15 @@ struct avt_s {
 	nat max_nds;
 	nat nds_realmente_en_abl;
 	nat nds_usados;
-	nat nds_realmente_en_abl_utiles;
-	nat max_nds_utiles;
-	nat ocu_totales;
 	struct avt_node_s *rt;
 	avt_node_t *nds_mem;
 	nat *nds_libres_idx;
-	unsigned long siguiente_idx_para_usar;
+	unsigned long sig_idx_para_usar;
 	unsigned long ultimo_idx_anadido;
+//	bitch_vector mapa_recorridos[AVL_TREE_MAX_RANGO_A_MAPEAR / (sizeof(bitch_vector) * 8)];
+//	nat numeros_marcados[AVL_TREE_MAX_RANGO_A_MAPEAR];
 };
 typedef struct avt_s avt_t;
-typedef struct avt_iterator_t {
-	avt_t *ablin;
-	char *contador_visitas;
-	avt_node_t *nd_actual;
-} avt_iterator_t;
 avt_t *avt_create(avt_t **ablin, int max_nds) {
 	avt_t *tree = NULL;
 	ass(ablin);
@@ -73,41 +695,34 @@ avt_t *avt_create(avt_t **ablin, int max_nds) {
 	ass(tree->nds_libres_idx);
 	return tree;
 }
-static inline void avt_destroy(avt_t *ablin) {
-	free(ablin->nds_mem);
-	free(ablin->nds_libres_idx);
-	free(ablin);
-}
-avt_node_t *avt_create_node(avt_t *ablin, td ll) {
+avt_node_t *avt_create_node(avt_t *ablin) {
 	avt_node_t *node = NULL;
 	ass(
-			ablin->siguiente_idx_para_usar < ablin->ultimo_idx_anadido
-					|| ((ablin->siguiente_idx_para_usar
+			ablin->sig_idx_para_usar < ablin->ultimo_idx_anadido
+					|| ((ablin->sig_idx_para_usar
 							== ablin->ultimo_idx_anadido)
 							&& ablin->nds_usados < ablin->max_nds));
-	if (ablin->siguiente_idx_para_usar < ablin->ultimo_idx_anadido) {
+	if (ablin->sig_idx_para_usar < ablin->ultimo_idx_anadido) {
 		node = ablin->nds_mem
-				+ ablin->nds_libres_idx[ablin->siguiente_idx_para_usar
+				+ ablin->nds_libres_idx[ablin->sig_idx_para_usar
 						% ablin->max_nds];
 		node->indice_en_arreglo =
-				ablin->nds_libres_idx[ablin->siguiente_idx_para_usar
+				ablin->nds_libres_idx[ablin->sig_idx_para_usar
 						% ablin->max_nds];
-		ablin->nds_libres_idx[ablin->siguiente_idx_para_usar
-				% ablin->max_nds] = 0xffffffff;
-		ablin->siguiente_idx_para_usar++;
+		ablin->nds_libres_idx[ablin->sig_idx_para_usar % ablin->max_nds] =
+				0xffffffff;
+		ablin->sig_idx_para_usar++;
 	} else {
 		node = ablin->nds_mem + ablin->nds_usados++;
 		node->indice_en_arreglo = ablin->nds_usados - 1;
 	}
-	node->ll = ll;
 	ablin->nds_realmente_en_abl++;
-	ablin->nds_realmente_en_abl_utiles++;
 	return node;
 }
 int avt_node_height(avt_node_t *node) {
 	return node ? node->altura : 0;
 }
-static inline void avt_node_actualizar_altura(avt_node_t *node) {
+static inline void avt_node_actizar_altura(avt_node_t *node) {
 	int height_lf = 0;
 	int height_rg = 0;
 	if (node->lf) {
@@ -117,14 +732,12 @@ static inline void avt_node_actualizar_altura(avt_node_t *node) {
 		height_rg = node->rg->altura;
 	}
 	if (node->lf || node->rg) {
-		node->altura = (height_rg > height_lf ? height_rg : height_lf)
-				+ 1;
+		node->altura = (height_rg > height_lf ? height_rg : height_lf) + 1;
 	} else {
 		node->altura = 0;
 	}
 }
-static inline void avt_node_actualizar_num_decendientes(
-		avt_node_t *node) {
+static inline void avt_node_actizar_num_decendientes(avt_node_t *node) {
 	int conteo_lf = 0;
 	int conteo_rg = 0;
 	if (node->lf) {
@@ -134,8 +747,8 @@ static inline void avt_node_actualizar_num_decendientes(
 		conteo_rg = node->rg->num_decendientes;
 	}
 	if (node->lf || node->rg) {
-		node->num_decendientes = conteo_lf + conteo_rg
-				+ (node->lf ? 1 : 0) + (node->rg ? 1 : 0);
+		node->num_decendientes = conteo_lf + conteo_rg + (node->lf ? 1 : 0)
+				+ (node->rg ? 1 : 0);
 	} else {
 		node->num_decendientes = 0;
 	}
@@ -147,10 +760,10 @@ avt_node_t *avt_rotate_lflf(avt_node_t *node) {
 	padre = node->padre;
 	a->lf = b->rg;
 	b->rg = a;
-	avt_node_actualizar_altura(a);
-	avt_node_actualizar_altura(b);
-	avt_node_actualizar_num_decendientes(a);
-	avt_node_actualizar_num_decendientes(b);
+	avt_node_actizar_altura(a);
+	avt_node_actizar_altura(b);
+	avt_node_actizar_num_decendientes(a);
+	avt_node_actizar_num_decendientes(b);
 	a->padre = b;
 	b->padre = padre;
 	if (a->lf) {
@@ -168,12 +781,12 @@ avt_node_t *avt_rotate_lfrg(avt_node_t *node) {
 	b->rg = c->lf;
 	c->lf = b;
 	c->rg = a;
-	avt_node_actualizar_altura(a);
-	avt_node_actualizar_altura(b);
-	avt_node_actualizar_altura(c);
-	avt_node_actualizar_num_decendientes(a);
-	avt_node_actualizar_num_decendientes(b);
-	avt_node_actualizar_num_decendientes(c);
+	avt_node_actizar_altura(a);
+	avt_node_actizar_altura(b);
+	avt_node_actizar_altura(c);
+	avt_node_actizar_num_decendientes(a);
+	avt_node_actizar_num_decendientes(b);
+	avt_node_actizar_num_decendientes(c);
 	a->padre = c;
 	b->padre = c;
 	c->padre = padre;
@@ -195,12 +808,12 @@ avt_node_t *avt_rotate_rglf(avt_node_t *node) {
 	b->lf = c->rg;
 	c->rg = b;
 	c->lf = a;
-	avt_node_actualizar_altura(a);
-	avt_node_actualizar_altura(b);
-	avt_node_actualizar_altura(c);
-	avt_node_actualizar_num_decendientes(a);
-	avt_node_actualizar_num_decendientes(b);
-	avt_node_actualizar_num_decendientes(c);
+	avt_node_actizar_altura(a);
+	avt_node_actizar_altura(b);
+	avt_node_actizar_altura(c);
+	avt_node_actizar_num_decendientes(a);
+	avt_node_actizar_num_decendientes(b);
+	avt_node_actizar_num_decendientes(c);
 	a->padre = c;
 	b->padre = c;
 	c->padre = padre;
@@ -219,10 +832,10 @@ avt_node_t *avt_rotate_rgrg(avt_node_t *node) {
 	padre = node->padre;
 	a->rg = b->lf;
 	b->lf = a;
-	avt_node_actualizar_altura(a);
-	avt_node_actualizar_altura(b);
-	avt_node_actualizar_num_decendientes(a);
-	avt_node_actualizar_num_decendientes(b);
+	avt_node_actizar_altura(a);
+	avt_node_actizar_altura(b);
+	avt_node_actizar_num_decendientes(a);
+	avt_node_actizar_num_decendientes(b);
 	a->padre = b;
 	b->padre = padre;
 	if (a->rg) {
@@ -238,35 +851,51 @@ int avt_balance_factor(avt_node_t *node) {
 		bf -= avt_node_height(node->rg);
 	return bf;
 }
-static inline avt_node_t *avt_balance_node_insertar(
-		const avt_node_t *node, const td ll_nueva) {
+static inline avt_node_t *avt_balance_node_insertar(const avt_node_t *node,
+		const td ll_nueva, const td pasajero_oscuro) {
 	avt_node_t *newrt = NULL;
-	avt_node_t *nd_actual = NULL;
+	avt_node_t *nd_act = NULL;
 	newrt = (avt_node_t *) node;
-	nd_actual = node->padre;
-	while (nd_actual) {
+	nd_act = node->padre;
+	while (nd_act) {
 		int bf = 0;
 		avt_node_t *padre = NULL;
 		avt_node_t **rama_padre = NULL;
-		bf = avt_balance_factor(nd_actual);
+		bf = avt_balance_factor(nd_act);
 		if (bf >= 2) {
-			
-			if (ll_nueva > nd_actual->lf->ll) {
-				newrt = avt_rotate_lfrg(nd_actual);
+
+			if (ll_nueva > nd_act->lf->ll) {
+				newrt = avt_rotate_lfrg(nd_act);
 			} else {
-				newrt = avt_rotate_lflf(nd_actual);
+				if (ll_nueva < nd_act->lf->ll) {
+					newrt = avt_rotate_lflf(nd_act);
+				} else {
+					if (pasajero_oscuro > nd_act->lf->pasajero_oscuro) {
+						newrt = avt_rotate_lfrg(nd_act);
+					} else {
+						newrt = avt_rotate_lflf(nd_act);
+					}
+				}
 			}
 		} else if (bf <= -2) {
-			
-			if (ll_nueva < nd_actual->rg->ll) {
-				newrt = avt_rotate_rglf(nd_actual);
+
+			if (ll_nueva < nd_act->rg->ll) {
+				newrt = avt_rotate_rglf(nd_act);
 			} else {
-				newrt = avt_rotate_rgrg(nd_actual);
+				if (ll_nueva > nd_act->rg->ll) {
+					newrt = avt_rotate_rgrg(nd_act);
+				} else {
+					if (pasajero_oscuro < nd_act->rg->pasajero_oscuro) {
+						newrt = avt_rotate_rglf(nd_act);
+					} else {
+						newrt = avt_rotate_rgrg(nd_act);
+					}
+				}
 			}
 		} else {
-			
-			newrt = nd_actual;
-			avt_node_actualizar_altura(nd_actual);
+
+			newrt = nd_act;
+			avt_node_actizar_altura(nd_act);
 		}
 		if (newrt->padre) {
 			padre = newrt->padre;
@@ -276,33 +905,42 @@ static inline avt_node_t *avt_balance_node_insertar(
 				if (ll_nueva > padre->ll) {
 					rama_padre = &padre->rg;
 				} else {
-					ass(0);
+					if (pasajero_oscuro < padre->pasajero_oscuro) {
+						rama_padre = &padre->lf;
+					} else {
+						if (pasajero_oscuro > padre->pasajero_oscuro) {
+							rama_padre = &padre->rg;
+						} else {
+							ass(0);
+						}
+					}
 				}
 			}
 			*rama_padre = newrt;
 		}
-		nd_actual = nd_actual->padre;
+		nd_act = nd_act->padre;
 	}
 	return (newrt);
 }
-void avt_balance_insertar(avt_t *tree, avt_node_t *nd,
-		td ll_nueva) {
+void avt_balance_insertar(avt_t *tree, avt_node_t *nd, td ll_nueva,
+		td pasajero_oscuro) {
 	avt_node_t *newrt = NULL;
-	newrt = avt_balance_node_insertar(nd, ll_nueva);
+	newrt = avt_balance_node_insertar(nd, ll_nueva, pasajero_oscuro);
 	if (newrt != tree->rt) {
 		tree->rt = newrt;
 	}
 }
-avt_node_t *avt_insert(avt_t *tree, td value) {
+void avt_insert(avt_t *tree, td value, td pasajero_oscuro) {
 	avt_node_t *node = NULL;
 	avt_node_t *next = NULL;
 	avt_node_t *last = NULL;
-	tree->ocu_totales++;
-	
+
 	if (tree->rt == NULL ) {
-		node = avt_create_node(tree, value);
+		node = avt_create_node(tree);
+		node->ll = value;
+		node->pasajero_oscuro = pasajero_oscuro;
 		tree->rt = node;
-		
+
 	} else {
 		next = tree->rt;
 		while (next != NULL ) {
@@ -315,895 +953,422 @@ avt_node_t *avt_insert(avt_t *tree, td value) {
 					next = next->rg;
 				} else {
 					if (value == next->ll) {
-						avt_node_t *ancestro_actal = NULL;
-						
-						next->ocu++;
-					
-						ancestro_actal = next;
-						while (ancestro_actal) {
-						
-							ancestro_actal->num_decendientes--;
-							ancestro_actal = ancestro_actal->padre;
+						if (pasajero_oscuro < next->pasajero_oscuro) {
+							next = next->lf;
+						} else {
+							if (pasajero_oscuro > next->pasajero_oscuro) {
+								next = next->rg;
+							} else {
+								avt_node_t *ancestro_actal = NULL;
+
+								next->ocu++;
+
+								ancestro_actal = next;
+								while (ancestro_actal) {
+
+									ancestro_actal->num_decendientes--;
+									ancestro_actal = ancestro_actal->padre;
+								}
+								return;
+							}
 						}
-						return next;
 					} else {
-					
+
 						ass(0);
 					}
 				}
 			}
 		}
-		node = avt_create_node(tree, value);
+		node = avt_create_node(tree);
+		node->ll = value;
+		node->pasajero_oscuro = pasajero_oscuro;
 		if (value < last->ll) {
 			last->lf = node;
-		}
-		if (value > last->ll) {
-			last->rg = node;
+		} else {
+			if (value > last->ll) {
+				last->rg = node;
+			} else {
+				if (pasajero_oscuro < last->pasajero_oscuro) {
+					last->lf = node;
+				} else {
+					last->rg = node;
+				}
+			}
 		}
 		node->padre = last;
 	}
 	node->ocu = 1;
-	avt_balance_insertar(tree, node, value);
-	return node;
+	avt_balance_insertar(tree, node, value, pasajero_oscuro);
 }
-avt_node_t *avt_find(avt_t *tree, td value) {
-	avt_node_t *current = tree->rt;
-	while (current && current->ll != value) {
-		if (value > current->ll)
-			current = current->rg;
-		else
-			current = current->lf;
-	}
-	return current ? current->ll == value ? current : NULL :NULL;
-}
-avt_node_t *avt_find_descartando(avt_node_t *nd_raiz,
-		avt_node_t **primer_nd_mayor_o_igual, td value,
-		td tope, bool *tope_topado) {
-	avt_node_t *current = NULL;
-	avt_node_t *primer_nd_mayor = NULL;
-	current = nd_raiz;
-	ass(!tope_topado || tope || !nd_raiz->ll);
-	ass(!tope_topado || tope >= value);
-	if (tope_topado) {
-		*tope_topado = falso;
-	}
-	do {
-		if (tope_topado) {
-			if ((current->ll > tope && !current->lf)
-					|| current->ll == tope) {
-				*tope_topado = verdadero;
-				break;
-			}
+static inline bool avt_es_hijo_perra(avt_node_t *nd) {
+	bool es_hijo_perra = falso;
+	if (nd->padre) {
+
+		if ((td) nd->padre->lf == (td) nd) {
+
+			es_hijo_perra = verdadero;
 		}
+	}
+	return es_hijo_perra;
+}
+avt_node_t *avt_find(avt_t *tree, td value, td pasajero_oscuro, bool buscar_ant) {
+	avt_node_t *current = tree->rt;
+	avt_node_t *last_of_us = NULL;
+	while (current) {
 		if (value > current->ll) {
+//			last_of_us = current;
 			current = current->rg;
 		} else {
 			if (value < current->ll) {
-				if (!primer_nd_mayor) {
-					primer_nd_mayor = current;
-				}
 				current = current->lf;
 			} else {
-				break;
+				if (pasajero_oscuro != AVL_TREE_VALOR_INVALIDO) {
+					if (pasajero_oscuro > current->pasajero_oscuro) {
+						if (buscar_ant) {
+							last_of_us = current;
+						}
+						current = current->rg;
+					} else {
+						if (pasajero_oscuro < current->pasajero_oscuro) {
+							if (!buscar_ant) {
+								last_of_us = current;
+							}
+							current = current->lf;
+						} else {
+							break;
+						}
+					}
+				} else {
+					break;
+				}
 			}
 		}
-	} while (current && current->ll != value);
-	*primer_nd_mayor_o_igual = primer_nd_mayor;
-	if (!*primer_nd_mayor_o_igual) {
-		if (current && (current->ll == value)) {
-			*primer_nd_mayor_o_igual = current;
-		}
 	}
-	if (tope_topado && current && current->ll >= tope && value >= tope) {
-		*tope_topado = verdadero;
+	if (!current) {
+		current = last_of_us;
 	}
-	return current ? current->ll == value ? current : NULL :NULL;
+	return current;
 }
-	
 void avt_traverse_node_dfs(avt_node_t *node, int depth) {
 	int i = 0;
 	if (node->lf)
 		avt_traverse_node_dfs(node->lf, depth + 2);
 	for (i = 0; i < depth; i++)
 		putchar(' ');
-	printf("%u: %d\n", node->ll, avt_balance_factor(node));
+	printf("%d: %d\n", node->ll, avt_balance_factor(node));
 	if (node->rg)
 		avt_traverse_node_dfs(node->rg, depth + 2);
 }
 void avt_traverse_dfs(avt_t *tree) {
 	avt_traverse_node_dfs(tree->rt, 0);
 }
-static inline void avt_iterador_ini(avt_t *ablin,
-		avt_iterator_t *iter) {
-	iter->contador_visitas = calloc(ablin->nds_usados, sizeof(char));
-	ass(iter->contador_visitas);
-	iter->ablin = ablin;
-}
-static inline void avt_iterador_fini(avt_iterator_t *iter) {
-	free(iter->contador_visitas);
-}
-static inline bool avt_iterador_hay_siguiente(avt_iterator_t *iter) {
-	return iter->ablin->rt
-			&& !(iter->nd_actual == iter->ablin->rt
-					&& iter->contador_visitas[iter->ablin->rt->indice_en_arreglo]
-							== 2);
-}
-static inline avt_node_t* avt_iterador_siguiente(
-		avt_iterator_t *iter) {
-	int contador_actual = 0;
-	avt_node_t *nd = NULL;
-	avt_node_t *last_of_us = NULL;
-	avt_node_t *nd_actual = NULL;
-	if (!iter->nd_actual) {
-		nd_actual = iter->nd_actual = iter->ablin->rt;
-	}
-	if (!avt_iterador_hay_siguiente(iter)) {
-		return NULL ;
-	}
-	contador_actual =
-			iter->contador_visitas[iter->nd_actual->indice_en_arreglo];
-	iter->contador_visitas[iter->nd_actual->indice_en_arreglo]++;
-	switch (contador_actual) {
-	case 0:
-	case 1:
-		if (!contador_actual) {
-			nd_actual = iter->nd_actual->lf;
-			if (!nd_actual) {
-				return iter->nd_actual;
-			}
-		} else {
-			nd_actual = iter->nd_actual->rg;
-			if (!nd_actual) {
-				nd_actual = iter->nd_actual->padre;
-				while (nd_actual
-						&& iter->contador_visitas[nd_actual->indice_en_arreglo]
-								== 2) {
-					last_of_us = nd_actual;
-					nd_actual = nd_actual->padre;
-				}
-				if (!nd_actual) {
-					if (last_of_us) {
-						iter->nd_actual = last_of_us;
-					}
-				} else {
-					iter->nd_actual = nd_actual;
-				}
-				return nd_actual;
+static inline char *avt_inoder_node_travesti(avt_node_t *nd, char *buf,
+		int profundidad_maxima) {
+	char num_buf[100] = { '\0' };
+	int profundidad = 0;
+	int i = 0;
+	ass(profundidad_maxima == -1 || profundidad != -1);
+	if (nd != NULL ) {
+		profundidad = profundidad_maxima - nd->altura;
+		ass(!nd->rg || nd->rg->padre == nd);
+		avt_inoder_node_travesti(nd->rg, buf, profundidad_maxima);
+		if (profundidad_maxima != -1) {
+			for (i = 0; i < profundidad; i++) {
+				strcat(buf, " ");
 			}
 		}
-		while (nd_actual) {
-			last_of_us = nd_actual;
-			iter->contador_visitas[nd_actual->indice_en_arreglo]++;
-			nd_actual = last_of_us->lf;
+		sprintf(num_buf, "%d", nd->ll);
+		strcat(buf, num_buf);
+		if (profundidad_maxima != -1) {
+			strcat(buf, "\n");
 		}
-		nd = iter->nd_actual = last_of_us;
-		break;
-	default:
-		ass(0)
-		;
-		break;
+		ass(!nd->lf || nd->lf->padre == nd);
+		avt_inoder_node_travesti(nd->lf, buf, profundidad_maxima);
+
 	}
-	return nd;
+	return buf;
 }
-static inline avt_node_t* avt_iterador_obtener_actual(
-		avt_iterator_t *iter) {
-	avt_node_t *nd = NULL;
-	if (!iter->nd_actual) {
-		avt_iterador_siguiente(iter);
+static inline char *avt_inoder_node_travesti_conteo(avt_node_t *nd, char *buf,
+		int profundidad_maxima) {
+	char num_buf[100] = { '\0' };
+	int profundidad = 0;
+	int i = 0;
+	ass(profundidad_maxima == -1 || profundidad != -1);
+	if (nd != NULL ) {
+		profundidad = profundidad_maxima - nd->altura;
+		ass(!nd->rg || nd->rg->padre == nd);
+		avt_inoder_node_travesti_conteo(nd->rg, buf, profundidad_maxima);
+		if (profundidad_maxima != -1) {
+			for (i = 0; i < profundidad; i++) {
+				strcat(buf, " ");
+			}
+		}
+		sprintf(num_buf, "%d [%u,%u] (%u) ocu %u", nd->ll, (nat ) (nd->ll),
+				(nat ) nd->ll, nd->num_decendientes, nd->ocu);
+		strcat(buf, num_buf);
+		if (profundidad_maxima != -1) {
+			strcat(buf, "\n");
+		}
+		ass(!nd->lf || nd->lf->padre == nd);
+		avt_inoder_node_travesti_conteo(nd->lf, buf, profundidad_maxima);
+
 	}
-	nd = iter->nd_actual;
-	return nd;
+	return buf;
 }
-static inline avt_node_t* avt_siguiente_nd_inorder(
-		avt_node_t *node) {
+static inline avt_node_t* avt_sig_nd_inorder(avt_node_t *node) {
 	avt_node_t *current = node;
-	
+
 	while (current->lf != NULL ) {
 		current = current->lf;
 	}
 	return current;
 }
-static inline avt_node_t *avt_nd_borrar(avt_t *ablini,
-		avt_node_t *rt, td key, bool ignora_conteo) {
-	// STEP 1: PERFORM STANDARD BST DELETE
+static inline avt_node_t *avt_nd_borrar(avt_t *ablini, avt_node_t *rt, td key,
+		bool ignora_conteo, td pasajero_oscuro) {
 	if (rt == NULL ) {
 		return rt;
 	}
 	if (key < rt->ll) {
-		// If the key to be deleted is smaller than the rt's key,
-		// then it lies in lf subtree
-		rt->lf = avt_nd_borrar(ablini, rt->lf, key,
-				ignora_conteo);
+		rt->lf = avt_nd_borrar(ablini, rt->lf, key, ignora_conteo,
+				pasajero_oscuro);
 		ass(!rt->lf || rt->lf->padre == rt);
 	} else {
-		// If the key to be deleted is greater than the rt's key,
-		// then it lies in rg subtree
 		if (key > rt->ll) {
-			rt->rg = avt_nd_borrar(ablini, rt->rg, key,
-					ignora_conteo);
+			rt->rg = avt_nd_borrar(ablini, rt->rg, key, ignora_conteo,
+					pasajero_oscuro);
 			ass(!rt->rg || rt->rg->padre == rt);
 		} else {
-			if (!ignora_conteo) {
-				ablini->ocu_totales--;
-			}
-			if ((rt->ocu - 1) == 0 || ignora_conteo) {
-				if (rt->lf == NULL || rt->rg == NULL ) {
-					avt_node_t *temp =
-							rt->lf ? rt->lf : rt->rg;
-					// No child case
-					if (temp == NULL ) {
-						temp = rt;
-						rt = NULL;
+			if (pasajero_oscuro == AVL_TREE_VALOR_INVALIDO) {
+				if ((rt->ocu - 1) == 0 || ignora_conteo) {
+					if (rt->lf == NULL || rt->rg == NULL ) {
+
+						avt_node_t *temp = rt->lf ? rt->lf : rt->rg;
+						if (temp == NULL ) {
+							temp = rt;
+							rt = NULL;
+						} else {
+							nat idx_en_arreglo = 0;
+							avt_node_t *padre = NULL;
+							padre = rt->padre;
+							idx_en_arreglo = rt->indice_en_arreglo;
+							*rt = *temp;
+							rt->padre = padre;
+							rt->indice_en_arreglo = idx_en_arreglo;
+							if (rt->lf) {
+								rt->lf->padre = rt;
+							}
+							if (rt->rg) {
+								rt->rg->padre = rt;
+							}
+						}
+						ass(
+								ablini->ultimo_idx_anadido
+										- ablini->sig_idx_para_usar
+										< ablini->max_nds);
+						ablini->nds_libres_idx[ablini->ultimo_idx_anadido++
+								% ablini->max_nds] = temp->indice_en_arreglo;
+						memset(temp, 0, sizeof(avt_node_t));
+						temp->ll = AVL_TREE_VALOR_INVALIDO;
+						temp->pasajero_oscuro = AVL_TREE_VALOR_INVALIDO;
+						ablini->nds_realmente_en_abl--;
+
 					} else {
-						// One child case
-						nat idx_en_arreglo = 0;
-						avt_node_t *padre = NULL;
-						padre = rt->padre;
-						idx_en_arreglo = rt->indice_en_arreglo;
-						*rt = *temp;// Copy the contents of the non-empty child
-						rt->padre = padre;
-						rt->indice_en_arreglo = idx_en_arreglo;
-						if (rt->lf) {
-							rt->lf->padre = rt;
-						}
-						if (rt->rg) {
-							rt->rg->padre = rt;
-						}
+
+						avt_node_t *temp = avt_sig_nd_inorder(rt->rg);
+						rt->ll = temp->ll;
+						rt->pasajero_oscuro = temp->pasajero_oscuro;
+						rt->ocu = temp->ocu;
+						rt->rg = avt_nd_borrar(ablini, rt->rg, temp->ll,
+								verdadero, temp->pasajero_oscuro);
 					}
-					ass(
-							ablini->ultimo_idx_anadido
-									- ablini->siguiente_idx_para_usar
-									< ablini->max_nds);
-					ablini->nds_libres_idx[ablini->ultimo_idx_anadido++
-							% ablini->max_nds] = temp->indice_en_arreglo;
-					memset(temp, 0, sizeof(avt_node_t));
-					temp->ll = AVL_TREE_VALOR_INVALIDO;
-					ablini->nds_realmente_en_abl--;
-					ablini->nds_realmente_en_abl_utiles--;
-				
 				} else {
-					// node with two children: Get the inorder successor (smallest
-					// in the rg subtree)
-					avt_node_t *temp = avt_siguiente_nd_inorder(
-							rt->rg);
-					// Copy the inorder successor's data to this node
-					rt->ll = temp->ll;
-					rt->ocu = temp->ocu;
-					// Delete the inorder successor
-					rt->rg = avt_nd_borrar(ablini, rt->rg,
-							temp->ll, verdadero);
+					rt->ocu--;
+					return rt;
 				}
 			} else {
-				rt->ocu--;
-				return rt;
+				if (pasajero_oscuro < rt->pasajero_oscuro) {
+					rt->lf = avt_nd_borrar(ablini, rt->lf, key, ignora_conteo,
+							pasajero_oscuro);
+					ass(!rt->lf || rt->lf->padre == rt);
+				} else {
+					if (pasajero_oscuro > rt->pasajero_oscuro) {
+						rt->rg = avt_nd_borrar(ablini, rt->rg, key,
+								ignora_conteo, pasajero_oscuro);
+						ass(!rt->rg || rt->rg->padre == rt);
+					} else {
+						if ((rt->ocu - 1) == 0 || ignora_conteo) {
+							if (rt->lf == NULL || rt->rg == NULL ) {
+
+								avt_node_t *temp = rt->lf ? rt->lf : rt->rg;
+								if (temp == NULL ) {
+									temp = rt;
+									rt = NULL;
+								} else {
+									nat idx_en_arreglo = 0;
+									avt_node_t *padre = NULL;
+									padre = rt->padre;
+									idx_en_arreglo = rt->indice_en_arreglo;
+									*rt = *temp;
+									rt->padre = padre;
+									rt->indice_en_arreglo = idx_en_arreglo;
+									if (rt->lf) {
+										rt->lf->padre = rt;
+									}
+									if (rt->rg) {
+										rt->rg->padre = rt;
+									}
+								}
+								ass(
+										ablini->ultimo_idx_anadido
+												- ablini->sig_idx_para_usar
+												< ablini->max_nds);
+								ablini->nds_libres_idx[ablini->ultimo_idx_anadido++
+										% ablini->max_nds] =
+										temp->indice_en_arreglo;
+								memset(temp, 0, sizeof(avt_node_t));
+								temp->ll = AVL_TREE_VALOR_INVALIDO;
+								ablini->nds_realmente_en_abl--;
+
+							} else {
+
+								avt_node_t *temp = avt_sig_nd_inorder(
+										rt->rg);
+								rt->ll = temp->ll;
+								rt->pasajero_oscuro = temp->pasajero_oscuro;
+								rt->ocu = temp->ocu;
+								rt->rg = avt_nd_borrar(ablini, rt->rg, temp->ll,
+										verdadero, temp->pasajero_oscuro);
+							}
+						} else {
+							rt->ocu--;
+							return rt;
+						}
+					}
+				}
 			}
 		}
 	}
-// If the tree had only one node then return
 	if (rt == NULL ) {
 		return rt;
 	}
-// STEP 2: UPDATE HEIGHT OF THE CURRENT NODE
-	avt_node_actualizar_altura(rt);
-	avt_node_actualizar_num_decendientes(rt);
-// STEP 3: GET THE BALANCE FACTOR OF THIS NODE (to check whether
-//  this node became unbalanced)
+	avt_node_actizar_altura(rt);
+	avt_node_actizar_num_decendientes(rt);
 	int balance = avt_balance_factor(rt);
-// If this node becomes unbalanced, then there are 4 cases
-// Left Left Case
 	if (balance > 1 && avt_balance_factor(rt->lf) >= 0) {
 		return avt_rotate_lflf(rt);
 	}
-// Left Right Case
 	if (balance > 1 && avt_balance_factor(rt->lf) < 0) {
 		return avt_rotate_lfrg(rt);
 	}
-// Right Right Case
 	if (balance < -1 && avt_balance_factor(rt->rg) <= 0) {
 		return avt_rotate_rgrg(rt);
 	}
-// Right Left Case
 	if (balance < -1 && avt_balance_factor(rt->rg) > 0) {
 		return avt_rotate_rglf(rt);
 	}
 	return rt;
 }
-void avt_borrar(avt_t *tree, td value) {
+void avt_borrar(avt_t *tree, td value, td pasajero_oscuro) {
 	avt_node_t *newrt = NULL;
 	if (!tree->rt) {
 		return;
 	}
-	newrt = avt_nd_borrar(tree, tree->rt, value, falso);
+	newrt = avt_nd_borrar(tree, tree->rt, value, falso, pasajero_oscuro);
 	if (newrt != tree->rt) {
 		tree->rt = newrt;
 	}
 }
-#endif
-typedef struct cax_numeros_unicos_en_rango {
-	avt_t *ablazo;
-	nat max_numeros;
-	nat max_num_esperados;
-	int altura;
-	int idx;
-	int limite_izq;
-	int limite_der;
-} cax_numeros_unicos_en_rango;
-typedef struct cax_estado_recursion {
-	int profundidad;
-	int idx_ini;
-	int idx_fin;
-	int idx_nd;
-	int num_popeado;
-	cax_numeros_unicos_en_rango *nd;
-} cax_estado_recursion;
-cax_estado_recursion *estado = NULL;
-static inline int lee_matrix_long_stdin(td *matrix, int *num_filas,
-		int *num_columnas, int num_max_filas, int num_max_columnas) {
-	int indice_filas = 0;
-	int indice_columnas = 0;
-	long numero = 0;
-	char *siguiente_cadena_numero = NULL;
-	char *cadena_numero_actual = NULL;
-	char *linea = NULL;
-	linea = calloc(TAM_MAX_LINEA, sizeof(char));
-	while (indice_filas < num_max_filas && fgets(linea, TAM_MAX_LINEA, stdin)) {
-		indice_columnas = 0;
-		cadena_numero_actual = linea;
-		for (siguiente_cadena_numero = linea;; siguiente_cadena_numero =
-				cadena_numero_actual) {
-			numero = strtol(siguiente_cadena_numero, &cadena_numero_actual, 10);
-			if (cadena_numero_actual == siguiente_cadena_numero) {
-				break;
-			}
-			*(matrix + indice_filas * num_max_columnas + indice_columnas) =
-					numero;
-		
-			indice_columnas++;
-		
+static inline avt_node_t* avt_nd_posicion_anterior(avt_t *ablin,
+		avt_node_t *nd_act) {
+	avt_node_t *nd_sig;
+	nd_sig = nd_act;
+	if (nd_sig->lf) {
+		nd_sig = nd_sig->lf;
+		while (nd_sig->rg) {
+			nd_sig = nd_sig->rg;
 		}
-		if (num_columnas) {
-			num_columnas[indice_filas] = indice_columnas;
-		}
-		indice_filas++;
-	
-	}
-	*num_filas = indice_filas;
-	free(linea);
-	return 0;
-}
-static inline void cax_inicializar_nd(cax_numeros_unicos_en_rango *nd,
-		int altura, int idx_nd, int limite_izq, int limite_der) {
-	nd->altura = altura;
-	nd->max_numeros = 1 << nd->altura;
-	avt_create(&nd->ablazo, nd->max_numeros);
-	nd->idx = idx_nd;
-	nd->limite_izq = limite_izq;
-	nd->limite_der = limite_der;
-}
-static inline void cax_clona_nds(avt_t *abl_dst,
-		avt_node_t *nd_ori, avt_node_t *nd_dst_padre,
-		avt_node_t **apuntador_hijo) {
-	int idx_en_arreglo_real = 0;
-	avt_node_t *nd_nuevo = NULL;
-	if (!nd_ori) {
-		return;
-	}
-	nd_nuevo = avt_create_node(abl_dst, nd_ori->ll);
-	idx_en_arreglo_real = nd_nuevo->indice_en_arreglo;
-	memcpy(nd_nuevo, nd_ori, offsetof(avt_node_t,lf));
-	nd_nuevo->indice_en_arreglo = idx_en_arreglo_real;
-	if (!abl_dst->rt) {
-		abl_dst->rt = nd_nuevo;
-	}
-	if (nd_dst_padre) {
-		nd_nuevo->padre = nd_dst_padre;
-		*apuntador_hijo = nd_nuevo;
-	}
-	cax_clona_nds(abl_dst, nd_ori->lf, nd_nuevo,
-			&nd_nuevo->lf);
-	cax_clona_nds(abl_dst, nd_ori->rg, nd_nuevo,
-			&nd_nuevo->rg);
-}
-static inline void cax_clona_abl(avt_t *abl_dst,
-		avt_t *abl_ori) {
-	int tam_abl_dst = 0;
-	int tam_abl_ori = 0;
-	tam_abl_dst = abl_dst->max_nds;
-	tam_abl_ori = abl_ori->nds_realmente_en_abl_utiles;
-	ass(tam_abl_dst >= tam_abl_ori);
-	ass(!abl_dst->nds_usados);
-	cax_clona_nds(abl_dst, abl_ori->rt, NULL, NULL );
-	abl_dst->ocu_totales = abl_ori->ocu_totales;
-}
-static inline void cax_mergear_ables(avt_t *ablin_izq,
-		avt_t *ablin_der, avt_t *ablin_resultante) {
-	int tam_abl_izq = 0;
-	int tam_abl_der = 0;
-	avt_iterator_t *iter = &(avt_iterator_t ) { 0 };
-	avt_t *abl_menor = NULL;
-	avt_t *abl_mayor = NULL;
-	ass(ablin_izq && ablin_der);
-	tam_abl_izq = ablin_izq->nds_realmente_en_abl_utiles;
-	tam_abl_der = ablin_der->nds_realmente_en_abl_utiles;
-	if (tam_abl_izq <= tam_abl_der) {
-		abl_menor = ablin_izq;
-		abl_mayor = ablin_der;
 	} else {
-		abl_menor = ablin_der;
-		abl_mayor = ablin_izq;
-	}
-	cax_clona_abl(ablin_resultante, abl_mayor);
-	ass(
-			ablin_resultante->nds_realmente_en_abl_utiles
-					== abl_mayor->nds_realmente_en_abl_utiles);
-	avt_iterador_ini(abl_menor, iter);
-	while (avt_iterador_hay_siguiente(iter)) {
-		int numero_actual = 0;
-		avt_node_t *nd_actual = NULL;
-		avt_node_t *nd_encontrado = NULL;
-		nd_actual = avt_iterador_obtener_actual(iter);
-		numero_actual = nd_actual->ll;
-		if (!(nd_encontrado = avt_find(ablin_resultante, numero_actual))) {
-			nd_encontrado = avt_insert(ablin_resultante,
-					numero_actual);
-			nd_encontrado->ocu = nd_actual->ocu;
-			ablin_resultante->ocu_totales += nd_actual->ocu
-					- 1;
-		} else {
-			nd_encontrado->ocu += nd_actual->ocu;
-			ablin_resultante->ocu_totales += nd_actual->ocu;
+		avt_node_t *last_of_us = nd_sig;
+		nd_sig = nd_sig->padre;
+		while (nd_sig) {
+			if (!avt_es_hijo_perra(last_of_us)) {
+				break;
+			}
+			last_of_us = nd_sig;
+			nd_sig = nd_sig->padre;
 		}
-		avt_iterador_siguiente(iter);
 	}
-	avt_iterador_fini(iter);
+	return nd_sig;
 }
-static inline void cax_construye_abl_binario_segmentado(int *numeros,
-		cax_numeros_unicos_en_rango *abl_numeros_unicos, int num_numeros,
-		int max_profundidad, nat ultimo_indice_numero_valido) {
-	int profundidad = -1;
-	estado->idx_ini = 0;
-	estado->idx_fin = num_numeros;
-	estado->idx_nd = 0;
-	estado->nd = NULL;
-	estado->profundidad = 0;
-	estado->num_popeado = 0;
-	profundidad++;
-	while (profundidad != -1) {
-		int idx_ini = 0;
-		int idx_fin = 0;
-		int idx_nd = 0;
-		int altura = 0;
-		cax_numeros_unicos_en_rango *nd = NULL;
-		cax_estado_recursion *estado_actual = NULL;
-		estado_actual = estado + profundidad;
-		ass(estado_actual->profundidad == profundidad);
-	
-		idx_ini = estado_actual->idx_ini;
-		idx_fin = estado_actual->idx_fin;
-		idx_nd = estado_actual->idx_nd;
-		altura = max_profundidad - profundidad;
-	
-		if (!estado_actual->num_popeado) {
-			nd = abl_numeros_unicos + idx_nd;
-			cax_inicializar_nd(nd, altura, idx_nd, idx_ini, idx_fin);
+static inline avt_node_t* avt_nd_posicion_sig(avt_t *ablin,
+		avt_node_t *nd_act) {
+	avt_node_t *nd_sig = NULL;
+	nd_sig = nd_act;
+	if (nd_sig->rg) {
+		nd_sig = nd_sig->rg;
+		while (nd_sig->lf) {
+			nd_sig = nd_sig->lf;
 		}
-		estado_actual->num_popeado++;
-		profundidad--;
-		if (altura) {
-			int distancia_media = 0;
-			int idx_medio = 0;
-			int ultimo_num_popeado = 0;
-			cax_estado_recursion *estado_futuro = NULL;
-			if (estado_actual->num_popeado == 1
-					|| estado_actual->num_popeado == 2) {
-			
-				estado_futuro = estado + estado_actual->profundidad + 1;
-			
-				if (estado_actual->num_popeado == 1) {
-					estado_actual->nd = nd;
-				}
-				memset(estado_futuro, 0, sizeof(cax_estado_recursion));
-				estado_futuro->profundidad = estado_actual->profundidad + 1;
-				distancia_media = (idx_fin - idx_ini) / 2;
-				idx_medio = idx_ini + distancia_media;
-			}
-			ultimo_num_popeado = estado_actual->num_popeado;
-			switch (estado_actual->num_popeado) {
-			case 1:
-				estado_futuro->idx_ini = idx_ini;
-				estado_futuro->idx_fin = idx_medio;
-				estado_futuro->idx_nd = 2 * idx_nd + 1;
-			
-				break;
-			case 2:
-				estado_futuro->idx_ini = idx_medio + 1;
-				estado_futuro->idx_fin = idx_fin;
-				estado_futuro->idx_nd = 2 * idx_nd + 2;
-			
-				break;
-			case 3: {
-				cax_numeros_unicos_en_rango *hijo_izq = NULL;
-				cax_numeros_unicos_en_rango *hijo_der = NULL;
-				avt_t *ablin_izq = NULL;
-				avt_t *ablin_der = NULL;
-				hijo_izq = abl_numeros_unicos + (idx_nd * 2 + 1);
-				hijo_der = abl_numeros_unicos + (idx_nd * 2 + 2);
-				ablin_izq = hijo_izq->ablazo;
-				ablin_der = hijo_der->ablazo;
-				cax_mergear_ables(ablin_izq, ablin_der,
-						estado_actual->nd->ablazo);
-				estado_actual->nd->max_num_esperados =
-						(ultimo_indice_numero_valido
-								>= estado_actual->nd->limite_der) ?
-								estado_actual->nd->max_numeros :
-						(ultimo_indice_numero_valido
-								>= estado_actual->nd->limite_izq) ?
-								(ultimo_indice_numero_valido
-										- estado_actual->nd->limite_izq + 1) :
-								0;
-				estado_actual->nd->ablazo->max_nds_utiles =
-						estado_actual->nd->max_num_esperados;
-#ifdef CACA_X_VALIDAR_ARBOLINES
-				avt_validar_ablin_indices_ex(
-						estado_actual->nd->ablazo,
-						estado_actual->nd->ablazo->rt, verdadero);
-#endif
-				memset(estado_actual, 0, sizeof(cax_estado_recursion));
-			
-			}
-				break;
-			default:
-				ass(0)
-				;
-				break;
-			}
-			if (ultimo_num_popeado < 3) {
-				profundidad += 2;
-			
-			}
-		} else {
-			int numero_actual = 0;
-			ass(idx_ini == idx_fin);
-			ass(nd);
-			numero_actual = numeros[idx_ini];
-			ass(nd->max_numeros == 1);
-			ass(nd->limite_izq == nd->limite_der);
-			ass(nd->ablazo->max_nds == 1);
-			ass(!nd->ablazo->nds_realmente_en_abl_utiles);
-			ass(!avt_find(nd->ablazo, numero_actual));
-			avt_insert(nd->ablazo, (td) numero_actual);
-			nd->ablazo->max_nds_utiles = nd->max_num_esperados = 1;
-		
-			memset(estado_actual, 0, sizeof(cax_estado_recursion));
-		}
-	}
-}
-static inline void cax_suma_unicos(entero_largo *sumas_abl_segmentado,
-		cax_numeros_unicos_en_rango *abl_numeros_unicos, int num_nds) {
-	int *numeros_unicos = NULL;
-	char *buf = NULL;
-	buf = calloc(1000, sizeof(char));
-	numeros_unicos = calloc(MAX_NODOS, sizeof(int));
-	assert(numeros_unicos);
-	for (int i = 0; i < num_nds; i++) {
-		int num_numeros_unicos = 0;
-		memset(buf, '\0', 1000);
-		cax_numeros_unicos_en_rango *nd = NULL;
-		avt_t *ablazo_actual = NULL;
-		avt_iterator_t * iterador = &(avt_iterator_t ) { 0 };
-		nd = abl_numeros_unicos + i;
-		if (!nd->ablazo) {
-			continue;
-		}
-		ass(i == nd->idx);
-		ablazo_actual = nd->ablazo;
-	
-	
-		avt_iterador_ini(ablazo_actual, iterador);
-		sumas_abl_segmentado[i] = 0;
-		while (avt_iterador_hay_siguiente(iterador)) {
-			int numero_unico_actual = 0;
-			avt_node_t *nd_abl_actual = NULL;
-			nd_abl_actual =
-					(avt_node_t*) avt_iterador_obtener_actual(
-							iterador);
-			if (nd_abl_actual) {
-				ass(num_numeros_unicos<MAX_NODOS-1);
-				numero_unico_actual = (int) nd_abl_actual->ll;
-				sumas_abl_segmentado[i] += numero_unico_actual;
-				numeros_unicos[num_numeros_unicos++] = numero_unico_actual;
-			}
-			avt_iterador_siguiente(iterador);
-		}
-	
-#if 0
-		ass(
-				nd->max_num_esperados
-				>= ablazo_actual->nds_realmente_en_abl_utiles);
-#endif
-	
-		avt_iterador_fini(iterador);
-	}
-	free(buf);
-	free(numeros_unicos);
-}
-static inline void cax_encuentra_indices_segmento(
-		cax_numeros_unicos_en_rango *nds, int idx_nd, int limite_izq,
-		int limite_der, int *indices, int *num_indices) {
-	cax_numeros_unicos_en_rango *nd = NULL;
-	nd = nds + idx_nd;
-	if (limite_izq <= nd->limite_izq && nd->limite_der <= limite_der) {
-	
-		indices[(*num_indices)++] = idx_nd;
 	} else {
-		if (nd->limite_der < limite_izq || limite_der < nd->limite_izq) {
-		
-		} else {
-		
-			cax_encuentra_indices_segmento(nds, 2 * idx_nd + 1,
-					limite_izq, limite_der, indices, num_indices);
-			cax_encuentra_indices_segmento(nds, 2 * idx_nd + 2,
-					limite_izq, limite_der, indices, num_indices);
-		}
-	}
-}
-static inline entero_largo cax_generar_suma_unicos(
-		cax_numeros_unicos_en_rango *abl_numeros_unicos,
-		entero_largo *sumas_abl_segmentado, int *indices, int num_indices) {
-	entero_largo suma_unicos = 0;
-	avt_t *ablin_unicos = NULL;
-	avt_create(&ablin_unicos, MAX_NODOS);
-	for (int i = 0; i < num_indices; i++) {
-		avt_t *ablin_actual = NULL;
-		ablin_actual = abl_numeros_unicos[indices[i]].ablazo;
-		if (!i) {
-		
-			cax_clona_abl(ablin_unicos, ablin_actual);
-			suma_unicos += sumas_abl_segmentado[indices[i]];
-		} else {
-			avt_iterator_t *iter_actual = &(avt_iterator_t ) { 0 };
-			avt_node_t *nd_actual = NULL;
-			avt_iterador_ini(ablin_actual, iter_actual);
-			while (avt_iterador_hay_siguiente(iter_actual)) {
-				int numero_actual = 0;
-				nd_actual = avt_iterador_obtener_actual(iter_actual);
-				numero_actual = nd_actual->ll;
-				if (!avt_find(ablin_unicos, numero_actual)) {
-				
-					avt_insert(ablin_unicos, numero_actual);
-					suma_unicos += numero_actual;
-				} else {
-				
-				}
-				avt_iterador_siguiente(iter_actual);
+		avt_node_t *last_of_us = nd_sig;
+		nd_sig = nd_sig->padre;
+		while (nd_sig) {
+			if (avt_es_hijo_perra(last_of_us)) {
+				break;
 			}
-			avt_iterador_fini(iter_actual);
+			last_of_us = nd_sig;
+			nd_sig = nd_sig->padre;
 		}
 	}
-	avt_destroy(ablin_unicos);
-	return suma_unicos;
+	return nd_sig;
 }
-int caca_comun_compara_enteros(const void *a, const void *b) {
-	int a_int = 0;
-	int b_int = 0;
-	int resultado = 0;
-	a_int = *(int *) a;
-	b_int = *(int *) b;
-	resultado = a_int - b_int;
-	return resultado;
-}
-static inline entero_largo cax_suma_segmento(entero_largo *sumas_abl_segmentado,
-		cax_numeros_unicos_en_rango *abl_numeros_unicos, int limite_izq,
-		int limite_der) {
-	entero_largo res = 0;
-	int num_indices_nds = 0;
-	int *indices_nds = (int[30] ) { 0 };
-	char buf[100] = { '\0' };
-	cax_encuentra_indices_segmento(abl_numeros_unicos, 0, limite_izq,
-			limite_der, indices_nds, &num_indices_nds);
-	ass(num_indices_nds < 30);
-	qsort(indices_nds, num_indices_nds, sizeof(int),
-			caca_comun_compara_enteros);
-	
-	res = cax_generar_suma_unicos(abl_numeros_unicos,
-			sumas_abl_segmentado, indices_nds, num_indices_nds);
-	return res;
-}
-static inline void cax_encuentra_indices_afectados_por_actualizacion(
-		cax_numeros_unicos_en_rango *nds, nat idx_nd,
-		nat idx_actualizado, nat *indices, nat *num_indices) {
-	cax_numeros_unicos_en_rango *nd = NULL;
-	nd = nds + idx_nd;
-	if (nd->limite_izq == idx_actualizado
-			&& idx_actualizado == nd->limite_der) {
-	
-		indices[(*num_indices)++] = idx_nd;
-	} else {
-		if (nd->limite_der < idx_actualizado
-				|| idx_actualizado < nd->limite_izq) {
-		
-		} else {
-		
-			indices[(*num_indices)++] = idx_nd;
-			cax_encuentra_indices_afectados_por_actualizacion(nds,
-					2 * idx_nd + 1, idx_actualizado, indices, num_indices);
-			cax_encuentra_indices_afectados_por_actualizacion(nds,
-					2 * idx_nd + 2, idx_actualizado, indices, num_indices);
-		}
-	}
-}
-static inline bool caca_comun_checa_bit(bitch_vector *bits,
-		unsigned long posicion) {
-	bool res = falso;
-	int idx_arreglo = 0;
-	int idx_registro = 0;
-	idx_arreglo = posicion / 64;
-	idx_registro = posicion % 64;
-	res = !!(bits[idx_arreglo]
-			& (bitch_vector) ((bitch_vector) 1 << idx_registro));
-	return res;
-}
-static inline void caca_comun_asigna_bit(bitch_vector *bits,
-		unsigned long posicion) {
-	int idx_arreglo = 0;
-	int idx_registro = 0;
-	idx_arreglo = posicion / 64;
-	idx_registro = posicion % 64;
-	bits[idx_arreglo] |= (bitch_vector) ((bitch_vector) 1 << idx_registro);
-}
-static inline void cax_actualiza_abl_numeros_unicos(
-		cax_numeros_unicos_en_rango *abl_numeros_unicos,
-		nat *indices_a_actualizar, nat num_indices_a_actualizar,
-		td viejo_pendejo, td nuevo_valor,
-		bitch_vector *nuevo_ya_existente, bitch_vector *viejo_aun_presente) {
-	for (int i = 0; i < num_indices_a_actualizar; i++) {
-		int idx_a_actualizar = 0;
-		cax_numeros_unicos_en_rango *nd_a_actualizar = NULL;
-		avt_t *ablazo = NULL;
-		idx_a_actualizar = indices_a_actualizar[i];
-		nd_a_actualizar = abl_numeros_unicos + idx_a_actualizar;
-		ablazo = nd_a_actualizar->ablazo;
-	
-		assert(avt_find(ablazo, viejo_pendejo));
-		avt_borrar(ablazo, viejo_pendejo);
-		if (avt_find(ablazo, viejo_pendejo)) {
-			caca_comun_asigna_bit(viejo_aun_presente, i);
-		}
-#ifdef CACA_X_VALIDAR_ARBOLINES
-		avt_validar_ablin_indices(ablazo, ablazo->rt);
 #endif
-	
-		if (!avt_find(ablazo, nuevo_valor)) {
-		
-		} else {
-			caca_comun_asigna_bit(nuevo_ya_existente, i);
-		
-		}
-		avt_insert(ablazo, (td) nuevo_valor);
-#ifdef CACA_X_VALIDAR_ARBOLINES
-		avt_validar_ablin_indices_ex(ablazo, ablazo->rt,
-				verdadero);
-#endif
-	
+int numeros[MAX_NUMEROS + 2] = { 0 };
+nat numeros_tam = 0;
+mo_mada consultas[MAX_QUERIES] = { 0 };
+nat consultas_tam = 0;
+bit_ch *biatch = &(bit_ch ) { 0 };
+hm_rr_bs_tabla *ocu_mapa = &(hm_rr_bs_tabla ) { 0 };
+hm_rr_bs_tabla *ultimo_idx_mapa = &(hm_rr_bs_tabla ) { 0 };
+void cax_anade_caca(td numero) {
+	enl_sin_signo cardinalidad_act = 0;
+	hm_iter iter = 0;
+	iter = hmrh_obten(ocu_mapa, (nat) numero,
+			(enl*) &cardinalidad_act);
+	if (!cardinalidad_act) {
+		mo_mada_resultado += numero;
+	}
+	hmrh_indice_pon_valor(ocu_mapa, iter,
+			cardinalidad_act + 1);
+}
+void cax_quita_caca(td numero) {
+	enl_sin_signo cardinalidad_act = 0;
+	hm_iter iter = 0;
+	iter = hmrh_obten(ocu_mapa, (nat) numero,
+			(enl*) &cardinalidad_act);
+	hmrh_indice_pon_valor(ocu_mapa, iter,
+			cardinalidad_act - 1);
+	ass(cardinalidad_act >= 0);
+	if (!(cardinalidad_act - 1)) {
+		mo_mada_resultado -= numero;
 	}
 }
-static inline void cax_actualiza_sumas_abl_segmentado(
-		cax_numeros_unicos_en_rango *abl_numeros_unicos,
-		entero_largo *sumas_abl_segmentado, nat *indices_a_actualizar,
-		nat num_indices_a_actualizar, td nuevo_valor,
-		td viejo_pendejo, bitch_vector *nuevo_ya_existente,
-		bitch_vector *viejo_aun_presente) {
-	for (nat i = 0; i < num_indices_a_actualizar; i++) {
-		int idx_a_actualizar = 0;
-		avt_t *ablin_a_actualizar = NULL;
-		idx_a_actualizar = indices_a_actualizar[i];
-		ablin_a_actualizar = abl_numeros_unicos[idx_a_actualizar].ablazo;
-	
-		if (!caca_comun_checa_bit(nuevo_ya_existente, i)) {
-			sumas_abl_segmentado[idx_a_actualizar] += nuevo_valor;
-		
-		} else {
-		
-		}
-		if (!caca_comun_checa_bit(viejo_aun_presente, i)) {
-			sumas_abl_segmentado[idx_a_actualizar] -= viejo_pendejo;
-		
-		} else {
-		
-		}
-		//3320749897
-	}
-}
-static inline void cax_actualiza_estado(td *numeros,
-		cax_numeros_unicos_en_rango *abl_numeros_unicos,
-		entero_largo *sumas_abl_segmentado, nat idx_actualizado,
-		td nuevo_valor, nat num_nds,
-		nat num_numeros_redondeado) {
-	bitch_vector nuevo_ya_existente = 0;
-	bitch_vector viejo_aun_presente = 0;
-	nat num_indices_afectados_actualizacion = 0;
-	td viejo_pendejo = 0;
-	nat *indices_afectados_actualizacion = (nat[18] ) { 0 };
-	char buf[100];
-	viejo_pendejo = numeros[idx_actualizado];
-	if (viejo_pendejo == nuevo_valor) {
-	
-		return;
-	}
-	cax_encuentra_indices_afectados_por_actualizacion(abl_numeros_unicos,
-			0, idx_actualizado, indices_afectados_actualizacion,
-			&num_indices_afectados_actualizacion);
-	ass(num_indices_afectados_actualizacion < 18);
-	cax_actualiza_abl_numeros_unicos(abl_numeros_unicos,
-			indices_afectados_actualizacion,
-			num_indices_afectados_actualizacion, viejo_pendejo, nuevo_valor,
-			&nuevo_ya_existente, &viejo_aun_presente);
-	cax_actualiza_sumas_abl_segmentado(abl_numeros_unicos,
-			sumas_abl_segmentado, indices_afectados_actualizacion,
-			num_indices_afectados_actualizacion, nuevo_valor, viejo_pendejo,
-			&nuevo_ya_existente, &viejo_aun_presente);
-	numeros[idx_actualizado] = nuevo_valor;
-#ifdef CACA_X_VALIDAR_ARBOLINES
-	cax_validar_segmentos(abl_numeros_unicos, numeros,
-			sumas_abl_segmentado, indices_afectados_actualizacion, 0,
-			num_numeros_redondeado, num_nds + 1,
-			num_indices_afectados_actualizacion);
-#endif
-}
+char buf[1000000] = { '\0' };
 static inline void cax_main() {
-	int *matriz_nums = NULL;
-	int num_filas = 0;
-	int num_numeros = 0;
-	int *numeros = NULL;
-	int num_queries = 0;
-	int cont_queries = 0;
+	nat num_queries = 0;
+	nat cont_queries = 0;
 	char tipo_query = 0;
-	int idx_query_ini = 0;
-	int idx_query_fin = 0;
-	int max_profundidad = 0;
-	nat num_numeros_redondeado = 0;
-	int num_nds = 0;
-	entero_largo *sumas_abl_segmentado = NULL;
-	cax_numeros_unicos_en_rango *abl_numeros_unicos = NULL;
-	char buf[100] = { '\0' };
-	matriz_nums = calloc(MAX_NUMEROS_REDONDEADO * 3, sizeof(int));
-	ass(matriz_nums);
-	num_filas = 3;
-	lee_matrix_long_stdin(matriz_nums, &num_filas, NULL, 3,
-			MAX_NUMEROS_REDONDEADO);
-	num_numeros = *matriz_nums;
-	numeros = matriz_nums + MAX_NUMEROS_REDONDEADO;
-	num_queries = *(numeros + MAX_NUMEROS_REDONDEADO);
-	while ((num_numeros >> max_profundidad)) {
-		max_profundidad++;
-	}
-	num_numeros_redondeado = (1 << max_profundidad);
-	num_nds = (2 << (max_profundidad + 0)) - 1;
-	abl_numeros_unicos = calloc(num_nds,
-			sizeof(cax_numeros_unicos_en_rango));
-	ass(abl_numeros_unicos);
-	sumas_abl_segmentado = calloc(num_nds, sizeof(entero_largo));
-	ass(sumas_abl_segmentado);
-#ifdef USA_MALLOC
-	estado = malloc((max_profundidad +2) * sizeof(cax_estado_recursion));
-	ass(estado);
-	memset(estado, 0, (max_profundidad+2 )* sizeof(cax_estado_recursion));
-#else
-	estado = calloc(max_profundidad + 2, sizeof(cax_estado_recursion));
-	ass(estado);
-#endif
-	cax_construye_abl_binario_segmentado(numeros, abl_numeros_unicos,
-			num_numeros_redondeado - 1, max_profundidad, num_numeros - 1);
-	cax_suma_unicos(sumas_abl_segmentado, abl_numeros_unicos, num_nds);
-#ifdef CACA_X_VALIDAR_ARBOLINES
-	cax_validar_segmentos(abl_numeros_unicos, numeros,
-			sumas_abl_segmentado, NULL, num_numeros, num_numeros_redondeado,
-			num_nds, 0);
-#endif
-	while (cont_queries < num_queries) {
-		int idx_actualizado = 0;
-		int nuevo_valor = 0;
-		entero_largo sum = 0;
+	nat idx_query_ini = 0;
+	nat idx_query_fin = 0;
+	avt_t *ablin = NULL;
+	bitch_init();
+	nds_trozo = calloc(TRT_MAX_NODOS, sizeof(trt));
+	scanf("%u\n", &numeros_tam);
+	lee_matrix_long_stdin(numeros + 1, &(int ) { 1 }, NULL, 1, numeros_tam + 1);
+	scanf("%u\n", &num_queries);
+	consultas_tam = num_queries;
+	while (cont_queries < consultas_tam) {
+		mo_mada *consul_act = consultas + cont_queries;
 		scanf("%c %d %d\n", &tipo_query, &idx_query_ini, &idx_query_fin);
 		if (tipo_query == 'Q' && idx_query_ini > idx_query_fin) {
 			td tmp = 0;
@@ -1211,30 +1376,148 @@ static inline void cax_main() {
 			idx_query_fin = idx_query_ini;
 			idx_query_ini = tmp;
 		}
-	
-		switch (tipo_query) {
-		case 'Q':
-			sum = cax_suma_segmento(sumas_abl_segmentado,
-					abl_numeros_unicos, idx_query_ini - 1, idx_query_fin - 1);
-			printf("%lld\n", sum);
-			break;
-		case 'U':
-			idx_actualizado = idx_query_ini - 1;
-			nuevo_valor = idx_query_fin;
-			cax_actualiza_estado(numeros, abl_numeros_unicos,
-					sumas_abl_segmentado, idx_actualizado, nuevo_valor,
-					num_nds - 1, num_numeros_redondeado);
-			break;
-		default:
-			abort();
-			break;
-		}
+
+		setbuf(stdout, NULL );
+		consul_act->idx_query = cont_queries;
+		consul_act->intervalo_idx_ini = idx_query_ini;
+		consul_act->intervalo_idx_fin = idx_query_fin;
+		consul_act->orden = cont_queries;
+		consul_act->tipo = tipo_query;
 		cont_queries++;
 	}
-	free(matriz_nums);
-	free(abl_numeros_unicos);
-	free(sumas_abl_segmentado);
-	free(estado);
+	hmrh_init(ocu_mapa, numeros_tam << 2);
+	hmrh_init(ultimo_idx_mapa, numeros_tam << 2);
+	for (int i = 0; i <= numeros_tam; i++) {
+		hmrh_pon(ocu_mapa, (nat) numeros[i], 0,
+				&(bool ) { 0 });
+		hmrh_pon(ultimo_idx_mapa, (nat) numeros[i], 0,
+				&(bool ) { 0 });
+	}
+	mo_mada_core(consultas, numeros, consultas_tam, numeros_tam);
+	setbuf(stdout, NULL );
+#ifdef CX_LOG
+	for (int i = 0; i < consultas_tam; i++) {
+
+	}
+#endif
+	avt_create(&ablin, MAX_NUMEROS);
+	for (int i = 1; i <= numeros_tam; i++) {
+		td numero_act = numeros[i];
+		avt_insert(ablin, numero_act, i);
+	}
+#ifdef CX_LOG
+	for (int i = 1; i <= numeros_tam; i++) {
+		td numero_act = numeros[i];
+		avt_node_t *nd_caca = NULL;
+
+		nd_caca = avt_find(ablin, numero_act, i - 1,verdadero);
+		if (nd_caca) {
+
+		} else {
+
+		}
+
+		nd_caca = avt_find(ablin, numero_act, i + 1,falso);
+		if (nd_caca) {
+
+		} else {
+
+		}
+	}
+#endif
+	bit_ch_init(biatch, 0, numeros_tam + 2, numeros);
+	trt_numeros_tam = numeros_tam + 2;
+	for (int i = 0; i < consultas_tam; i++) {
+		mo_mada *consul = consultas + i;
+		ass(
+				consul->tipo == mo_mada_consulta
+						|| consul->tipo == mo_mada_actizacion);
+		if (consul->tipo == mo_mada_actizacion) {
+			nat idx_actizar = consul->intervalo_idx_ini;
+			nat idx_viejo_ant = 0;
+			nat idx_viejo_pos = numeros_tam + 1;
+			nat idx_nuevo_ant = 0;
+			nat idx_nuevo_pos = numeros_tam + 1;
+			td valor_nuevo = consul->intervalo_idx_fin;
+			td viejo_pendejo = numeros[idx_actizar];
+			avt_node_t *ocurrencia_viejo_ant = NULL;
+			avt_node_t *ocurrencia_viejo_act = NULL;
+			avt_node_t *ocurrencia_viejo_pos = NULL;
+			avt_node_t *ocurrencia_nuevo_ant = NULL;
+			avt_node_t *ocurrencia_nuevo_pos = NULL;
+
+			ocurrencia_viejo_act = avt_find(ablin, viejo_pendejo,
+					idx_actizar, verdadero);
+			ass(
+					ocurrencia_viejo_act
+							&& ocurrencia_viejo_act->ll == viejo_pendejo
+							&& ocurrencia_viejo_act->pasajero_oscuro
+									== idx_actizar);
+			ocurrencia_viejo_ant = avt_nd_posicion_anterior(ablin,
+					ocurrencia_viejo_act);
+			ocurrencia_viejo_pos = avt_nd_posicion_sig(ablin,
+					ocurrencia_viejo_act);
+
+			if (ocurrencia_viejo_ant
+					&& ocurrencia_viejo_ant->ll == viejo_pendejo) {
+				idx_viejo_ant = ocurrencia_viejo_ant->pasajero_oscuro;
+			}
+			if (ocurrencia_viejo_pos
+					&& ocurrencia_viejo_pos->ll == viejo_pendejo) {
+				idx_viejo_pos = ocurrencia_viejo_pos->pasajero_oscuro;
+			}
+
+			ocurrencia_nuevo_ant = avt_find(ablin, valor_nuevo, idx_actizar,
+					verdadero);
+			ass(
+					!ocurrencia_nuevo_ant
+							|| ocurrencia_nuevo_ant->ll != valor_nuevo
+							|| ocurrencia_nuevo_ant->pasajero_oscuro
+									!= idx_actizar
+							|| valor_nuevo == numeros[idx_actizar]);
+
+			if (ocurrencia_nuevo_ant) {
+				ocurrencia_nuevo_pos = avt_nd_posicion_sig(ablin,
+						ocurrencia_nuevo_ant);
+			} else {
+				ocurrencia_nuevo_pos = avt_find(ablin, valor_nuevo,
+						idx_actizar, falso);
+			}
+
+			ass(
+					!ocurrencia_nuevo_pos
+							|| ocurrencia_nuevo_pos->ll != valor_nuevo
+							|| ocurrencia_nuevo_pos->pasajero_oscuro
+									!= idx_actizar);
+			if (ocurrencia_nuevo_ant
+					&& ocurrencia_nuevo_ant->ll == valor_nuevo) {
+				idx_nuevo_ant = ocurrencia_nuevo_ant->pasajero_oscuro;
+			}
+			if (ocurrencia_nuevo_pos
+					&& ocurrencia_nuevo_pos->ll == valor_nuevo) {
+				idx_nuevo_pos = ocurrencia_nuevo_pos->pasajero_oscuro;
+			}
+
+			bit_ch_actiza(biatch, idx_viejo_ant, idx_actizar,
+					idx_viejo_pos, -viejo_pendejo);
+			bit_ch_actiza(biatch, idx_nuevo_ant, idx_actizar,
+					idx_nuevo_pos, valor_nuevo);
+			avt_borrar(ablin, viejo_pendejo, idx_actizar);
+			avt_insert(ablin, valor_nuevo, idx_actizar);
+			numeros[idx_actizar] = valor_nuevo;
+		} else {
+			enl delta = 0;
+			enl resu = 0;
+			nat idx_ini = consul->intervalo_idx_ini;
+			nat idx_fin = consul->intervalo_idx_fin;
+
+			delta = bit_ch_consulta_trozos(biatch, idx_ini, idx_fin);
+
+			resu = consul->resulcaca + delta;
+
+			printf("%lld\n", resu);
+		}
+	}
 }
 int main(void) {
 //	puts("he corrido con algo de suerte");
@@ -1242,4 +1525,3 @@ int main(void) {
 	cax_main();
 	return EXIT_SUCCESS;
 }
-
