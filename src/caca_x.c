@@ -36,10 +36,10 @@
 
 #define CACA_X_BUF_STATICO_DUMP_ARBOL (char[1000] ) { '\0' }
 
-/*
 #define caca_log_debug printf
- */
+/*
  #define caca_log_debug(formato, args...) 0
+ */
 #define assert_timeout(condition) assert(condition);
 /*
  #define assert_timeout(condition) 0
@@ -1225,10 +1225,8 @@ static inline void trozo_tree_actualiza(trozo_tree **nodo_actual,
 		nodo_actual_int->valor += nodo_actual_int->hijo_der->valor;
 	}
 
-	caca_log_debug(
-			"trozo %u-%u aora vale verga %lld, se le sumio %d hijo izq %p hijo der %p\n",
-			idx_ini, idx_fin, nodo_actual_int->valor, nuevo_valor,
-			nodo_actual_int->hijo_izq, nodo_actual_int->hijo_der);
+	caca_log_debug("trozo %u-%u aora vale verga %lld, se le sumio %d \n",
+			idx_ini, idx_fin, nodo_actual_int->valor, nuevo_valor);
 }
 
 static inline entero_largo trozo_tree_consulta(trozo_tree *nodo_actual,
@@ -2765,6 +2763,8 @@ static inline void caca_x_main() {
 							|| ocurrencia_nuevo_ant->pasajero_oscuro
 									!= idx_actualizar
 							|| valor_nuevo == numeros[idx_actualizar]);
+			caca_log_debug("encontro ocurrencia ant de %d(%u) %p\n",
+					valor_nuevo, idx_actualizar, ocurrencia_nuevo_ant);
 			if (ocurrencia_nuevo_ant) {
 				ocurrencia_viejo_pos = avl_tree_nodo_posicion_siguiente(arbolin,
 						ocurrencia_nuevo_ant);
@@ -2772,6 +2772,7 @@ static inline void caca_x_main() {
 				ocurrencia_nuevo_ant = avl_tree_find(arbolin, valor_nuevo,
 						idx_actualizar, falso);
 			}
+			caca_log_debug("pero q mierdas %p\n", ocurrencia_nuevo_ant);
 
 			assert_timeout(
 					!ocurrencia_nuevo_pos
@@ -2789,8 +2790,8 @@ static inline void caca_x_main() {
 
 			}
 
-			caca_log_debug("de nueva mierda %d el ant %u el pos %u\n",
-					valor_nuevo, idx_nuevo_ant, idx_nuevo_pos);
+			caca_log_debug("de nueva mierda %d(%u) el ant %u el pos %u\n",
+					valor_nuevo, idx_actualizar, idx_nuevo_ant, idx_nuevo_pos);
 
 			bit_ch_actualiza(biatch, idx_viejo_ant, idx_actualizar,
 					idx_viejo_pos, -viejo_pendejo);

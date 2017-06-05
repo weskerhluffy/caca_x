@@ -5,7 +5,7 @@ command alias nodos memory read -s 16 -f int64_t -c 31 me-> odes
 
 #settings set target.run-args < caca.txt
 #settings set target.run-args < caca1.txt
-#settings set target.run-args < caca2.txt
+settings set target.run-args < caca2.txt
 #settings set target.run-args < caca3.txt
 #settings set target.run-args < caca4.txt
 #settings set target.run-args < caca5.txt
@@ -23,4 +23,4 @@ command alias nodos memory read -s 16 -f int64_t -c 31 me-> odes
 #settings set target.run-args < caca_grande_actualizaciones_indice_dec.txt
 #settings set target.run-args < caca_grande_random_1_c.txt
 #settings set target.run-args < caca_grande_random_1_d.txt
-settings set target.run-args < caca_negativos.txt
+#settings set target.run-args < caca_negativos.txt
